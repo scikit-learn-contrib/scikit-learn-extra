@@ -195,3 +195,44 @@ def test_nystroem_callable():
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+
+def test_enfore_dimensionality_constraint():
+
+    yield assert_raises, ValueError, Fastfood.enforce_dimensionality_constraints, 20, 16
+
+    for message, input, expected in [
+        ('test n is scaled to be a multiple of d', (16, 20), (16, 32)),
+        ('test n equals d', (16, 16), (16, 16)),
+        ('test n becomes power of two', (3, 16), (4, 16)),
+        ('test all', (7, 12), (8, 16)),
+            ]:
+        d, n = input
+        output = Fastfood.enforce_dimensionality_constraints(d, n)
+        yield assert_equal, expected, output, message
+
+def given_gaussian_iid_matrix(d):
+    b, g, P = Fastfood.create_vectors(d)
+    gaussian_iid = Fastfood.create_gaussian_iid_matrix(b, g, P)
+    return b, g, P, gaussian_iid
+
+
+def test_rows_of_gaussian_iid_have_same_length():
+    _, _, _, gaussian_iid = given_gaussian_iid_matrix(8)
+    norm_of_all_rows = np.linalg.norm(gaussian_iid, axis=1)
+
+    all(assert_array_almost_equal(n, norm_of_all_rows[0]) for n in norm_of_all_rows)
+
+
+def test_fastfood():
+    """test that Fastfood approximates kernel on random data"""
+    # compute exact kernel
+    gamma = 10.
+    kernel = rbf_kernel(X, Y, gamma=gamma)
+
+    # approximate kernel mapping
+    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma)), n_components=1000, random_state=42)
+    X_trans = rbf_transform.fit_transform(X)
+    Y_trans = rbf_transform.transform(Y)
+    kernel_approx = np.dot(X_trans, Y_trans.T)
+
+    assert_array_almost_equal(kernel, kernel_approx, 1)
