@@ -239,10 +239,10 @@ def test_fastfood():
     Y_trans = rbf_transform.transform(Y)
     #print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
-    
+
     print kernel_approx[1:10,1:10]
     print kernel[1:10,1:10]
-    
+
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
     raise
@@ -251,7 +251,7 @@ def test_fastfood_perormance_to_rks():
     """test that Fastfood approximates kernel on random data"""
     # compute exact kernel
     gamma = 10.
-    
+
     fastfood_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
     rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/12, n_components=1000, random_state=42)
@@ -273,4 +273,4 @@ def test_fastfood_perormance_to_rks():
 
     assert_greater(rks_spent_time,fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
-    
+
