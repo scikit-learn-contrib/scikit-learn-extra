@@ -620,7 +620,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         result = b*x
         result = Fastfood.approx_fourier_transformation(result)
         result = np.take(result, p)
-        result = g*result
+        result *= g
         result = Fastfood.approx_fourier_transformation(result)
         return result
 
