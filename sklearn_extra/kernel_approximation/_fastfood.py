@@ -178,7 +178,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self._S = np.multiply(1 / self.l2norm_along_axis1(self._G)
                               .reshape((-1, 1)),
                               chi.rvs(self._d,
-                                      size=(self._times_to_stack_v, self._d)))
+                                      size=(self._times_to_stack_v, self._d),
+                                      random_state=self.random_state))
 
         self._U = self.uniform_vector()
 
@@ -205,6 +206,3 @@ class Fastfood(BaseEstimator, TransformerMixin):
                                                         X_padded)
         VX = self.scale_transformed_data(self._S, HGPHBX)
         return self.phi(VX)
-
-    def _more_tags(self):
-        return {'non_deterministic': True}
