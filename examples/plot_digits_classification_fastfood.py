@@ -12,7 +12,7 @@ data.
 
 """
 
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Modified By: Felix Maximilian Möller
@@ -51,7 +51,8 @@ train__idx = range(n_samples / 2)
 test__idx = range(n_samples / 2, n_samples)
 
 # map data into featurespace
-rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate)
+rbf_transform = Fastfood(
+    sigma=sigma, n_components=number_of_features_to_generate)
 data_transformed_train = rbf_transform.fit_transform(data[train__idx])
 data_transformed_test = rbf_transform.transform(data[test__idx])
 
@@ -65,30 +66,35 @@ classifier.fit(data[train__idx], digits.target[train__idx])
 linear_classifier.fit(data[train__idx], digits.target[train__idx])
 
 # Run the linear classifier on the mapped data.
-linear_classifier_transformation.fit(data_transformed_train, digits.target[train__idx])
+linear_classifier_transformation.fit(
+    data_transformed_train, digits.target[train__idx])
 
 # Now predict the value of the digit on the second half:
 expected = digits.target[test__idx]
 predicted = classifier.predict(data[test__idx])
 predicted_linear = linear_classifier.predict(data[test__idx])
-predicted_linear_transformed = linear_classifier_transformation.predict(data_transformed_test)
+predicted_linear_transformed = linear_classifier_transformation.predict(
+    data_transformed_test)
 
-print "Classification report for dual classifier %s:\n%s\n" % (
-    classifier, metrics.classification_report(expected, predicted))
-print "Classification report for primal linear classifier %s:\n%s\n" % (
-    linear_classifier, metrics.classification_report(expected, predicted_linear))
-print "Classification report for primal transformation classifier %s:\n%s\n" % (
-    linear_classifier_transformation, metrics.classification_report(expected, predicted_linear_transformed))
+print("Classification report for dual classifier %s:\n%s\n"
+      % (classifier, metrics.classification_report(expected, predicted)))
+print("Classification report for primal linear classifier %s:\n%s\n"
+      % (linear_classifier,
+         metrics.classification_report(expected, predicted_linear)))
+print(
+    "Classification report for primal transformation classifier %s:\n%s\n"
+    % (linear_classifier_transformation,
+       metrics.classification_report(expected, predicted_linear_transformed)))
 
-print "Confusion matrix for dual classifier:\n%s" % metrics.confusion_matrix(expected, predicted)
-print "Confusion matrix for primal linear classifier:\n%s" % metrics.confusion_matrix(expected, predicted_linear)
-print "Confusion matrix for for primal transformation classifier:\n%s" % metrics.confusion_matrix(expected, predicted_linear_transformed)
+print("Confusion matrix for dual classifier:\n%s"
+      % metrics.confusion_matrix(expected, predicted))
+print("Confusion matrix for primal linear classifier:\n%s"
+      % metrics.confusion_matrix(expected, predicted_linear))
+print("Confusion matrix for for primal transformation classifier:\n%s"
+      % metrics.confusion_matrix(expected, predicted_linear_transformed))
 
-# assert_almost_equal(metrics.classification_report(expected, predicted),
-#                     metrics.classification_report(expected, predicted_linear_transformed),
-#                     decimal=1)
-
-for index, (image, prediction) in enumerate(zip(digits.images[test__idx], predicted)[:4]):
+for index, (image, prediction) in enumerate(
+        zip(digits.images[test__idx], predicted)[:4]):
     pl.subplot(2, 4, index + 5)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
