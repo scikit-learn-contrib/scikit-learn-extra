@@ -67,12 +67,12 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self.tradeoff_mem_accuracy = tradeoff_mem_accuracy
 
     @staticmethod
-    def is_number_power_of_two(n):
+    def _is_number_power_of_two(n):
         return n != 0 and ((n & (n - 1)) == 0)
 
     @staticmethod
-    def enforce_dimensionality_constraints(d, n):
-        if not (Fastfood.is_number_power_of_two(d)):
+    def _enforce_dimensionality_constraints(d, n):
+        if not (Fastfood._is_number_power_of_two(d)):
             # find d that fulfills 2^l
             d = np.power(2, np.floor(np.log2(d)) + 1)
         divisor, remainder = divmod(n, d)
@@ -83,7 +83,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
             times_to_stack_v = int(divisor+1)
         return int(d), int(n), times_to_stack_v
 
-    def pad_with_zeros(self, X):
+    def _pad_with_zeros(self, X):
         try:
             X_padded = np.pad(
                 X,
@@ -98,42 +98,42 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return X_padded
 
     @staticmethod
-    def approx_fourier_transformation_multi_dim(result):
+    def _approx_fourier_transformation_multi_dim(result):
         cyfht(result)
 
     @staticmethod
-    def l2norm_along_axis1(X):
+    def _l2norm_along_axis1(X):
         return np.sqrt(np.einsum('ij,ij->i', X, X))
 
-    def uniform_vector(self):
+    def _uniform_vector(self, rng):
         if self.tradeoff_mem_accuracy != 'accuracy':
-            return self._rng.uniform(0, 2 * np.pi, size=self._n)
+            return rng.uniform(0, 2 * np.pi, size=self._n)
         else:
             return None
 
-    def apply_approximate_gaussian_matrix(self, B, G, P, X):
+    def _apply_approximate_gaussian_matrix(self, B, G, P, X):
         """ Create mapping of all x_i by applying B, G and P step-wise """
         num_examples = X.shape[0]
 
         result = np.multiply(B, X.reshape((1, num_examples, 1, self._d)))
         result = result.reshape((num_examples*self._times_to_stack_v, self._d))
-        Fastfood.approx_fourier_transformation_multi_dim(result)
+        Fastfood._approx_fourier_transformation_multi_dim(result)
         result = result.reshape((num_examples, -1))
         np.take(result, P, axis=1, mode='wrap', out=result)
         np.multiply(np.ravel(G), result.reshape(num_examples, self._n),
                     out=result)
         result = result.reshape(num_examples*self._times_to_stack_v, self._d)
-        Fastfood.approx_fourier_transformation_multi_dim(result)
+        Fastfood._approx_fourier_transformation_multi_dim(result)
         return result
 
-    def scale_transformed_data(self, S, VX):
+    def _scale_transformed_data(self, S, VX):
         """ Scale mapped data VX to match kernel(e.g. RBF-Kernel) """
         VX = VX.reshape(-1, self._times_to_stack_v*self._d)
 
         return (1 / (self.sigma * np.sqrt(self._d)) *
                 np.multiply(np.ravel(S), VX))
 
-    def phi(self, X):
+    def _phi(self, X):
         if self.tradeoff_mem_accuracy == 'accuracy':
             return (1 / np.sqrt(X.shape[1])) * \
                 np.hstack([np.cos(X), np.sin(X)])
@@ -161,27 +161,27 @@ class Fastfood(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype=np.float64)
 
         d_orig = X.shape[1]
-        self._rng = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
 
         self._d, self._n, self._times_to_stack_v = \
-            Fastfood.enforce_dimensionality_constraints(d_orig,
-                                                        self.n_components)
+            Fastfood._enforce_dimensionality_constraints(d_orig,
+                                                         self.n_components)
         self._number_of_features_to_pad_with_zeros = self._d - d_orig
 
-        self._G = self._rng.normal(size=(self._times_to_stack_v, self._d))
-        self._B = self._rng.choice(
+        self._G = rng.normal(size=(self._times_to_stack_v, self._d))
+        self._B = rng.choice(
                 [-1, 1],
                 size=(self._times_to_stack_v, self._d),
                 replace=True)
-        self._P = np.hstack([(i*self._d)+self._rng.permutation(self._d)
+        self._P = np.hstack([(i*self._d) + rng.permutation(self._d)
                             for i in range(self._times_to_stack_v)])
-        self._S = np.multiply(1 / self.l2norm_along_axis1(self._G)
+        self._S = np.multiply(1 / self._l2norm_along_axis1(self._G)
                               .reshape((-1, 1)),
                               chi.rvs(self._d,
                                       size=(self._times_to_stack_v, self._d),
                                       random_state=self.random_state))
 
-        self._U = self.uniform_vector()
+        self._U = self._uniform_vector(rng)
 
         return self
 
@@ -199,10 +199,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         X = check_array(X, dtype=np.float64)
-        X_padded = self.pad_with_zeros(X)
-        HGPHBX = self.apply_approximate_gaussian_matrix(self._B,
-                                                        self._G,
-                                                        self._P,
-                                                        X_padded)
-        VX = self.scale_transformed_data(self._S, HGPHBX)
-        return self.phi(VX)
+        X_padded = self._pad_with_zeros(X)
+        HGPHBX = self._apply_approximate_gaussian_matrix(
+                self._B, self._G, self._P, X_padded)
+        VX = self._scale_transformed_data(self._S, HGPHBX)
+        return self._phi(VX)

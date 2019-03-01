@@ -206,14 +206,14 @@ def test_nystroem_callable():
 
 def test_enforce_dimensionality_constraint():
 
-    for message, input, expected in [
+    for message, input_, expected in [
         ('test n is scaled to be a multiple of d', (16, 20), (16, 32, 2)),
         ('test n equals d', (16, 16), (16, 16, 1)),
         ('test n becomes power of two', (3, 16), (4, 16, 4)),
         ('test all', (7, 12), (8, 16, 2)),
             ]:
-        d, n = input
-        output = Fastfood.enforce_dimensionality_constraints(d, n)
+        d, n = input_
+        output = Fastfood._enforce_dimensionality_constraints(d, n)
         yield assert_equal, expected, output, message
 
 
