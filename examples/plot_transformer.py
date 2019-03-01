@@ -3,11 +3,11 @@
 Plotting Template Transformer
 =============================
 
-An example plot of :class:`skltemplate.template.TemplateTransformer`
+An example plot of :class:`sklearn_extra.template.TemplateTransformer`
 """
 import numpy as np
 from matplotlib import pyplot as plt
-from skltemplate import TemplateTransformer
+from sklearn_extra import TemplateTransformer
 
 X = np.arange(50, dtype=np.float).reshape(-1, 1)
 X /= 50

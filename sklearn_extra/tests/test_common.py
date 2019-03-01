@@ -2,9 +2,9 @@ import pytest
 
 from sklearn.utils.estimator_checks import check_estimator
 
-from skltemplate import TemplateEstimator
-from skltemplate import TemplateClassifier
-from skltemplate import TemplateTransformer
+from sklearn_extra import TemplateEstimator
+from sklearn_extra import TemplateClassifier
+from sklearn_extra import TemplateTransformer
 
 
 @pytest.mark.parametrize(

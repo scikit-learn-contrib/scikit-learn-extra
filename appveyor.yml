@@ -36,7 +36,7 @@ install:
 test_script:
   - mkdir for_test
   - cd for_test
-  - pytest -v --cov=skltemplate --pyargs skltemplate
+  - pytest -v --cov=sklearn_extra --pyargs sklearn_extra
 
 after_test:
   - cp .coverage %APPVEYOR_BUILD_FOLDER%

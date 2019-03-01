@@ -3,11 +3,11 @@
 Plotting Template Classifier
 ============================
 
-An example plot of :class:`skltemplate.template.TemplateClassifier`
+An example plot of :class:`sklearn_extra.template.TemplateClassifier`
 """
 import numpy as np
 from matplotlib import pyplot as plt
-from skltemplate import TemplateClassifier
+from sklearn_extra import TemplateClassifier
 
 X = [[0, 0], [1, 1]]
 y = [0, 1]

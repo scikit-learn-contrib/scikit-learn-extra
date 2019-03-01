@@ -1,6 +1,6 @@
-#####################################
-Quick Start with the project-template
-#####################################
+#######################################
+Quick Start with the scikit-learn-extra
+#######################################
 
 This package serves as a skeleton package aiding at developing compatible
 scikit-learn contribution.
@@ -11,22 +11,22 @@ Creating your own scikit-learn contribution package
 1. Download and setup your repository
 -------------------------------------
 
-To create your package, you need to clone the ``project-template`` repository::
+To create your package, you need to clone the ``scikit-learn-extra`` repository::
 
-    $ git clone https://github.com/scikit-learn-contrib/project-template.git
+    $ git clone https://github.com/scikit-learn-contrib/scikit-learn-extra.git
 
 Before to reinitialize your git repository, you need to make the following
-changes. Replace all occurrences of ``skltemplate`` and ``sklearn-template``
+changes. Replace all occurrences of ``sklearn_extra`` and ``sklearn-template``
 with the name of you own contribution. You can find all the occurrences using
 the following command::
 
-    $ git grep skltemplate
+    $ git grep sklearn_extra
     $ git grep sklearn-template
 
 To remove the history of the template package, you need to remove the `.git`
 directory::
 
-    $ cd project-template
+    $ cd scikit-learn-extra
     $ rm -rf .git
 
 Then, you need to initialize your new git repository::

@@ -2,8 +2,8 @@
 
 [run]
 branch = True
-source = skltemplate
-include = */skltemplate/*
+source = sklearn_extra
+include = */sklearn_extra/*
 omit =
     */setup.py
 

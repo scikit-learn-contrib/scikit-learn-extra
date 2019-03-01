@@ -5,14 +5,15 @@ from sklearn.datasets import load_iris
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
-from skltemplate import TemplateEstimator
-from skltemplate import TemplateTransformer
-from skltemplate import TemplateClassifier
+from sklearn_extra import TemplateEstimator
+from sklearn_extra import TemplateTransformer
+from sklearn_extra import TemplateClassifier
 
 
 @pytest.fixture
 def data():
     return load_iris(return_X_y=True)
+
 
 def test_template_estimator(data):
     est = TemplateEstimator()

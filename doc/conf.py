@@ -82,7 +82,7 @@ copyright = u'2016, Vighnesh Birodkar'
 # built documents.
 #
 # The short X.Y version.
-from skltemplate import __version__
+from sklearn_extra import __version__
 version = __version__
 # The full version, including alpha/beta/rc tags.
 release = __version__
@@ -306,10 +306,10 @@ intersphinx_mapping = {
 
 # sphinx-gallery configuration
 sphinx_gallery_conf = {
-    'doc_module': 'skltemplate',
+    'doc_module': 'sklearn_extra',
     'backreferences_dir': os.path.join('generated'),
     'reference_url': {
-        'skltemplate': None}
+        'sklearn_extra': None}
 }
 
 def setup(app):
