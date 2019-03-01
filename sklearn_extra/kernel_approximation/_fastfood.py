@@ -179,7 +179,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
                               .reshape((-1, 1)),
                               chi.rvs(self._d,
                                       size=(self._times_to_stack_v, self._d),
-                                      random_state=self.random_state))
+                                      random_state=rng))
 
         self._U = self._uniform_vector(rng)
 
