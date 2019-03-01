@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 """ Implementation of the Fast Hadamard Transform.
 
 https://en.wikipedia.org/wiki/Hadamard_transform
