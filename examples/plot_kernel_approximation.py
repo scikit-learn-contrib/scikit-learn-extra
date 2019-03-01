@@ -54,9 +54,10 @@ from time import time
 
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, pipeline
-from sklearn.kernel_approximation import (RBFSampler,
-                                          Nystroem, Fastfood)
+from sklearn.kernel_approximation import Nystroem, RBFSampler
 from sklearn.decomposition import PCA
+
+from sklearn_extra.kernel_approximation import Fastfood
 
 # The digits dataset
 digits = datasets.load_digits(n_class=9)
@@ -68,11 +69,11 @@ data = digits.data / 16.
 data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
-data_train, targets_train = data[:n_samples / 2], digits.target[:n_samples / 2]
+data_train, targets_train = data[:n_samples // 2], digits.target[:n_samples // 2]
 
 
 # Now predict the value of the digit on the second half:
-data_test, targets_test = data[n_samples / 2:], digits.target[n_samples / 2:]
+data_test, targets_test = data[n_samples // 2:], digits.target[n_samples // 2:]
 #data_test = scaler.transform(data_test)
 
 # fix model parameters:

@@ -24,7 +24,8 @@ import pylab as pl
 
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, metrics
-from sklearn.kernel_approximation import Fastfood
+
+from sklearn_extra.kernel_approximation import Fastfood
 
 # The digits dataset
 digits = datasets.load_digits()
@@ -34,11 +35,13 @@ digits = datasets.load_digits()
 # attribute of the dataset. If we were working from image files, we
 # could load them using pylab.imread. For these images know which
 # digit they represent: it is given in the 'target' of the dataset.
-for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
+for index, (image, label) in enumerate(zip(digits.images, digits.target)):
     pl.subplot(2, 4, index + 1)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Training: %i' % label)
+    if index > 3:
+        break
 
 # To apply an classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
@@ -47,8 +50,8 @@ data = digits.images.reshape((n_samples, -1))
 gamma = .001
 sigma = np.sqrt(1 / (2 * gamma))
 number_of_features_to_generate = 1000
-train__idx = range(n_samples / 2)
-test__idx = range(n_samples / 2, n_samples)
+train__idx = range(n_samples // 2)
+test__idx = range(n_samples // 2, n_samples)
 
 # map data into featurespace
 rbf_transform = Fastfood(
@@ -94,10 +97,12 @@ print("Confusion matrix for for primal transformation classifier:\n%s"
       % metrics.confusion_matrix(expected, predicted_linear_transformed))
 
 for index, (image, prediction) in enumerate(
-        zip(digits.images[test__idx], predicted)[:4]):
-    pl.subplot(2, 4, index + 5)
+        zip(digits.images[test__idx], predicted)):
+    pl.subplot(2, 4, index + 4)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Prediction: %i' % prediction)
+    if index > 3:
+        break
 
 pl.show()
