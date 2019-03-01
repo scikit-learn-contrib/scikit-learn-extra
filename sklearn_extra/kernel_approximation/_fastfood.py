@@ -11,16 +11,16 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from sklearn.utils.cyfht import fht2 as cyfht
 from scipy.linalg import svd
 from scipy.stats import chi
-from sklearn.utils.random import choice
 
-from .base import BaseEstimator
-from .base import TransformerMixin
-from .utils import check_array, check_random_state, as_float_array
-from .utils.extmath import safe_sparse_dot
-from .metrics.pairwise import pairwise_kernels
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
+from sklearn.utils import check_array, check_random_state, as_float_array
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.metrics.pairwise import pairwise_kernels
+
+from ..utils._cyfht import fht2 as cyfht
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -659,10 +659,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self.number_of_features_to_pad_with_zeros = self.d - d_orig
 
         self.G = self.rng.normal(size=(self.times_to_stack_v, self.d))
-        self.B = choice([-1, 1],
-                        size=(self.times_to_stack_v, self.d),
-                        replace=True,
-                        random_state=self.random_state)
+        self.B = self.rng.choice(
+                [-1, 1],
+                size=(self.times_to_stack_v, self.d),
+                replace=True)
         self.P = np.hstack([(i*self.d)+self.rng.permutation(self.d)
                             for i in range(self.times_to_stack_v)])
         self.S = np.multiply(1 / self.l2norm_along_axis1(self.G)

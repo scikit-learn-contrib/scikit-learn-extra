@@ -13,6 +13,8 @@ from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
+from sklearn_extra.kernel_approximation import Fastfood
+
 
 # generate data
 rng = np.random.RandomState(0)
