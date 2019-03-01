@@ -25,7 +25,7 @@ exact_start = datetime.datetime.utcnow()
 # rbf_kernel(X, Y, gamma=gamma)
 exact_end = datetime.datetime.utcnow()
 exact_spent_time = exact_end - exact_start
-print "Timimg exact rbf: \t\t", exact_spent_time
+print("Timimg exact rbf: \t\t", exact_spent_time)
 
 rbf_transform = Fastfood(sigma=sigma,
                          n_components=number_of_features_to_generate,
@@ -39,7 +39,7 @@ _ = rbf_transform.transform(Y)
 fastfood_fast_vec_end = datetime.datetime.utcnow()
 fastfood_fast_vec_spent_time = fastfood_fast_vec_end - \
     fastfood_fast_vec_start
-print "Timimg fastfood fast vectorized: \t\t", fastfood_fast_vec_spent_time
+print("Timimg fastfood fast vectorized: \t\t", fastfood_fast_vec_spent_time)
 
 rks_rbf_transform = RBFSampler(gamma=gamma,
                                n_components=number_of_features_to_generate,
@@ -51,6 +51,6 @@ _ = rks_rbf_transform.transform(X)
 _ = rks_rbf_transform.transform(Y)
 rks_end = datetime.datetime.utcnow()
 rks_spent_time = rks_end - rks_start
-print "Timimg rks: \t\t\t", rks_spent_time
+print("Timimg rks: \t\t\t", rks_spent_time)
 
 assert_greater(rks_spent_time, fastfood_fast_vec_spent_time)
