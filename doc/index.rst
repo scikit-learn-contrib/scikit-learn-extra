@@ -3,18 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to sklearn-template's documentation!
-============================================
+scikit-learn-extra documentation
+================================
 
-This project is a reference implementation to anyone who wishes to develop
-scikit-learn compatible classes.
-
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-   :caption: Getting Started
-
-   quick_start
 
 .. toctree::
    :maxdepth: 2
@@ -27,24 +18,18 @@ scikit-learn compatible classes.
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Tutorial - Examples
+   :caption: Examples
 
    auto_examples/index
-
-`Getting started <quick_start.html>`_
--------------------------------------
-
-Information regarding this template and how to modify it for your own project.
 
 `User Guide <user_guide.html>`_
 -------------------------------
 
-An example of narrative documentation.
+The user guide (to be added)
 
 `API Documentation <api.html>`_
 -------------------------------
 
-An example of API documentation.
 
 `Examples <auto_examples/index.html>`_
 --------------------------------------
