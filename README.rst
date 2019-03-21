@@ -19,9 +19,32 @@ scikit-learn-extra - A set of useful tools compatible with scikit-learn
 
 .. _scikit-learn: https://scikit-learn.org
 
+scikit-learn-extra is a Python module for machine learning that extends scikit-learn. It includes algorithms that are useful but do not satisfy the scikit-learn `inclusion criteria <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_, for instance due to their novelty or lower citation number.
 
-.. _documentation: https://scikit-learn-extra.readthedocs.io/en/latest/quick_start.html
+Installation
+------------
 
-Refer to the documentation_ for additional information.
+Dependencies
+^^^^^^^^^^^^
 
-*Thank you for contributing to the scikit-learn ecosystem!*
+scikit-learn-extra requires,
+ 
+ - Python (>=3.5)
+ - scikit-learn (>=0.20), and its dependencies
+ - Cython (>0.28)
+
+
+User installation
+^^^^^^^^^^^^^^^^^
+
+Latest development version can be installed with,
+
+.. code::
+
+    pip install https://github.com/scikit-learn-contrib/scikit-learn-extra/archive/master.zip
+
+
+License
+-------
+
+This package is released under the 3-Clause BSD license.
