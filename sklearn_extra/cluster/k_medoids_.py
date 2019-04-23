@@ -11,12 +11,12 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, ClusterMixin, TransformerMixin
-from ..metrics.pairwise import pairwise_distances, pairwise_distances_argmin
-from ..utils import check_array, check_random_state
-from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
-from ..exceptions import ConvergenceWarning
+from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
+from sklearn.metrics.pairwise import pairwise_distances, pairwise_distances_argmin
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.validation import check_is_fitted
+from sklearn.exceptions import ConvergenceWarning
 
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
