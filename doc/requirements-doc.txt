@@ -1,0 +1,6 @@
+sphinx
+scikit-learn>=0.20
+cython
+pillow
+sphinx_rtd_theme
+numpydoc
