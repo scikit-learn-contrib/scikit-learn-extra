@@ -47,7 +47,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
     Quoc Le, Tamas Sarl and Alex Smola.
 
     Examples
-    ----
+    --------
     See scikit-learn-fastfood/examples/plot_digits_classification_fastfood.py
     for an example how to use fastfood with a primal classifier in comparison
     to an usual rbf-kernel with a dual classifier.
