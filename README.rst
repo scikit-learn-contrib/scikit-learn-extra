@@ -29,9 +29,9 @@ Dependencies
 
 scikit-learn-extra requires,
  
- - Python (>=3.5)
- - scikit-learn (>=0.20), and its dependencies
- - Cython (>0.28)
+- Python (>=3.5)
+- scikit-learn (>=0.20), and its dependencies
+- Cython (>0.28)
 
 
 User installation

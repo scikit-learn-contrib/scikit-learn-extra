@@ -6,32 +6,18 @@
 scikit-learn-extra documentation
 ================================
 
+scikit-learn-extra is a Python module for machine learning that extends scikit-learn. It includes algorithms that are useful but do not satisfy the scikit-learn `inclusion criteria <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_, for instance due to their novelty or lower citation number.
 
 .. toctree::
    :maxdepth: 2
-   :hidden:
    :caption: Documentation
 
+   install
    user_guide
    api
 
 .. toctree::
    :maxdepth: 2
-   :hidden:
    :caption: Examples
 
    auto_examples/index
-
-`User Guide <user_guide.html>`_
--------------------------------
-
-The user guide (to be added)
-
-`API Documentation <api.html>`_
--------------------------------
-
-
-`Examples <auto_examples/index.html>`_
---------------------------------------
-
-A set of examples. It complements the `User Guide <user_guide.html>`_.
