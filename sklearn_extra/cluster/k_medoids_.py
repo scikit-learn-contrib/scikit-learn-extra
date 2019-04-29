@@ -62,7 +62,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.cluster import KMedoids
+    >>> from sklearn_extra.cluster import KMedoids
     >>> import numpy as np
 
     >>> X = np.asarray([[1, 2], [1, 4], [1, 0],
