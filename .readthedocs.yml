@@ -1,3 +1,5 @@
+build:
+  image: latest
 formats:
   - none
 requirements_file: requirements.txt

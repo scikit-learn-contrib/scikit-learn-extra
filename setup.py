@@ -27,7 +27,7 @@ URL = 'https://github.com/scikit-learn-contrib/scikit-learn-extra'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'https://github.com/scikit-learn-contrib/scikit-learn-extra'
 VERSION = __version__  # noqa
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn']
+INSTALL_REQUIRES = ['cython', 'numpy', 'scipy', 'scikit-learn']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -46,6 +46,7 @@ EXTRAS_REQUIRE = {
         'pytest',
         'pytest-cov'],
     'docs': [
+        'pillow',
         'sphinx',
         'sphinx-gallery',
         'sphinx_rtd_theme',
