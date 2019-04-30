@@ -302,7 +302,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Pick random k medoids as the initial ones.
             medoids = random_state_.choice(len(D), n_clusters)
         elif self.init == 'k-medoids++':
-            medoids = self._kpp_init(D, random_state_)
+            medoids = self._kpp_init(D, n_clusters, random_state_)
         elif self.init == "heuristic":  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
@@ -314,7 +314,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return medoids
 
-    def _kpp_init(self, D, random_state_, n_local_trials=None):
+    def _kpp_init(self, D, n_clusters, random_state_, n_local_trials=None):
         """Init n_clusters seeds with a method similar to k-means++
 
         Parameters
@@ -349,14 +349,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         """
         n_samples, _ = D.shape
 
-        centers = np.empty(self.n_clusters, dtype=int)
+        centers = np.empty(n_clusters, dtype=int)
 
         # Set the number of local seeding trials if none is given
         if n_local_trials is None:
             # This is what Arthur/Vassilvitskii tried, but did not report
             # specific results for other than mentioning in the conclusion
             # that it helped.
-            n_local_trials = 2 + int(np.log(self.n_clusters))
+            n_local_trials = 2 + int(np.log(n_clusters))
 
         center_id = random_state_.randint(n_samples)
         centers[0] = center_id
@@ -365,8 +365,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         closest_dist_sq = D[centers[0], :]**2
         current_pot = closest_dist_sq.sum()
 
-        # pick the remaining self.n_clusters-1 points
-        for cluster_index in range(1, self.n_clusters):
+        # pick the remaining n_clusters-1 points
+        for cluster_index in range(1, n_clusters):
             rand_vals = (random_state_.random_sample(n_local_trials)
                          * current_pot)
             candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),

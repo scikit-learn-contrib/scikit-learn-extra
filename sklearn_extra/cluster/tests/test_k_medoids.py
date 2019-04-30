@@ -1,6 +1,7 @@
 """Testing for K-Medoids"""
 import warnings
 import numpy as np
+from unittest import mock
 from scipy.sparse import csc_matrix
 
 from sklearn.datasets import load_iris
@@ -101,12 +102,30 @@ def test_kmedoids_empty_clusters():
     assert_warns_message(UserWarning, "Cluster 1 is empty!", kmedoids.fit, X)
 
 
+@mock.patch.object(KMedoids, '_kpp_init', return_value=object())
+def test_kpp_called(_kpp_init_mocked):
+    """KMedoids._kpp_init method should be called by _initialize_medoids"""
+    D = np.array([[0, 1], [1, 0]])
+    n_clusters = 2
+    rng = np.random.RandomState(seed)
+    kmedoids = KMedoids()
+    kmedoids.init = 'k-medoids++'
+    # set _kpp_init_mocked.return_value to a singleton
+    initial_medoids = kmedoids._initialize_medoids(
+        D,
+        n_clusters,
+        rng,
+    )
+
+    # assert that _kpp_init was called and its result was returned.
+    _kpp_init_mocked.assert_called_once_with(D, n_clusters, rng)
+    assert initial_medoids == _kpp_init_mocked.return_value
+
+
 def test_kmedoids_pp():
     """Initial clusters should be well-separated for k-medoids++"""
     rng = np.random.RandomState(seed)
-    kmedoids = KMedoids(n_clusters=3,
-                        init="k-medoids++",
-                        random_state=rng)
+    kmedoids = KMedoids()
     X = [[10, 0],
          [11, 0],
          [0, 10],
@@ -118,7 +137,9 @@ def test_kmedoids_pp():
          ]
     D = euclidean_distances(X)
 
-    centers = kmedoids._initialize_medoids(D, 3, random_state_=rng)
+    centers = kmedoids._kpp_init(D,
+                                 n_clusters=3,
+                                 random_state_=rng)
 
     assert len(centers) == 3
 
