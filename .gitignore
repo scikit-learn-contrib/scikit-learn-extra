@@ -67,3 +67,5 @@ doc/generated/
 
 # PyBuilder
 target/
+
+.idea
