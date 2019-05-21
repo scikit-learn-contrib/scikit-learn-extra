@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
-from sklearn.fast_kernel import FKC_EigenPro
+from sklearn_extra.fast_kernel import FKC_EigenPro
 from sklearn.svm import SVC
 from sklearn.datasets import fetch_mldata
 

@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn.datasets import make_regression, make_classification
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.fast_kernel import FKR_EigenPro, FKC_EigenPro
+from sklearn_extra.fast_kernel import FKR_EigenPro, FKC_EigenPro
 
 np.random.seed(1)
 # Tests for Fast Kernel Regression and Classification

@@ -19,7 +19,7 @@ import numpy as np
 from time import time
 
 from sklearn.datasets import fetch_mldata
-from sklearn.fast_kernel import FKC_EigenPro
+from sklearn_extra.fast_kernel import FKC_EigenPro
 from sklearn.svm import SVC
 
 rng = np.random.RandomState(1)
