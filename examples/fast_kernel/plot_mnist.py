@@ -19,12 +19,12 @@ from time import time
 
 from sklearn_extra.fast_kernel import FKC_EigenPro
 from sklearn.svm import SVC
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 
 rng = np.random.RandomState(1)
 
 # Generate sample data from mnist
-mnist = fetch_mldata('MNIST original')
+mnist = fetch_openml('mnist_784')
 mnist.data = mnist.data / 255.
 
 p = np.random.permutation(60000)
