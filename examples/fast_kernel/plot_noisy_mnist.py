@@ -53,7 +53,7 @@ train_sizes = [500, 1000, 2000]
 for train_size in train_sizes:
     for name, estimator in [
         ("FastKernel",
-         FKC_EigenPro(n_epoch=2, bandwidth=5, random_state=rng)),
+         FKC_EigenPro(n_epoch=2, bandwidth=5., random_state=rng)),
             ("SupportVector", SVC(C=5, gamma=1. / (2 * 5 * 5)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])

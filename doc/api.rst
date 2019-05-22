@@ -24,5 +24,4 @@ EigenPro
 .. currentmodule:: sklearn_extra
 
 .. autosummary::
-   fast_kernel.FKR_EigenPro
-   fast_kernel.FKC_EigenPro
+   fast_kernel

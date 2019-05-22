@@ -262,7 +262,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         # Each batch will require about 1 gb memory
         mem_bytes = 1024 ** 3
         mem_usages = (d + n_label + 2 * np.arange(sample_size)) * n * 4
-        mG = np.sum(mem_usages < mem_bytes)
+        mG = np.int32(np.sum(mem_usages < mem_bytes))
 
         # Calculate largest eigenvalue and max{k(x,x)} using subsamples.
         self.pinx_ = self.random_state_.choice(n, sample_size,
@@ -507,7 +507,8 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
             bandwidth=self.bandwidth, gamma=self.gamma,
             degree=self.degree, coef0=self.coef0,
             kernel_params=self.kernel_params, random_state=self.random_state)
-        X, Y = check_X_y(X, Y, multi_output=False, ensure_min_samples=3)
+        X, Y = check_X_y(X, Y, dtype=np.float32,
+                         multi_output=False, ensure_min_samples=3)
         check_classification_targets(Y)
         self.classes_ = np.unique(Y)
 

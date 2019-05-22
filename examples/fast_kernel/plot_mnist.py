@@ -25,7 +25,7 @@ rng = np.random.RandomState(1)
 
 # Generate sample data from mnist
 mnist = fetch_openml('mnist_784')
-mnist.data = mnist.data / 255.
+mnist.data = mnist.data / 255.0
 
 p = np.random.permutation(60000)
 x_train = mnist.data[p][:60000]
@@ -43,7 +43,7 @@ svc_err = []
 
 train_sizes = [500, 1000, 2000]
 
-bandwidth = 5
+bandwidth = 5.0
 
 # Fit models to data
 for train_size in train_sizes:
