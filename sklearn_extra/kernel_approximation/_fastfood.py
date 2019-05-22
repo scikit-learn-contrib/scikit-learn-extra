@@ -7,7 +7,7 @@ from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 from sklearn.utils import check_array, check_random_state
 
-#from ..utils._cyfht import fht2 as cyfht
+from ..utils._cyfht import fht2 as cyfht
 
 
 class Fastfood(BaseEstimator, TransformerMixin):

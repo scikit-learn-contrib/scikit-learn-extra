@@ -1,8 +1,8 @@
 # Authors: Alex Li <7Alex7Li@gmail.com>
 #          Siyuan Ma <Siyuan.ma9@gmail.com>
 
-import numpy as np
 import scipy as sp
+import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
 from sklearn.utils import check_random_state
