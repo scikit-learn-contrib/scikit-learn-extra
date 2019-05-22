@@ -9,8 +9,8 @@ dataset. Features of this dataset are sampled from two
 independent Gaussian distributions. We halt the training
 for EigenPro in 3 epochs. Experimental results
 demonstrate that EigenPro achieves high test accuracy,
-competitive to that of SVC, while completing training in
-significant less time (8 times speedup).
+competitive to that of SVC, while completing training almost
+10 times faster.
 """
 print(__doc__)
 
@@ -25,16 +25,15 @@ from sklearn.svm import SVC
 
 rng = np.random.RandomState(1)
 
-centers = np.zeros((2, 50))
-centers[0][0] = 2
-max_size = 10000
-test_size = 10000
+max_size = 5000
+test_size = 5000
 
 # Get data for testing
 x, y = make_classification(n_samples=max_size+test_size,
-                           n_features=200,
-                           n_informative=10,
+                           n_features=500,
+                           n_informative=6,
                            random_state=rng)
+
 x_train = x[:max_size]
 y_train = y[:max_size]
 x_test = x[max_size:]
@@ -47,7 +46,7 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [2000, 4000, 8000]
+train_sizes = [1000, 2500, 5000]
 
 bandwidth = 10.
 for train_size in train_sizes:
