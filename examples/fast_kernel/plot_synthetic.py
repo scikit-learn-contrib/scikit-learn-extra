@@ -1,15 +1,15 @@
 """
-=======================================================
-Comparison of Fast Kernel Machine (Eigenpro) and SVC on
-synthetic dataset
-=======================================================
+=========================================================================
+Comparison of Fast Kernel Machine (Eigenpro) and SVC on synthetic dataset
+=========================================================================
+
 Here we train a Fast Kernel Machine (EigenPro) and a
 Support Vector Classifier (SVC) on subsets of a synthetic
 dataset. Features of this dataset are sampled from two
 independent Gaussian distributions. We halt the training
 for EigenPro in 3 epochs. Experimental results
 demonstrate that EigenPro achieves high test accuracy,
-competitive to that of SVC, while completes training in
+competitive to that of SVC, while completing training in
 significant less time (8 times speedup).
 """
 print(__doc__)

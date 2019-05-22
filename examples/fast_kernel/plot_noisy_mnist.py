@@ -1,8 +1,8 @@
 """
-================================================================
-Comparison of Fast Kernel Classifier (EigenPro) and SVC on MNIST
-with added label noise
-================================================================
+==================================================================
+Comparison of FKC_EigenPro and SVC on MNIST with added label noise
+==================================================================
+
 Here we train a Fast Kernel Machine (EigenPro) and a Support
 Vector Classifier (SVC) on subsets of MNIST with added label
 noises. Specifically, we randomly reset the label (0-9) of 20%

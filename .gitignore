@@ -68,4 +68,5 @@ doc/generated/
 # PyBuilder
 target/
 
+# Pycharm
 .idea

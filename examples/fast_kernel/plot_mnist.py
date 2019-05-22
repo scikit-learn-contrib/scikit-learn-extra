@@ -1,7 +1,8 @@
 """
-================================================================
-Comparison of Fast Kernel Classifier (EigenPro) and SVC on MNIST
-================================================================
+===========================================
+Comparison of FKC_EigenPro and SVC on MNIST
+===========================================
+
 Here we train a Fast Kernel Classifier (EigenPro) and a Support
 Vector Classifier (SVC) on subsets of MNIST of various sizes.
 We halt the training of EigenPro in two epochs.

@@ -80,7 +80,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
     Examples
     --------
-    >>> from sklearn.fast_kernel import FKR_EigenPro
+    >>> from sklearn_extra.fast_kernel import FKR_EigenPro
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
@@ -454,7 +454,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
-    >>> from sklearn.fast_kernel import FKC_EigenPro
+    >>> from sklearn_extra.fast_kernel import FKC_EigenPro
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
