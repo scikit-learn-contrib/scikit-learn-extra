@@ -111,7 +111,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         self.kernel_params = kernel_params
         self.random_state = random_state
 
-    def _kernel(self, X, Y, Y_squared=None):
+    def _kernel(self, X, Y):
         """Calculate the kernel matrix
 
         Parameters
@@ -121,9 +121,6 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
         Y : {float, array}, shape = [n_centers, n_targets]
             Kernel centers.
-
-        Y_squared : {float, array}, shape = [1, n_centers]
-            Square of L2 norms of centers.
 
         Returns
         -------
@@ -141,8 +138,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
                           "coef0": self.coef0}
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)
-        distance = euclidean_distances(X, Y, squared=True,
-                                       Y_norm_squared=Y_squared)
+        distance = euclidean_distances(X, Y, squared=True)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
             K = np.exp(-distance / (2 * np.square(bandwidth)))
@@ -307,7 +303,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         """
         X, Y = check_X_y(X, Y, dtype=np.float32, multi_output=True,
                          ensure_min_samples=3, y_numeric=True)
-        Y = Y.astype(np.float32)  # check_X_y does not seem to do this
+        Y = Y.astype(np.float32)
         """Parameter Initialization"""
         Y = self._initialize_params(X, Y)
 
@@ -315,8 +311,6 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         n = self.centers_.shape[0]
 
         self.coef_ = np.zeros((n, Y.shape[1]), dtype=np.float32)
-        self.centers_squared_ = \
-            np.square(self.centers_).sum(axis=1, keepdims=True).T
         step = np.float32(self.eta_ / self.bs_)
         for epoch in range(0, self.n_epoch):
             epoch_inds = \
@@ -325,9 +319,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
             for batch_inds in np.array_split(epoch_inds, n // self.bs_):
                 batch_x = self.centers_[batch_inds]
-                kfeat = self._kernel(batch_x, self.centers_,
-                                     Y_squared=self.centers_squared_)
-
+                kfeat = self._kernel(batch_x, self.centers_)
                 batch_y = Y[batch_inds]
 
                 # Update 1: Sampled Coordinate Block.
@@ -356,7 +348,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         Y : {float, array}, shape = [n_samples, n_targets]
             Predicted targets.
         """
-        check_is_fitted(self, ["bs_", "centers_", "centers_squared_", "coef_",
+        check_is_fitted(self, ["bs_", "centers_", "coef_",
                                "eta_", "random_state_", "pinx_",
                                "Q_", "V_", "was_1D_"])
         X = np.asarray(X, dtype=np.float64)
@@ -369,8 +361,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         Ys = []
         for batch_inds in np.array_split(range(n), max(1, n // self.bs_)):
             batch_x = X[batch_inds]
-            kfeat = self._kernel(batch_x, self.centers_,
-                                 Y_squared=self.centers_squared_)
+            kfeat = self._kernel(batch_x, self.centers_)
 
             pred = np.dot(kfeat, self.coef_)
             Ys.append(pred)
