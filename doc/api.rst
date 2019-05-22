@@ -12,3 +12,17 @@ Kernel approximation
    :template: class.rst
 
    kernel_approximation.Fastfood
+
+EigenPro
+========
+
+.. currentmodule:: doc
+
+.. toctree::
+   modules/fast_kernel
+
+.. currentmodule:: sklearn_extra
+
+.. autosummary::
+   fast_kernel.FKR_EigenPro
+   fast_kernel.FKC_EigenPro
