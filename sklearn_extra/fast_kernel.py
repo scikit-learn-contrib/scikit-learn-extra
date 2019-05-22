@@ -138,7 +138,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
                           "coef0": self.coef0}
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)
-        distance = np.float32(euclidean_distances(X, Y, squared=True))
+        distance = euclidean_distances(X, Y, squared=True)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
             K = np.exp(-distance / (2.0 * bandwidth * bandwidth))
@@ -235,7 +235,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         return max_S / scale, np.max(kxx)
 
     def _initialize_params(self, X, Y):
-        """Validate parameters passed to the model, choose parameters
+        """
+        Validate parameters passed to the model, choose parameters
         that have not been passed in, and run setup for EigenPro iteration.
         """
         self.random_state_ = check_random_state(self.random_state)
@@ -498,7 +499,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
             bandwidth=self.bandwidth, gamma=self.gamma,
             degree=self.degree, coef0=self.coef0,
             kernel_params=self.kernel_params, random_state=self.random_state)
-        X, Y = check_X_y(X, Y, dtype=np.float32,
+        X, Y = check_X_y(X, Y, dtype=np.float32, force_all_finite=True,
                          multi_output=False, ensure_min_samples=3)
         check_classification_targets(Y)
         self.classes_ = np.unique(Y)
