@@ -69,11 +69,17 @@ data = digits.data / 16.0
 data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
-data_train, targets_train = data[: n_samples // 2], digits.target[: n_samples // 2]
+data_train, targets_train = (
+    data[: n_samples // 2],
+    digits.target[: n_samples // 2],
+)
 
 
 # Now predict the value of the digit on the second half:
-data_test, targets_test = data[n_samples // 2 :], digits.target[n_samples // 2 :]
+data_test, targets_test = (
+    data[n_samples // 2 :],
+    digits.target[n_samples // 2 :],
+)
 # data_test = scaler.transform(data_test)
 
 # fix model parameters:
@@ -153,13 +159,19 @@ accuracy = plt.subplot(211)
 timescale = plt.subplot(212)
 
 accuracy.plot(sample_sizes, nystroem_scores, label="Nystroem approx. kernel")
-timescale.plot(sample_sizes, nystroem_times, "--", label="Nystroem approx. kernel")
+timescale.plot(
+    sample_sizes, nystroem_times, "--", label="Nystroem approx. kernel"
+)
 
 accuracy.plot(sample_sizes, fourier_scores, label="Fourier approx. kernel")
-timescale.plot(sample_sizes, fourier_times, "--", label="Fourier approx. kernel")
+timescale.plot(
+    sample_sizes, fourier_times, "--", label="Fourier approx. kernel"
+)
 
 accuracy.plot(sample_sizes, fastfood_scores, label="Fastfood approx. kernel")
-timescale.plot(sample_sizes, fastfood_times, "--", label="Fastfood approx. kernel")
+timescale.plot(
+    sample_sizes, fastfood_times, "--", label="Fastfood approx. kernel"
+)
 
 # horizontal lines for exact rbf and linear kernels:
 accuracy.plot(

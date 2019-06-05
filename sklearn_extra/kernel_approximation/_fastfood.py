@@ -88,10 +88,14 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def _pad_with_zeros(self, X):
         try:
             X_padded = np.pad(
-                X, ((0, 0), (0, self._number_of_features_to_pad_with_zeros)), "constant"
+                X,
+                ((0, 0), (0, self._number_of_features_to_pad_with_zeros)),
+                "constant",
             )
         except AttributeError:
-            zeros = np.zeros((X.shape[0], self._number_of_features_to_pad_with_zeros))
+            zeros = np.zeros(
+                (X.shape[0], self._number_of_features_to_pad_with_zeros)
+            )
             X_padded = np.concatenate((X, zeros), axis=1)
 
         return X_padded
@@ -115,11 +119,15 @@ class Fastfood(BaseEstimator, TransformerMixin):
         num_examples = X.shape[0]
 
         result = np.multiply(B, X.reshape((1, num_examples, 1, self._d)))
-        result = result.reshape((num_examples * self._times_to_stack_v, self._d))
+        result = result.reshape(
+            (num_examples * self._times_to_stack_v, self._d)
+        )
         Fastfood._approx_fourier_transformation_multi_dim(result)
         result = result.reshape((num_examples, -1))
         np.take(result, P, axis=1, mode="wrap", out=result)
-        np.multiply(np.ravel(G), result.reshape(num_examples, self._n), out=result)
+        np.multiply(
+            np.ravel(G), result.reshape(num_examples, self._n), out=result
+        )
         result = result.reshape(num_examples * self._times_to_stack_v, self._d)
         Fastfood._approx_fourier_transformation_multi_dim(result)
         return result
@@ -128,11 +136,15 @@ class Fastfood(BaseEstimator, TransformerMixin):
         """ Scale mapped data VX to match kernel(e.g. RBF-Kernel) """
         VX = VX.reshape(-1, self._times_to_stack_v * self._d)
 
-        return 1 / (self.sigma * np.sqrt(self._d)) * np.multiply(np.ravel(S), VX)
+        return (
+            1 / (self.sigma * np.sqrt(self._d)) * np.multiply(np.ravel(S), VX)
+        )
 
     def _phi(self, X):
         if self.tradeoff_mem_accuracy == "accuracy":
-            return (1 / np.sqrt(X.shape[1])) * np.hstack([np.cos(X), np.sin(X)])
+            return (1 / np.sqrt(X.shape[1])) * np.hstack(
+                [np.cos(X), np.sin(X)]
+            )
         else:
             np.cos(X + self._U, X)
             return X * np.sqrt(2.0 / X.shape[1])
@@ -176,7 +188,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
         )
         self._S = np.multiply(
             1 / self._l2norm_along_axis1(self._G).reshape((-1, 1)),
-            chi.rvs(self._d, size=(self._times_to_stack_v, self._d), random_state=rng),
+            chi.rvs(
+                self._d,
+                size=(self._times_to_stack_v, self._d),
+                random_state=rng,
+            ),
         )
 
         self._U = self._uniform_vector(rng)

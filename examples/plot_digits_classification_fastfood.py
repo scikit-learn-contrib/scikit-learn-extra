@@ -54,7 +54,9 @@ train__idx = range(n_samples // 2)
 test__idx = range(n_samples // 2, n_samples)
 
 # map data into featurespace
-rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate)
+rbf_transform = Fastfood(
+    sigma=sigma, n_components=number_of_features_to_generate
+)
 data_transformed_train = rbf_transform.fit_transform(data[train__idx])
 data_transformed_test = rbf_transform.transform(data[test__idx])
 
@@ -68,7 +70,9 @@ classifier.fit(data[train__idx], digits.target[train__idx])
 linear_classifier.fit(data[train__idx], digits.target[train__idx])
 
 # Run the linear classifier on the mapped data.
-linear_classifier_transformation.fit(data_transformed_train, digits.target[train__idx])
+linear_classifier_transformation.fit(
+    data_transformed_train, digits.target[train__idx]
+)
 
 # Now predict the value of the digit on the second half:
 expected = digits.target[test__idx]
@@ -84,7 +88,10 @@ print(
 )
 print(
     "Classification report for primal linear classifier %s:\n%s\n"
-    % (linear_classifier, metrics.classification_report(expected, predicted_linear))
+    % (
+        linear_classifier,
+        metrics.classification_report(expected, predicted_linear),
+    )
 )
 print(
     "Classification report for primal transformation classifier %s:\n%s\n"
@@ -107,7 +114,9 @@ print(
     % metrics.confusion_matrix(expected, predicted_linear_transformed)
 )
 
-for index, (image, prediction) in enumerate(zip(digits.images[test__idx], predicted)):
+for index, (image, prediction) in enumerate(
+    zip(digits.images[test__idx], predicted)
+):
     pl.subplot(2, 4, index + 4)
     pl.axis("off")
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation="nearest")
