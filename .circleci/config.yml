@@ -34,8 +34,17 @@ jobs:
       branches:
         ignore: gh-pages
 
+  lint:
+    docker:
+      - image: circleci/python:3.6.1
+    steps:
+      - checkout
+      - pip install flake8
+      - black --check examples sklearn_extra *py
+
 workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
       - python3
+      - lint
