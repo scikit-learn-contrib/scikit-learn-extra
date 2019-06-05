@@ -41,6 +41,8 @@ jobs:
       - checkout
       - pip install flake8
       - black --check examples sklearn_extra *py
+      # ensure there is no unused imports with flake8
+      - flake8 --select=F401 examples sklearn_extra *.py
 
 workflows:
   version: 2

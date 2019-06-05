@@ -2,7 +2,6 @@
 """A template for scikit-learn compatible packages."""
 
 import codecs
-import warnings
 import os
 
 from setuptools import find_packages, setup, Extension
