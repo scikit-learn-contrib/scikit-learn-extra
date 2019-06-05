@@ -41,7 +41,7 @@ jobs:
       - checkout
       - run:
           command: |
-              python3 -m pip install flake8
+              sudo python3 -m pip install flake8
       - run:
           command: |
               black --check examples sklearn_extra *py
