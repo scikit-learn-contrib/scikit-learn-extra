@@ -39,7 +39,7 @@ jobs:
       - image: circleci/python:3.6.1
     steps:
       - checkout
-      - pip install flake8
+      - python3 -m pip install flake8
       - black --check examples sklearn_extra *py
       # ensure there is no unused imports with flake8
       - flake8 --select=F401 examples sklearn_extra *.py
