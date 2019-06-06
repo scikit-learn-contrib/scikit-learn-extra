@@ -46,7 +46,7 @@ jobs:
           command: |
               black --check examples sklearn_extra *py
               # ensure there is no unused imports with flake8
-              flake8 --select=F401 examples sklearn_extra *.py
+              flake8 --select=F401
 
 workflows:
   version: 2
