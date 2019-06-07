@@ -1,0 +1,6 @@
+[build-system]
+# build with the oldest numpy that has pre-build wheels for Py3.7 on PyPi
+requires = ["setuptools", "wheel", "cython>=0.28", "numpy==1.14.5"]
+
+[tool.black]
+line-length = 79

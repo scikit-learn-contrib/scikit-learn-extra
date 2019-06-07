@@ -17,12 +17,14 @@ Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
 @pytest.mark.parametrize(
-        "message, input_, expected",
-        [('test n is scaled to be a multiple of d', (16, 20), (16, 32, 2)),
-         ('test n equals d', (16, 16), (16, 16, 1)),
-         ('test n becomes power of two', (3, 16), (4, 16, 4)),
-         ('test all', (7, 12), (8, 16, 2)),
-         ])
+    "message, input_, expected",
+    [
+        ("test n is scaled to be a multiple of d", (16, 20), (16, 32, 2)),
+        ("test n equals d", (16, 16), (16, 16, 1)),
+        ("test n becomes power of two", (3, 16), (4, 16, 4)),
+        ("test all", (7, 12), (8, 16, 2)),
+    ],
+)
 def test_fastfood_enforce_dimensionality_constraint(message, input_, expected):
     d, n = input_
     output = Fastfood._enforce_dimensionality_constraints(d, n)
@@ -32,7 +34,7 @@ def test_fastfood_enforce_dimensionality_constraint(message, input_, expected):
 def test_fastfood():
     """test that Fastfood fast approximates kernel on random data"""
     # compute exact kernel
-    gamma = 10.
+    gamma = 10.0
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
     sigma = np.sqrt(1 / (2 * gamma))
@@ -47,9 +49,10 @@ def test_fastfood():
     # print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    print('approximation:', kernel_approx[:5, :5])
-    print('true kernel:', kernel[:5, :5])
+    print("approximation:", kernel_approx[:5, :5])
+    print("true kernel:", kernel[:5, :5])
     assert_array_almost_equal(kernel, kernel_approx, decimal=1)
+
 
 # def test_fastfood_mem_or_accuracy():
 #     """compares the performance of Fastfood and RKS"""
