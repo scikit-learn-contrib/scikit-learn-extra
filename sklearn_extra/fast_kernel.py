@@ -1,8 +1,9 @@
 # Authors: Alex Li <7Alex7Li@gmail.com>
 #          Siyuan Ma <Siyuan.ma9@gmail.com>
 
-import scipy as sp
 import numpy as np
+from scipy.linalg import eigh
+from abc import ABC, abstractmethod
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
 from sklearn.utils import check_random_state
@@ -10,91 +11,11 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
 
-class FKR_EigenPro(BaseEstimator, RegressorMixin):
-    """Fast kernel regression using EigenPro iteration.
-
-    Train least squared kernel regression model with mini-batch EigenPro
-    iteration.
-
-    Parameters
-    ----------
-    batch_size : int, default = 'auto'
-        Mini-batch size for gradient descent.
-
-    n_epoch : int, default = 1
-        The number of passes over the training data.
-
-    n_components : int, default = 1000
-        the maximum number of eigendirections used in modifying the kernel
-        operator. Convergence rate speedup over normal gradient descent is
-        approximately the largest eigenvalue over the n_componentth
-        eigenvalue, however, it may take time to compute eigenvalues for
-        large n_components
-
-    subsample_size : int, default = 'auto'
-        The number of subsamples used for estimating the largest
-        n_component eigenvalues and eigenvectors. When it is set to 'auto',
-        it will be 4000 if there are less than 100,000 samples
-        (for training), and otherwise 10000.
-
-    kernel : string or callable, default = "gaussian"
-        Kernel mapping used internally. Strings can be anything supported
-        by sklearn's library, however, it is recommended to use a radial
-        kernel. There is special support for gaussian, laplace, and cauchy
-        kernels. A callable should accept two arguments and return a
-        floating point number.
-
-    bandwidth : float, default=5
-        Bandwidth to use with the gaussian, laplacian, and cauchy kernels.
-        Ignored by other kernels.
-
-    gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi2 and
-        sigmoid kernels. Interpretation of the default value is left to
-        the kernel; see the documentation for sklearn.metrics.pairwise.
-        Ignored by other kernels.
-
-    degree : float, default=3
-        Degree of the polynomial kernel. Ignored by other kernels.
-
-    coef0 : float, default=1
-        Zero coefficient for polynomial and sigmoid kernels.
-        Ignored by other kernels.
-
-    kernel_params : mapping of string to any
-        Additional parameters (keyword arguments) for kernel function
-        passed as callable object.
-
-    random_state : int, RandomState instance or None, (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.  If int, random_state is the seed used by the
-        random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator
-        is the RandomState instance used by `np.random`.
-
-    References
-    ----------
-    * Siyuan Ma, Mikhail Belkin
-      "Diving into the shallows: a computational perspective on
-      large-scale machine learning", NIPS 2017.
-
-    Examples
-    --------
-    >>> from sklearn_extra.fast_kernel import FKR_EigenPro
-    >>> import numpy as np
-    >>> n_samples, n_features, n_targets = 4000, 20, 3
-    >>> rng = np.random.RandomState(1)
-    >>> x_train = rng.randn(n_samples, n_features)
-    >>> y_train = rng.randn(n_samples, n_targets)
-    >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
-    >>> rgs.fit(x_train, y_train)
-    FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-           kernel='gaussian', kernel_params=None, n_components=1000, n_epoch=3,
-           random_state=None, subsample_size=50)
-    >>> y_pred = rgs.predict(x_train)
-    >>> loss = np.mean(np.square(y_train - y_pred))
+class BaseEigenPro(BaseEstimator, ABC):
     """
-
+    Base class for Fast Kernel/Eigenpro iteration.
+    """
+    @abstractmethod
     def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
                  subsample_size="auto", kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
@@ -174,7 +95,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         m, _ = X.shape
         K = self._kernel(X, X)
         W = K / m
-        S, V = sp.linalg.eigh(W, eigvals=(m - n_components, m - 1))
+        S, V = eigh(W, eigvals=(m - n_components, m - 1))
 
         # Flip so eigenvalues are in descending order.
         S = np.maximum(np.float32(1e-7), np.flipud(S))
@@ -190,7 +111,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         feat : {float, array}, shape = [n_samples, n_features]
             Feature matrix (normally from training data).
 
-        max_components : float
+        max_components : int
             Maximum number of components to be used in EigenPro iteration.
 
         mG : int
@@ -222,24 +143,23 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         if n_components < 2:
             n_components = min(S.shape[0] - 1, 2)
 
-        self.V_ = V[:, :n_components]
+        V = V[:, :n_components]
         scale = np.power(S[0] / S[n_components], alpha)
 
         # Compute part of the preconditioner for step 2 of gradient descent in
         # the eigenpro model
-        self.Q_ = (1 - np.power(S[n_components] / S[:n_components],
-                                alpha)) / S[:n_components]
+        Q = (1 - np.power(S[n_components] / S[:n_components],
+                          alpha)) / S[:n_components]
 
         max_S = S[0].astype(np.float32)
-        kxx = 1 - np.sum(self.V_ ** 2, axis=1) * n_subsamples
-        return max_S / scale, np.max(kxx)
+        kxx = 1 - np.sum(V ** 2, axis=1) * n_subsamples
+        return max_S / scale, np.max(kxx), Q, V
 
-    def _initialize_params(self, X, Y):
+    def _initialize_params(self, X, Y, random_state):
         """
         Validate parameters passed to the model, choose parameters
         that have not been passed in, and run setup for EigenPro iteration.
         """
-        self.random_state_ = check_random_state(self.random_state)
         n, d = X.shape
         n_label = 1 if len(Y.shape) == 1 else Y.shape[1]
         self.centers_ = X
@@ -247,11 +167,12 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         # Calculate the subsample size to be used.
         if self.subsample_size == "auto":
             if n < 100000:
-                sample_size = min(n, 4000)
+                sample_size = 4000
             else:
                 sample_size = 12000
         else:
-            sample_size = min(n, self.subsample_size)
+            sample_size = self.subsample_size
+        sample_size = min(n, sample_size)
 
         n_components = min(sample_size - 1, self.n_components)
         n_components = max(1, n_components)
@@ -262,12 +183,12 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         mG = np.int32(np.sum(mem_usages < mem_bytes))
 
         # Calculate largest eigenvalue and max{k(x,x)} using subsamples.
-        self.pinx_ = self.random_state_.choice(n, sample_size,
-                                               replace=False).astype('int32')
-        max_S, beta = self._setup(X[self.pinx_], n_components, mG, alpha=.95)
+        pinx = random_state.choice(n, sample_size,
+                                   replace=False).astype('int32')
+        max_S, beta, Q, V = self._setup(X[pinx], n_components, mG, alpha=.95)
         # Calculate best batch size.
         if self.batch_size == "auto":
-            bs = min(np.int32(beta / max_S + 1), mG)
+            bs = min(np.int32(beta / max_S), mG)+1
         else:
             bs = self.batch_size
         self.bs_ = min(bs, n)
@@ -279,15 +200,31 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
             eta = 2. * self.bs_ / (beta + (self.bs_ - 1) * max_S)
         else:
             eta = 0.95 * 2 / max_S
-        self.eta_ = np.float32(eta)
         # Remember the shape of Y for predict() and ensure it's shape is 2-D.
         self.was_1D_ = False
         if len(Y.shape) == 1:
             Y = np.reshape(Y, (Y.shape[0], 1))
             self.was_1D_ = True
-        return Y
+        return Y, Q, V, np.float32(eta), pinx
 
-    def fit(self, X, Y):
+    def validate_parameters(self):
+        if self.n_epoch <= 0:
+            raise ValueError('n_epoch should be positive, was '
+                             + str(self.n_epoch))
+        if self.n_components < 0:
+            raise ValueError('n_components should be non-negative, was '
+                             + str(self.n_components))
+        if self.subsample_size != 'auto' and self.subsample_size < 0:
+            raise ValueError('subsample_size should be non-negative, was '
+                             + str(self.subsample_size))
+        if self.batch_size != 'auto' and self.batch_size <= 0:
+            raise ValueError('batch_size should be positive, was '
+                             + str(self.batch_size))
+        if self.bandwidth <= 0:
+            raise ValueError('bandwidth should be positive, was '
+                             + str(self.bandwidth))
+
+    def _raw_fit(self, X, Y):
         """Train fast kernel regression model
 
         Parameters
@@ -305,18 +242,20 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         X, Y = check_X_y(X, Y, dtype=np.float32, multi_output=True,
                          ensure_min_samples=3, y_numeric=True)
         Y = Y.astype(np.float32)
+        random_state = check_random_state(self.random_state)
+
+        self.validate_parameters()
         """Parameter Initialization"""
-        Y = self._initialize_params(X, Y)
+        Y, Q, V, eta, pinx = self._initialize_params(X, Y, random_state)
 
         """Training loop"""
         n = self.centers_.shape[0]
 
         self.coef_ = np.zeros((n, Y.shape[1]), dtype=np.float32)
-        step = np.float32(self.eta_ / self.bs_)
+        step = np.float32(eta / self.bs_)
         for epoch in range(0, self.n_epoch):
-            epoch_inds = \
-                self.random_state_.choice(n, n // self.bs_ * self.bs_,
-                                          replace=False).astype('int32')
+            epoch_inds = random_state.choice(n, n // self.bs_ * self.bs_,
+                                             replace=False).astype('int32')
 
             for batch_inds in np.array_split(epoch_inds, n // self.bs_):
                 batch_x = self.centers_[batch_inds]
@@ -330,13 +269,12 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
                     self.coef_[batch_inds] - step * gradient
 
                 # Update 2: Fixed Coordinate Block
-                delta = np.dot(self.V_ * self.Q_,
-                               np.dot(self.V_.T, np.dot(
-                                   kfeat[:, self.pinx_].T, gradient)))
-                self.coef_[self.pinx_] += step * delta
+                delta = np.dot(V * Q, np.dot(V.T, np.dot(
+                    kfeat[:, pinx].T, gradient)))
+                self.coef_[pinx] += step * delta
         return self
 
-    def predict(self, X):
+    def _raw_predict(self, X):
         """Predict using the kernel regression model
 
         Parameters
@@ -349,9 +287,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         Y : {float, array}, shape = [n_samples, n_targets]
             Predicted targets.
         """
-        check_is_fitted(self, ["bs_", "centers_", "coef_",
-                               "eta_", "random_state_", "pinx_",
-                               "Q_", "V_", "was_1D_"])
+        check_is_fitted(self, ["bs_", "centers_", "coef_", "was_1D_"])
         X = np.asarray(X, dtype=np.float64)
 
         if len(X.shape) == 1:
@@ -375,7 +311,109 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         return {'multioutput': True}
 
 
-class FKC_EigenPro(BaseEstimator, ClassifierMixin):
+class FKR_EigenPro(BaseEigenPro, RegressorMixin):
+    """Fast kernel regression using EigenPro iteration.
+
+    Train least squared kernel regression model with mini-batch EigenPro
+    iteration.
+
+    Parameters
+    ----------
+    batch_size : int, default = 'auto'
+        Mini-batch size for gradient descent.
+
+    n_epoch : int, default = 1
+        The number of passes over the training data.
+
+    n_components : int, default = 1000
+        the maximum number of eigendirections used in modifying the kernel
+        operator. Convergence rate speedup over normal gradient descent is
+        approximately the largest eigenvalue over the n_componentth
+        eigenvalue, however, it may take time to compute eigenvalues for
+        large n_components
+
+    subsample_size : int, default = 'auto'
+        The number of subsamples used for estimating the largest
+        n_component eigenvalues and eigenvectors. When it is set to 'auto',
+        it will be 4000 if there are less than 100,000 samples
+        (for training), and otherwise 10000.
+
+    kernel : string or callable, default = "gaussian"
+        Kernel mapping used internally. Strings can be anything supported
+        by sklearn's library, however, it is recommended to use a radial
+        kernel. There is special support for gaussian, laplace, and cauchy
+        kernels. A callable should accept two arguments and return a
+        floating point number.
+
+    bandwidth : float, default=5
+        Bandwidth to use with the gaussian, laplacian, and cauchy kernels.
+        Ignored by other kernels.
+
+    gamma : float, default=None
+        Gamma parameter for the RBF, polynomial, exponential chi2 and
+        sigmoid kernels. Interpretation of the default value is left to
+        the kernel; see the documentation for sklearn.metrics.pairwise.
+        Ignored by other kernels.
+
+    degree : float, default=3
+        Degree of the polynomial kernel. Ignored by other kernels.
+
+    coef0 : float, default=1
+        Zero coefficient for polynomial and sigmoid kernels.
+        Ignored by other kernels.
+
+    kernel_params : mapping of string to any
+        Additional parameters (keyword arguments) for kernel function
+        passed as callable object.
+
+    random_state : int, RandomState instance or None, (default=None)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator
+        is the RandomState instance used by `np.random`.
+
+    References
+    ----------
+    * Siyuan Ma, Mikhail Belkin
+      "Diving into the shallows: a computational perspective on
+      large-scale machine learning", NIPS 2017.
+
+    Examples
+    --------
+    >>> from sklearn_extra.fast_kernel import FKR_EigenPro
+    >>> import numpy as np
+    >>> n_samples, n_features, n_targets = 4000, 20, 3
+    >>> rng = np.random.RandomState(1)
+    >>> x_train = rng.randn(n_samples, n_features)
+    >>> y_train = rng.randn(n_samples, n_targets)
+    >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs.fit(x_train, y_train)
+    FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
+                 kernel='gaussian', kernel_params=None, n_components=1000, n_epoch=3,
+                 random_state=None, subsample_size=50)
+    >>> y_pred = rgs.predict(x_train)
+    >>> loss = np.mean(np.square(y_train - y_pred))
+    """
+    def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
+                 subsample_size="auto", kernel="gaussian",
+                 bandwidth=5, gamma=None, degree=3, coef0=1,
+                 kernel_params=None, random_state=None):
+        super().__init__(
+            batch_size=batch_size, n_epoch=n_epoch,
+            n_components=n_components, subsample_size=subsample_size,
+            kernel=kernel, bandwidth=bandwidth, gamma=gamma,
+            degree=degree, coef0=coef0,
+            kernel_params=kernel_params, random_state=random_state)
+
+    def fit(self, X, Y):
+        return self._raw_fit(X, Y)
+
+    def predict(self, X):
+        return self._raw_predict(X)
+
+
+class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
     """Fast kernel classification using EigenPro iteration.
 
     Train least squared kernel classification model with mini-batch EigenPro
@@ -455,8 +493,8 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
     >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKC_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-           kernel='gaussian', kernel_params=None, n_components=1000, n_epoch=3,
-           random_state=None, subsample_size=50)
+                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """
@@ -465,17 +503,12 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
                  subsample_size="auto", kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None):
-        self.batch_size = batch_size
-        self.n_epoch = n_epoch
-        self.n_components = n_components
-        self.subsample_size = subsample_size
-        self.kernel = kernel
-        self.bandwidth = bandwidth
-        self.gamma = gamma
-        self.degree = degree
-        self.coef0 = coef0
-        self.kernel_params = kernel_params
-        self.random_state = random_state
+        super().__init__(
+            batch_size=batch_size, n_epoch=n_epoch,
+            n_components=n_components, subsample_size=subsample_size,
+            kernel=kernel, bandwidth=bandwidth, gamma=gamma,
+            degree=degree, coef0=coef0,
+            kernel_params=kernel_params, random_state=random_state)
 
     def fit(self, X, Y):
         """ Train fast kernel classification model
@@ -492,13 +525,6 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         -------
         self : returns an instance of self.
        """
-        self.regressor_ = FKR_EigenPro(
-            batch_size=self.batch_size, n_epoch=self.n_epoch,
-            n_components=self.n_components,
-            subsample_size=self.subsample_size, kernel=self.kernel,
-            bandwidth=self.bandwidth, gamma=self.gamma,
-            degree=self.degree, coef0=self.coef0,
-            kernel_params=self.kernel_params, random_state=self.random_state)
         X, Y = check_X_y(X, Y, dtype=np.float32, force_all_finite=True,
                          multi_output=False, ensure_min_samples=3)
         check_classification_targets(Y)
@@ -512,8 +538,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
 
         for ind, label in enumerate(Y):
             class_matrix[ind][loc[label]] = 1
-        self.regressor_.fit(X, class_matrix)
-
+        self._raw_fit(X, class_matrix)
         return self
 
     def predict(self, X):
@@ -529,9 +554,5 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         y : {float, array}, shape = [n_samples]
             Predicted labels.
         """
-        check_is_fitted(self, ["regressor_"])
-        Y = self.regressor_.predict(X)
+        Y = self._raw_predict(X)
         return self.classes_[np.argmax(Y, axis=1)]
-
-    def _get_tags(self):
-        return {'multioutput': True}

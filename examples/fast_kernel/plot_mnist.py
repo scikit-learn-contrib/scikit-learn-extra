@@ -1,7 +1,7 @@
 """
-===========================================
-Comparison of FKC_EigenPro and SVC on MNIST
-===========================================
+===================================================
+Comparison of FKC_EigenPro and SVC on Fashion-MNIST
+===================================================
 
 Here we train a Fast Kernel Classifier (EigenPro) and a Support
 Vector Classifier (SVC) on subsets of MNIST of various sizes.
@@ -24,12 +24,12 @@ from sklearn.datasets import fetch_openml
 rng = np.random.RandomState(1)
 
 # Generate sample data from mnist
-mnist = fetch_openml('mnist_784')
+mnist = fetch_openml('mnist_784')  # 'Fashion-MNIST')
 mnist.data = mnist.data / 255.0
 
 p = np.random.permutation(60000)
-x_train = mnist.data[p][:60000]
-y_train = np.int32(mnist.target[p][:60000])
+x_train = mnist.data[p]
+y_train = np.int32(mnist.target[p])
 x_test = mnist.data[60000:]
 y_test = np.int32(mnist.target[60000:])
 
@@ -41,7 +41,7 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [500, 1000, 2000]
+train_sizes = [5000, 60000]
 
 bandwidth = 5.0
 
@@ -84,7 +84,7 @@ ax.set_yscale('log', nonposy='clip')
 ax.set_xlabel('train size')
 ax.set_ylabel('time (seconds)')
 ax.legend()
-ax.set_title('Train set')
+ax.set_title('Training Time')
 ax.set_xticks(train_sizes)
 ax.set_xticklabels(train_size_labels)
 ax.set_xticks([], minor=True)
@@ -97,7 +97,7 @@ ax.plot(train_sizes, svc_pred_times, 'o--', color='g')
 ax.set_xscale('log')
 ax.set_yscale('log', nonposy='clip')
 ax.set_ylabel('time (seconds)')
-ax.set_title('Test set')
+ax.set_title('Prediction Time')
 ax.set_xticks([])
 ax.set_xticks([], minor=True)
 
