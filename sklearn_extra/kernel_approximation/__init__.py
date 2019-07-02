@@ -1,4 +1,4 @@
 from ._fastfood import Fastfood
 
 
-__all__ = ['Fastfood']
+__all__ = ["Fastfood"]
