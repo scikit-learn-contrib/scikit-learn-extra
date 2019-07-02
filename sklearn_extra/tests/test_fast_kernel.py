@@ -60,7 +60,7 @@ def test_parameter_validation(estimator, data, params, err_msg):
         # Test with multiple outputs
         (gen_regression({'n_features': 200, 'n_targets': 30}),
             FKR_EigenPro(kernel="gaussian", n_epoch=100, bandwidth=14,
-            random_state=1)),
+                         random_state=1)),
         # Test with a very large number of input features
         (gen_regression({'n_features': 10000}),
             FKR_EigenPro(kernel="gaussian", n_epoch=100,
@@ -73,7 +73,7 @@ def test_parameter_validation(estimator, data, params, err_msg):
         (gen_regression({'n_samples': 500, 'n_informative': 100}),
          FKR_EigenPro(kernel="gaussian", n_epoch=60, bandwidth=10,
                       random_state=1))
-     ]
+    ]
 )
 def test_regressor_accuracy(data, estimator):
     """
@@ -86,7 +86,7 @@ def test_regressor_accuracy(data, estimator):
     """
     X, y = data
     prediction = estimator.fit(X, y).predict(X)
-    assert_array_almost_equal(abs(prediction / y)/2.0, .5, decimal=2)
+    assert_array_almost_equal(abs(prediction / y) / 2.0, .5, decimal=2)
 
 
 def test_fast_kernel_regression_duplicate_data():
@@ -96,7 +96,7 @@ def test_fast_kernel_regression_duplicate_data():
     fkr_prediction = FKR_EigenPro(
         kernel="gaussian", n_epoch=100, bandwidth=5,
         random_state=1).fit(X, y).predict(X)
-    assert_array_almost_equal(abs(fkr_prediction / y)/2.0, .5, decimal=2)
+    assert_array_almost_equal(abs(fkr_prediction / y) / 2.0, .5, decimal=2)
 
 
 def test_fast_kernel_regression_conflict_data():
@@ -104,7 +104,7 @@ def test_fast_kernel_regression_conflict_data():
     data is given"""
     X, y = make_regression(random_state=1)
     y = np.reshape(y, (-1, 1))
-    X, y = X, np.hstack([y, y+2])
+    X, y = X, np.hstack([y, y + 2])
     # Make sure we don't throw an error when fitting or predicting
     FKR_EigenPro(kernel="linear", n_epoch=5, bandwidth=1,
                  random_state=1).fit(X, y).predict(X)
@@ -174,7 +174,7 @@ def test_fast_kernel_classification_conflict_data():
     """Make sure that the classifier doesn't crash
     when given conflicting input data"""
     X, y = make_classification(random_state=1)
-    X, y = np.concatenate([X, X]), np.concatenate([y, 1-y])
+    X, y = np.concatenate([X, X]), np.concatenate([y, 1 - y])
     # Make sure we don't throw an error when fitting or predicting
     FKC_EigenPro(kernel="linear", n_epoch=5, bandwidth=5,
                  random_state=1).fit(X, y).predict(X)

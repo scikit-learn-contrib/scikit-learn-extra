@@ -2,7 +2,7 @@
 #          Siyuan Ma <Siyuan.ma9@gmail.com>
 
 import numpy as np
-from scipy.linalg import eigh, eig, LinAlgError
+from scipy.linalg import eigh
 from abc import ABC, abstractmethod
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
@@ -48,9 +48,9 @@ class BaseEigenPro(BaseEstimator, ABC):
         K : {float, array}, shape = [n_samples, n_centers]
             Kernel matrix.
         """
-        if (self.kernel != "gaussian" and
-                self.kernel != "laplace" and
-                self.kernel != "cauchy"):
+        if (self.kernel != "gaussian"
+                and self.kernel != "laplace"
+                and self.kernel != "cauchy"):
             if callable(self.kernel):
                 params = self.kernel_params or {}
             else:
@@ -93,8 +93,9 @@ class BaseEigenPro(BaseEstimator, ABC):
             operator).
         """
         m, _ = X.shape
-
         K = self._kernel(X, X)
+
+        # Use float64 so eigh doesn't occassionally crash and burn and fail
         W = np.float64(K) / m
         S, V = eigh(W, eigvals=(m - n_components, m - 1))
         # Flip so eigenvalues are in descending order.
@@ -188,7 +189,7 @@ class BaseEigenPro(BaseEstimator, ABC):
         max_S, beta, Q, V = self._setup(X[pinx], n_components, mG, alpha=.95)
         # Calculate best batch size.
         if self.batch_size == "auto":
-            bs = min(np.int32(beta / max_S), mG)+1
+            bs = min(np.int32(beta / max_S), mG) + 1
         else:
             bs = self.batch_size
         self.bs_ = min(bs, n)
