@@ -93,9 +93,11 @@ class BaseEigenPro(BaseEstimator, ABC):
             operator).
         """
         m, _ = X.shape
+
         K = self._kernel(X, X)
         W = K / m
         S, V = eigh(W, eigvals=(m - n_components, m - 1))
+
 
         # Flip so eigenvalues are in descending order.
         S = np.maximum(np.float32(1e-7), np.flipud(S))
@@ -187,11 +189,16 @@ class BaseEigenPro(BaseEstimator, ABC):
                                    replace=False).astype('int32')
         max_S, beta, Q, V = self._setup(X[pinx], n_components, mG, alpha=.95)
         # Calculate best batch size.
+        print("mG:" + str(mG))
+        print("BETA:" + str(beta))
+        print("max_S:" + str(max_S))
+        print("N:" + str(n))
         if self.batch_size == "auto":
             bs = min(np.int32(beta / max_S), mG)+1
         else:
             bs = self.batch_size
         self.bs_ = min(bs, n)
+        print("BS: " + str(bs))
 
         # Calculate best step size.
         if self.bs_ < beta / max_S + 1:
@@ -200,6 +207,7 @@ class BaseEigenPro(BaseEstimator, ABC):
             eta = 2. * self.bs_ / (beta + (self.bs_ - 1) * max_S)
         else:
             eta = 0.95 * 2 / max_S
+        print("eta" + str(eta))
         # Remember the shape of Y for predict() and ensure it's shape is 2-D.
         self.was_1D_ = False
         if len(Y.shape) == 1:
@@ -390,8 +398,8 @@ class FKR_EigenPro(BaseEigenPro, RegressorMixin):
     >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                 kernel='gaussian', kernel_params=None, n_components=1000, n_epoch=3,
-                 random_state=None, subsample_size=50)
+                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """

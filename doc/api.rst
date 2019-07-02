@@ -24,4 +24,8 @@ EigenPro
 .. currentmodule:: sklearn_extra
 
 .. autosummary::
-   fast_kernel
+   :toctree: generated/
+   :template: class.rst
+
+   fast_kernel.FKR_EigenPro
+   fast_kernel.FKC_EigenPro

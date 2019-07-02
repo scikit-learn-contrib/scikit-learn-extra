@@ -24,10 +24,11 @@ from sklearn.datasets import fetch_openml
 rng = np.random.RandomState(1)
 
 # Generate sample data from mnist
-mnist = fetch_openml('mnist_784')  # 'Fashion-MNIST')
+mnist = fetch_openml('Fashion-MNIST')
 mnist.data = mnist.data / 255.0
+print("Data has loaded")
 
-p = np.random.permutation(60000)
+p = np.random.permutation(600)
 x_train = mnist.data[p]
 y_train = np.int32(mnist.target[p])
 x_test = mnist.data[60000:]
@@ -41,7 +42,8 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [5000, 60000]
+train_sizes = [500, 1000]
+print("Train Sizes: " + str(train_sizes))
 
 bandwidth = 5.0
 
@@ -49,7 +51,7 @@ bandwidth = 5.0
 for train_size in train_sizes:
     for name, estimator in [
         ("FastKernel", FKC_EigenPro(
-            n_epoch=2, bandwidth=bandwidth,  random_state=rng)),
+            n_epoch=2, bandwidth=bandwidth, random_state=rng)),
             ("SupportVector", SVC(C=5, gamma=1./(2 * bandwidth * bandwidth)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
