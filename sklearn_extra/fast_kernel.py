@@ -200,7 +200,6 @@ class BaseEigenPro(BaseEstimator, ABC):
             eta = 2. * self.bs_ / (beta + (self.bs_ - 1) * max_S)
         else:
             eta = 0.95 * 2 / max_S
-        print("eta" + str(eta))
         # Remember the shape of Y for predict() and ensure it's shape is 2-D.
         self.was_1D_ = False
         if len(Y.shape) == 1:
