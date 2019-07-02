@@ -189,16 +189,11 @@ class BaseEigenPro(BaseEstimator, ABC):
                                    replace=False).astype('int32')
         max_S, beta, Q, V = self._setup(X[pinx], n_components, mG, alpha=.95)
         # Calculate best batch size.
-        print("mG:" + str(mG))
-        print("BETA:" + str(beta))
-        print("max_S:" + str(max_S))
-        print("N:" + str(n))
         if self.batch_size == "auto":
             bs = min(np.int32(beta / max_S), mG)+1
         else:
             bs = self.batch_size
         self.bs_ = min(bs, n)
-        print("BS: " + str(bs))
 
         # Calculate best step size.
         if self.bs_ < beta / max_S + 1:

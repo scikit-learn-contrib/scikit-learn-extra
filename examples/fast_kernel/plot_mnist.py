@@ -28,7 +28,7 @@ mnist = fetch_openml('Fashion-MNIST')
 mnist.data = mnist.data / 255.0
 print("Data has loaded")
 
-p = np.random.permutation(600)
+p = np.random.permutation(60000)
 x_train = mnist.data[p]
 y_train = np.int32(mnist.target[p])
 x_test = mnist.data[60000:]
@@ -42,7 +42,7 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [500, 1000]
+train_sizes = [500, 1000, 5000]
 print("Train Sizes: " + str(train_sizes))
 
 bandwidth = 5.0
