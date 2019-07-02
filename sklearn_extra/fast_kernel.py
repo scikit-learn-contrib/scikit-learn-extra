@@ -2,7 +2,7 @@
 #          Siyuan Ma <Siyuan.ma9@gmail.com>
 
 import numpy as np
-from scipy.linalg import eigh
+from scipy.linalg import eigh, eig, LinAlgError
 from abc import ABC, abstractmethod
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
@@ -95,15 +95,13 @@ class BaseEigenPro(BaseEstimator, ABC):
         m, _ = X.shape
 
         K = self._kernel(X, X)
-        W = K / m
+        W = np.float64(K) / m
         S, V = eigh(W, eigvals=(m - n_components, m - 1))
-
-
         # Flip so eigenvalues are in descending order.
         S = np.maximum(np.float32(1e-7), np.flipud(S))
         V = np.fliplr(V)[:, :n_components] / np.sqrt(m, dtype='float32')
 
-        return S, V
+        return np.float32(S), np.float32(V)
 
     def _setup(self, feat, max_components, mG, alpha):
         """Compute preconditioner and scale factors for EigenPro iteration
