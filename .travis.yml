@@ -25,7 +25,7 @@ install:
   - MINICONDA_PATH=/home/travis/miniconda
   - chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
   - export PATH=$MINICONDA_PATH/bin:$PATH
-  - conda update --yes conda
+  - conda install --yes conda==4.6.14
   # create the testing environment
   - conda create -n testenv --yes python=$PYTHON_VERSION pip
   - source activate testenv
