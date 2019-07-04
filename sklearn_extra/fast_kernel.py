@@ -2,7 +2,7 @@
 #          Siyuan Ma <Siyuan.ma9@gmail.com>
 
 import numpy as np
-from scipy.linalg import eigh
+from scipy.linalg import eigh, LinAlgError
 from abc import ABC, abstractmethod
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
@@ -15,11 +15,22 @@ class BaseEigenPro(BaseEstimator, ABC):
     """
     Base class for Fast Kernel/Eigenpro iteration.
     """
+
     @abstractmethod
-    def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
-                 subsample_size="auto", kernel="gaussian",
-                 bandwidth=5, gamma=None, degree=3, coef0=1,
-                 kernel_params=None, random_state=None):
+    def __init__(
+        self,
+        batch_size="auto",
+        n_epoch=2,
+        n_components=1000,
+        subsample_size="auto",
+        kernel="gaussian",
+        bandwidth=5,
+        gamma=None,
+        degree=3,
+        coef0=1,
+        kernel_params=None,
+        random_state=None,
+    ):
         self.batch_size = batch_size
         self.n_epoch = n_epoch
         self.n_components = n_components
@@ -48,17 +59,22 @@ class BaseEigenPro(BaseEstimator, ABC):
         K : {float, array}, shape = [n_samples, n_centers]
             Kernel matrix.
         """
-        if (self.kernel != "gaussian"
-                and self.kernel != "laplace"
-                and self.kernel != "cauchy"):
+        if (
+            self.kernel != "gaussian"
+            and self.kernel != "laplace"
+            and self.kernel != "cauchy"
+        ):
             if callable(self.kernel):
                 params = self.kernel_params or {}
             else:
-                params = {"gamma": self.gamma,
-                          "degree": self.degree,
-                          "coef0": self.coef0}
-            return pairwise_kernels(X, Y, metric=self.kernel,
-                                    filter_params=True, **params)
+                params = {
+                    "gamma": self.gamma,
+                    "degree": self.degree,
+                    "coef0": self.coef0,
+                }
+            return pairwise_kernels(
+                X, Y, metric=self.kernel, filter_params=True, **params
+            )
         distance = euclidean_distances(X, Y, squared=True)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
@@ -96,13 +112,18 @@ class BaseEigenPro(BaseEstimator, ABC):
         K = self._kernel(X, X)
 
         # Use float64 so eigh doesn't occassionally crash and burn and fail
-        W = np.float64(K) / m
-        S, V = eigh(W, eigvals=(m - n_components, m - 1))
+        W = K / m
+        try:
+            S, V = eigh(W, eigvals=(m - n_components, m - 1))
+        except LinAlgError:
+            W = np.float64(W)
+            S, V = eigh(W, eigvals=(m - n_components, m - 1))
+            S, V = np.float32(S), np.float32(V)
         # Flip so eigenvalues are in descending order.
         S = np.maximum(np.float32(1e-7), np.flipud(S))
-        V = np.fliplr(V)[:, :n_components] / np.sqrt(m, dtype='float32')
+        V = np.fliplr(V)[:, :n_components] / np.sqrt(m, dtype="float32")
 
-        return np.float32(S), np.float32(V)
+        return S, V
 
     def _setup(self, feat, max_components, mG, alpha):
         """Compute preconditioner and scale factors for EigenPro iteration
@@ -149,8 +170,9 @@ class BaseEigenPro(BaseEstimator, ABC):
 
         # Compute part of the preconditioner for step 2 of gradient descent in
         # the eigenpro model
-        Q = (1 - np.power(S[n_components] / S[:n_components],
-                          alpha)) / S[:n_components]
+        Q = (1 - np.power(S[n_components] / S[:n_components], alpha)) / S[
+            :n_components
+        ]
 
         max_S = S[0].astype(np.float32)
         kxx = 1 - np.sum(V ** 2, axis=1) * n_subsamples
@@ -184,9 +206,10 @@ class BaseEigenPro(BaseEstimator, ABC):
         mG = np.int32(np.sum(mem_usages < mem_bytes))
 
         # Calculate largest eigenvalue and max{k(x,x)} using subsamples.
-        pinx = random_state.choice(n, sample_size,
-                                   replace=False).astype('int32')
-        max_S, beta, Q, V = self._setup(X[pinx], n_components, mG, alpha=.95)
+        pinx = random_state.choice(n, sample_size, replace=False).astype(
+            "int32"
+        )
+        max_S, beta, Q, V = self._setup(X[pinx], n_components, mG, alpha=0.95)
         # Calculate best batch size.
         if self.batch_size == "auto":
             bs = min(np.int32(beta / max_S), mG) + 1
@@ -198,7 +221,7 @@ class BaseEigenPro(BaseEstimator, ABC):
         if self.bs_ < beta / max_S + 1:
             eta = self.bs_ / beta
         elif self.bs_ < n:
-            eta = 2. * self.bs_ / (beta + (self.bs_ - 1) * max_S)
+            eta = 2.0 * self.bs_ / (beta + (self.bs_ - 1) * max_S)
         else:
             eta = 0.95 * 2 / max_S
         # Remember the shape of Y for predict() and ensure it's shape is 2-D.
@@ -210,20 +233,27 @@ class BaseEigenPro(BaseEstimator, ABC):
 
     def validate_parameters(self):
         if self.n_epoch <= 0:
-            raise ValueError('n_epoch should be positive, was '
-                             + str(self.n_epoch))
+            raise ValueError(
+                "n_epoch should be positive, was " + str(self.n_epoch)
+            )
         if self.n_components < 0:
-            raise ValueError('n_components should be non-negative, was '
-                             + str(self.n_components))
-        if self.subsample_size != 'auto' and self.subsample_size < 0:
-            raise ValueError('subsample_size should be non-negative, was '
-                             + str(self.subsample_size))
-        if self.batch_size != 'auto' and self.batch_size <= 0:
-            raise ValueError('batch_size should be positive, was '
-                             + str(self.batch_size))
+            raise ValueError(
+                "n_components should be non-negative, was "
+                + str(self.n_components)
+            )
+        if self.subsample_size != "auto" and self.subsample_size < 0:
+            raise ValueError(
+                "subsample_size should be non-negative, was "
+                + str(self.subsample_size)
+            )
+        if self.batch_size != "auto" and self.batch_size <= 0:
+            raise ValueError(
+                "batch_size should be positive, was " + str(self.batch_size)
+            )
         if self.bandwidth <= 0:
-            raise ValueError('bandwidth should be positive, was '
-                             + str(self.bandwidth))
+            raise ValueError(
+                "bandwidth should be positive, was " + str(self.bandwidth)
+            )
 
     def _raw_fit(self, X, Y):
         """Train fast kernel regression model
@@ -240,8 +270,14 @@ class BaseEigenPro(BaseEstimator, ABC):
         -------
         self : returns an instance of self.
         """
-        X, Y = check_X_y(X, Y, dtype=np.float32, multi_output=True,
-                         ensure_min_samples=3, y_numeric=True)
+        X, Y = check_X_y(
+            X,
+            Y,
+            dtype=np.float32,
+            multi_output=True,
+            ensure_min_samples=3,
+            y_numeric=True,
+        )
         Y = Y.astype(np.float32)
         random_state = check_random_state(self.random_state)
 
@@ -255,8 +291,9 @@ class BaseEigenPro(BaseEstimator, ABC):
         self.coef_ = np.zeros((n, Y.shape[1]), dtype=np.float32)
         step = np.float32(eta / self.bs_)
         for epoch in range(0, self.n_epoch):
-            epoch_inds = random_state.choice(n, n // self.bs_ * self.bs_,
-                                             replace=False).astype('int32')
+            epoch_inds = random_state.choice(
+                n, n // self.bs_ * self.bs_, replace=False
+            ).astype("int32")
 
             for batch_inds in np.array_split(epoch_inds, n // self.bs_):
                 batch_x = self.centers_[batch_inds]
@@ -266,12 +303,14 @@ class BaseEigenPro(BaseEstimator, ABC):
                 # Update 1: Sampled Coordinate Block.
                 gradient = np.dot(kfeat, self.coef_) - batch_y
 
-                self.coef_[batch_inds] = \
+                self.coef_[batch_inds] = (
                     self.coef_[batch_inds] - step * gradient
+                )
 
                 # Update 2: Fixed Coordinate Block
-                delta = np.dot(V * Q, np.dot(V.T, np.dot(
-                    kfeat[:, pinx].T, gradient)))
+                delta = np.dot(
+                    V * Q, np.dot(V.T, np.dot(kfeat[:, pinx].T, gradient))
+                )
                 self.coef_[pinx] += step * delta
         return self
 
@@ -292,8 +331,10 @@ class BaseEigenPro(BaseEstimator, ABC):
         X = np.asarray(X, dtype=np.float64)
 
         if len(X.shape) == 1:
-            raise ValueError("Reshape your data. X should be a matrix of shape"
-                             " (n_samples, n_features).")
+            raise ValueError(
+                "Reshape your data. X should be a matrix of shape"
+                " (n_samples, n_features)."
+            )
         n = X.shape[0]
 
         Ys = []
@@ -309,7 +350,7 @@ class BaseEigenPro(BaseEstimator, ABC):
         return Y
 
     def _get_tags(self):
-        return {'multioutput': True}
+        return {"multioutput": True}
 
 
 class FKR_EigenPro(BaseEigenPro, RegressorMixin):
@@ -391,21 +432,39 @@ class FKR_EigenPro(BaseEigenPro, RegressorMixin):
     >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-           kernel='gaussian', kernel_params=None, n_components=1000,
-           n_epoch=3, random_state=None, subsample_size=50)
+                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
-    def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
-                 subsample_size="auto", kernel="gaussian",
-                 bandwidth=5, gamma=None, degree=3, coef0=1,
-                 kernel_params=None, random_state=None):
+
+    def __init__(
+        self,
+        batch_size="auto",
+        n_epoch=2,
+        n_components=1000,
+        subsample_size="auto",
+        kernel="gaussian",
+        bandwidth=5,
+        gamma=None,
+        degree=3,
+        coef0=1,
+        kernel_params=None,
+        random_state=None,
+    ):
         super().__init__(
-            batch_size=batch_size, n_epoch=n_epoch,
-            n_components=n_components, subsample_size=subsample_size,
-            kernel=kernel, bandwidth=bandwidth, gamma=gamma,
-            degree=degree, coef0=coef0,
-            kernel_params=kernel_params, random_state=random_state)
+            batch_size=batch_size,
+            n_epoch=n_epoch,
+            n_components=n_components,
+            subsample_size=subsample_size,
+            kernel=kernel,
+            bandwidth=bandwidth,
+            gamma=gamma,
+            degree=degree,
+            coef0=coef0,
+            kernel_params=kernel_params,
+            random_state=random_state,
+        )
 
     def fit(self, X, Y):
         return self._raw_fit(X, Y)
@@ -494,22 +553,39 @@ class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
     >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKC_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-           kernel='gaussian', kernel_params=None, n_components=1000,
-           n_epoch=3, random_state=None, subsample_size=50)
+                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """
 
-    def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
-                 subsample_size="auto", kernel="gaussian",
-                 bandwidth=5, gamma=None, degree=3, coef0=1,
-                 kernel_params=None, random_state=None):
+    def __init__(
+        self,
+        batch_size="auto",
+        n_epoch=2,
+        n_components=1000,
+        subsample_size="auto",
+        kernel="gaussian",
+        bandwidth=5,
+        gamma=None,
+        degree=3,
+        coef0=1,
+        kernel_params=None,
+        random_state=None,
+    ):
         super().__init__(
-            batch_size=batch_size, n_epoch=n_epoch,
-            n_components=n_components, subsample_size=subsample_size,
-            kernel=kernel, bandwidth=bandwidth, gamma=gamma,
-            degree=degree, coef0=coef0,
-            kernel_params=kernel_params, random_state=random_state)
+            batch_size=batch_size,
+            n_epoch=n_epoch,
+            n_components=n_components,
+            subsample_size=subsample_size,
+            kernel=kernel,
+            bandwidth=bandwidth,
+            gamma=gamma,
+            degree=degree,
+            coef0=coef0,
+            kernel_params=kernel_params,
+            random_state=random_state,
+        )
 
     def fit(self, X, Y):
         """ Train fast kernel classification model
@@ -526,8 +602,14 @@ class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
         -------
         self : returns an instance of self.
        """
-        X, Y = check_X_y(X, Y, dtype=np.float32, force_all_finite=True,
-                         multi_output=False, ensure_min_samples=3)
+        X, Y = check_X_y(
+            X,
+            Y,
+            dtype=np.float32,
+            force_all_finite=True,
+            multi_output=False,
+            ensure_min_samples=3,
+        )
         check_classification_targets(Y)
         self.classes_ = np.unique(Y)
 

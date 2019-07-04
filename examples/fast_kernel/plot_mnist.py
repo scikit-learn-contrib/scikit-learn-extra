@@ -24,7 +24,7 @@ from sklearn.datasets import fetch_openml
 rng = np.random.RandomState(1)
 
 #  Generate sample data from mnist
-mnist = fetch_openml('Fashion-MNIST')
+mnist = fetch_openml("Fashion-MNIST")
 mnist.data = mnist.data / 255.0
 print("Data has loaded")
 
@@ -50,10 +50,12 @@ bandwidth = 5.0
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
-        ("FastKernel",
-         FKC_EigenPro(n_epoch=2, bandwidth=bandwidth, random_state=rng)),
-        ("SupportVector",
-         SVC(C=5, gamma=1. / (2 * bandwidth * bandwidth)))]:
+        (
+            "FastKernel",
+            FKC_EigenPro(n_epoch=2, bandwidth=bandwidth, random_state=rng),
+        ),
+        ("SupportVector", SVC(C=5, gamma=1.0 / (2 * bandwidth * bandwidth))),
+    ]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
         fit_t = time() - stime
@@ -62,7 +64,7 @@ for train_size in train_sizes:
         y_pred_test = estimator.predict(x_test)
         pred_t = time() - stime
 
-        err = 100. * np.sum(y_pred_test != y_test) / len(y_test)
+        err = 100.0 * np.sum(y_pred_test != y_test) / len(y_test)
         if name == "FastKernel":
             fkc_fit_times.append(fit_t)
             fkc_pred_times.append(pred_t)
@@ -71,8 +73,10 @@ for train_size in train_sizes:
             svc_fit_times.append(fit_t)
             svc_pred_times.append(pred_t)
             svc_err.append(err)
-        print("%s Classification with %i training samples in %0.2f seconds." %
-              (name, train_size, fit_t + pred_t))
+        print(
+            "%s Classification with %i training samples in %0.2f seconds."
+            % (name, train_size, fit_t + pred_t)
+        )
 
 # set up grid for figures
 fig = plt.figure(num=None, figsize=(6, 4), dpi=160)
@@ -80,14 +84,14 @@ ax = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
 
 # Graph fit(train) time
 train_size_labels = [str(s) for s in train_sizes]
-ax.plot(train_sizes, svc_fit_times, 'o--', color='g', label='SVC')
-ax.plot(train_sizes, fkc_fit_times, 'o-', color='r', label='FKC (EigenPro)')
-ax.set_xscale('log')
-ax.set_yscale('log', nonposy='clip')
-ax.set_xlabel('train size')
-ax.set_ylabel('time (seconds)')
+ax.plot(train_sizes, svc_fit_times, "o--", color="g", label="SVC")
+ax.plot(train_sizes, fkc_fit_times, "o-", color="r", label="FKC (EigenPro)")
+ax.set_xscale("log")
+ax.set_yscale("log", nonposy="clip")
+ax.set_xlabel("train size")
+ax.set_ylabel("time (seconds)")
 ax.legend()
-ax.set_title('Training Time')
+ax.set_title("Training Time")
 ax.set_xticks(train_sizes)
 ax.set_xticklabels(train_size_labels)
 ax.set_xticks([], minor=True)
@@ -95,24 +99,24 @@ ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 
 # Graph prediction(test) time
 ax = plt.subplot2grid((2, 2), (0, 1), rowspan=1)
-ax.plot(train_sizes, fkc_pred_times, 'o-', color='r')
-ax.plot(train_sizes, svc_pred_times, 'o--', color='g')
-ax.set_xscale('log')
-ax.set_yscale('log', nonposy='clip')
-ax.set_ylabel('time (seconds)')
-ax.set_title('Prediction Time')
+ax.plot(train_sizes, fkc_pred_times, "o-", color="r")
+ax.plot(train_sizes, svc_pred_times, "o--", color="g")
+ax.set_xscale("log")
+ax.set_yscale("log", nonposy="clip")
+ax.set_ylabel("time (seconds)")
+ax.set_title("Prediction Time")
 ax.set_xticks([])
 ax.set_xticks([], minor=True)
 
 # Graph training error
 ax = plt.subplot2grid((2, 2), (1, 1), rowspan=1)
-ax.plot(train_sizes, fkc_err, 'o-', color='r')
-ax.plot(train_sizes, svc_err, 'o-', color='g')
-ax.set_xscale('log')
+ax.plot(train_sizes, fkc_err, "o-", color="r")
+ax.plot(train_sizes, svc_err, "o-", color="g")
+ax.set_xscale("log")
 ax.set_xticks(train_sizes)
 ax.set_xticklabels(train_size_labels)
 ax.set_xticks([], minor=True)
-ax.set_xlabel('train size')
-ax.set_ylabel('classification error %')
+ax.set_xlabel("train size")
+ax.set_ylabel("classification error %")
 plt.tight_layout()
 plt.show()
