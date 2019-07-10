@@ -133,9 +133,7 @@ def test_fast_kernel_regression_duplicate_data():
     X, y = make_regression(random_state=1)
     X, y = np.concatenate([X, X]), np.concatenate([y, y])
     fkr_prediction = (
-        FKR_EigenPro(
-            kernel="rbf", n_epoch=100, bandwidth=5, random_state=1
-        )
+        FKR_EigenPro(kernel="rbf", n_epoch=100, bandwidth=5, random_state=1)
         .fit(X, y)
         .predict(X)
     )
@@ -238,9 +236,7 @@ def test_fast_kernel_classification_duplicate_data():
     """
     X, y = make_classification(n_features=200, n_repeated=50, random_state=1)
     fkc_prediction = (
-        FKC_EigenPro(
-            kernel="rbf", n_epoch=60, bandwidth=1, random_state=1
-        )
+        FKC_EigenPro(kernel="rbf", n_epoch=60, bandwidth=1, random_state=1)
         .fit(X, y)
         .predict(X)
     )

@@ -68,7 +68,9 @@ class BaseEigenPro(BaseEstimator, ABC):
                 params = self.kernel_params or {}
             else:
                 params = {
-                    "gamma": np.float32(.5/(self.bandwidth*self.bandwidth)),
+                    "gamma": np.float32(
+                        0.5 / (self.bandwidth * self.bandwidth)
+                    ),
                     "degree": self.degree,
                     "coef0": self.coef0,
                 }
