@@ -23,7 +23,7 @@ class BaseEigenPro(BaseEstimator, ABC):
         n_epoch=2,
         n_components=1000,
         subsample_size="auto",
-        kernel="gaussian",
+        kernel="rbf",
         bandwidth=5,
         gamma=None,
         degree=3,
@@ -60,7 +60,7 @@ class BaseEigenPro(BaseEstimator, ABC):
             Kernel matrix.
         """
         if (
-            self.kernel != "gaussian"
+            self.kernel != "rbf"
             and self.kernel != "laplace"
             and self.kernel != "cauchy"
         ):
@@ -68,7 +68,7 @@ class BaseEigenPro(BaseEstimator, ABC):
                 params = self.kernel_params or {}
             else:
                 params = {
-                    "gamma": self.gamma,
+                    "gamma": np.float32(.5/(self.bandwidth*self.bandwidth)),
                     "degree": self.degree,
                     "coef0": self.coef0,
                 }
@@ -77,7 +77,7 @@ class BaseEigenPro(BaseEstimator, ABC):
             )
         distance = euclidean_distances(X, Y, squared=True)
         bandwidth = np.float32(self.bandwidth)
-        if self.kernel == "gaussian":
+        if self.kernel == "rbf":
             K = np.exp(-distance / (2.0 * bandwidth * bandwidth))
         elif self.kernel == "laplace":
             d = np.maximum(distance, 0)
@@ -380,20 +380,15 @@ class FKR_EigenPro(BaseEigenPro, RegressorMixin):
         it will be 4000 if there are less than 100,000 samples
         (for training), and otherwise 10000.
 
-    kernel : string or callable, default = "gaussian"
+    kernel : string or callable, default = "rbf"
         Kernel mapping used internally. Strings can be anything supported
-        by sklearn's library, however, it is recommended to use a radial
-        kernel. There is special support for gaussian, laplace, and cauchy
-        kernels. A callable should accept two arguments and return a
-        floating point number.
+        by sklearn's library, however, there is special support for the
+        rbf, laplace, and cauchy kernels. If a callable is given, it should
+        accept two arguments and return a floating point number.
 
     bandwidth : float, default=5
-        Bandwidth to use with the gaussian, laplacian, and cauchy kernels.
-        Ignored by other kernels.
-
-    gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi2 and
-        sigmoid kernels. Interpretation of the default value is left to
+        Bandwidth to use with the given kernel. For kernels that use gamma,
+        gamma = .5/(bandwidth^2). Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
@@ -432,7 +427,7 @@ class FKR_EigenPro(BaseEigenPro, RegressorMixin):
     >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 kernel='rbf', kernel_params=None, n_components=1000,
                  n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
@@ -444,7 +439,7 @@ class FKR_EigenPro(BaseEigenPro, RegressorMixin):
         n_epoch=2,
         n_components=1000,
         subsample_size="auto",
-        kernel="gaussian",
+        kernel="rbf",
         bandwidth=5,
         gamma=None,
         degree=3,
@@ -500,17 +495,17 @@ class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
         'auto', it will be 4000 if there are less than 100,000 samples
         (for training), and otherwise 10000.
 
-    kernel : string or callable, default = "gaussian"
-        Kernel mapping used internally. Strings can be anything
-        supported by sklearn's library, however, it is recommended to
-        use a radial kernel. There is special support for gaussian,
-        laplace, and cauchy kernels. A callable should accept two
-        arguments and return a floating point number.
+    kernel : string or callable, default = "rbf"
+        Kernel mapping used internally. Strings can be anything supported
+        by sklearn's library, however, there is special support for the
+        rbf, laplace, and cauchy kernels. If a callable is given, it should
+        accept two arguments and return a floating point number.
 
     bandwidth : float, default=5
-        Bandwidth to use with the gaussian, laplacian, and cauchy
-        kernels. Ignored by other kernels.
-
+        Bandwidth to use with the given kernel. For kernels that use gamma,
+        gamma = .5/(bandwidth^2). Interpretation of the default value is left to
+        the kernel; see the documentation for sklearn.metrics.pairwise.
+        Ignored by other kernels.
     gamma : float, default=None
         Gamma parameter for the RBF, polynomial, exponential chi2
         and sigmoid kernels. Interpretation of the default value is left
@@ -553,7 +548,7 @@ class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
     >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKC_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 kernel='rbf', kernel_params=None, n_components=1000,
                  n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
@@ -565,7 +560,7 @@ class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
         n_epoch=2,
         n_components=1000,
         subsample_size="auto",
-        kernel="gaussian",
+        kernel="rbf",
         bandwidth=5,
         gamma=None,
         degree=3,

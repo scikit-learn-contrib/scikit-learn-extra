@@ -55,11 +55,11 @@ def test_parameter_validation(estimator, data, params, err_msg):
 @pytest.mark.parametrize(
     "data, estimator",
     [
-        # Test gaussian kernel
+        # Test rbf kernel
         (
             gen_regression({}),
             FKR_EigenPro(
-                kernel="gaussian", n_epoch=100, bandwidth=10, random_state=1
+                kernel="rbf", n_epoch=100, bandwidth=10, random_state=1
             ),
         ),
         # Test laplacian kernel
@@ -84,14 +84,14 @@ def test_parameter_validation(estimator, data, params, err_msg):
         (
             gen_regression({"n_features": 200, "n_targets": 30}),
             FKR_EigenPro(
-                kernel="gaussian", n_epoch=100, bandwidth=14, random_state=1
+                kernel="rbf", n_epoch=100, bandwidth=14, random_state=1
             ),
         ),
         # Test with a very large number of input features
         (
             gen_regression({"n_features": 10000}),
             FKR_EigenPro(
-                kernel="gaussian", n_epoch=100, bandwidth=1, random_state=1
+                kernel="rbf", n_epoch=100, bandwidth=1, random_state=1
             ),
         ),
         # Test a very simple underlying distribution
@@ -99,7 +99,7 @@ def test_parameter_validation(estimator, data, params, err_msg):
             gen_regression({"n_informative": 1}),
             FKR_EigenPro(
                 batch_size=500,
-                kernel="gaussian",
+                kernel="rbf",
                 n_epoch=100,
                 bandwidth=10,
                 random_state=1,
@@ -109,7 +109,7 @@ def test_parameter_validation(estimator, data, params, err_msg):
         (
             gen_regression({"n_samples": 500, "n_informative": 100}),
             FKR_EigenPro(
-                kernel="gaussian", n_epoch=60, bandwidth=10, random_state=1
+                kernel="rbf", n_epoch=60, bandwidth=10, random_state=1
             ),
         ),
     ],
@@ -134,7 +134,7 @@ def test_fast_kernel_regression_duplicate_data():
     X, y = np.concatenate([X, X]), np.concatenate([y, y])
     fkr_prediction = (
         FKR_EigenPro(
-            kernel="gaussian", n_epoch=100, bandwidth=5, random_state=1
+            kernel="rbf", n_epoch=100, bandwidth=5, random_state=1
         )
         .fit(X, y)
         .predict(X)
@@ -160,12 +160,12 @@ def test_fast_kernel_regression_conflict_data():
 @pytest.mark.parametrize(
     "data, estimator",
     [
-        # Test gaussian kernel
+        # Test rbf kernel
         (
             gen_classification({"n_samples": 10, "hypercube": False}),
             FKC_EigenPro(
                 batch_size=9,
-                kernel="gaussian",
+                kernel="rbf",
                 bandwidth=2.5,
                 n_epoch=100,
                 random_state=1,
@@ -198,14 +198,14 @@ def test_fast_kernel_regression_conflict_data():
                 }
             ),
             FKC_EigenPro(
-                kernel="gaussian", n_epoch=100, bandwidth=20, random_state=1
+                kernel="rbf", n_epoch=100, bandwidth=20, random_state=1
             ),
         ),
         # Test a distribution that has been shifted
         (
             gen_classification({"shift": 1, "hypercube": False}),
             FKC_EigenPro(
-                kernel="gaussian", n_epoch=200, bandwidth=8, random_state=1
+                kernel="rbf", n_epoch=200, bandwidth=8, random_state=1
             ),
         ),
         # Test with many redundant features.
@@ -239,7 +239,7 @@ def test_fast_kernel_classification_duplicate_data():
     X, y = make_classification(n_features=200, n_repeated=50, random_state=1)
     fkc_prediction = (
         FKC_EigenPro(
-            kernel="gaussian", n_epoch=60, bandwidth=1, random_state=1
+            kernel="rbf", n_epoch=60, bandwidth=1, random_state=1
         )
         .fit(X, y)
         .predict(X)
