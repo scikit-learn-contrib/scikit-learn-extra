@@ -102,10 +102,10 @@ class BaseEigenPro(BaseEstimator, ABC):
 
         Returns
         -------
-        S : {float, array}, shape = [k]
+        E : {float, array}, shape = [k]
             Top eigenvalues.
 
-        V : {float, array}, shape = [n_subsamples, k]
+        Lambda : {float, array}, shape = [n_subsamples, k]
             Top eigenvectors of a subsample kernel matrix (which can be
             directly used to approximate the eigenfunctions of the kernel
             operator).
@@ -116,16 +116,18 @@ class BaseEigenPro(BaseEstimator, ABC):
         # Use float64 so eigh doesn't occassionally crash and burn and fail
         W = K / m
         try:
-            S, V = eigh(W, eigvals=(m - n_components, m - 1))
+            E, Lambda = eigh(W, eigvals=(m - n_components, m - 1))
         except LinAlgError:
             W = np.float64(W)
-            S, V = eigh(W, eigvals=(m - n_components, m - 1))
-            S, V = np.float32(S), np.float32(V)
+            E, Lambda = eigh(W, eigvals=(m - n_components, m - 1))
+            E, Lambda = np.float32(E), np.float32(Lambda)
         # Flip so eigenvalues are in descending order.
-        S = np.maximum(np.float32(1e-7), np.flipud(S))
-        V = np.fliplr(V)[:, :n_components] / np.sqrt(m, dtype="float32")
+        E = np.maximum(np.float32(1e-7), np.flipud(E))
+        Lambda = np.fliplr(Lambda)[:, :n_components] / np.sqrt(
+            m, dtype="float32"
+        )
 
-        return S, V
+        return E, Lambda
 
     def _setup(self, feat, max_components, mG, alpha):
         """Compute preconditioner and scale factors for EigenPro iteration
@@ -151,39 +153,73 @@ class BaseEigenPro(BaseEstimator, ABC):
 
         max_kxx : float
             Maximum of k(x,x) where k is the EigenPro kernel.
+
+        E : {float, array}, shape = [k]
+            Preconditioner for EigenPro
+
+        Lambda : {float, array}, shape = [n_subsamples, k]
+            Top eigenvectors of a subsample kernel matrix
         """
         alpha = np.float32(alpha)
 
         # Estimate eigenvalues (S) and eigenvectors (V) of the kernel matrix
         # corresponding to the feature matrix.
-        S, V = self._nystrom_svd(feat, max_components)
+        E, Lambda = self._nystrom_svd(feat, max_components)
         n_subsamples = feat.shape[0]
 
         # Calculate the number of components to be used such that the
         # corresponding batch size is bounded by the subsample size and the
         # memory size.
         max_bs = min(max(n_subsamples / 5, mG), n_subsamples)
-        n_components = np.sum(np.power(1 / S, alpha) < max_bs) - 1
+        n_components = np.sum(np.power(1 / E, alpha) < max_bs) - 1
         if n_components < 2:
-            n_components = min(S.shape[0] - 1, 2)
+            n_components = min(E.shape[0] - 1, 2)
 
-        V = V[:, :n_components]
-        scale = np.power(S[0] / S[n_components], alpha)
+        Lambda = Lambda[:, :n_components]
+        scale = np.power(E[0] / E[n_components], alpha)
 
         # Compute part of the preconditioner for step 2 of gradient descent in
         # the eigenpro model
-        Q = (1 - np.power(S[n_components] / S[:n_components], alpha)) / S[
+        D = (1 - np.power(E[n_components] / E[:n_components], alpha)) / E[
             :n_components
         ]
 
-        max_S = S[0].astype(np.float32)
-        kxx = 1 - np.sum(V ** 2, axis=1) * n_subsamples
-        return max_S / scale, np.max(kxx), Q, V
+        max_S = E[0].astype(np.float32)
+        kxx = 1 - np.sum(Lambda ** 2, axis=1) * n_subsamples
+        return max_S / scale, np.max(kxx), D, Lambda
 
     def _initialize_params(self, X, Y, random_state):
         """
         Validate parameters passed to the model, choose parameters
         that have not been passed in, and run setup for EigenPro iteration.
+        Parameters
+        ----------
+        X : {float, array}, shape = [n_samples, n_features]
+            Training data.
+
+        Y : {float, array}, shape = [n_samples, n_targets]
+            Training targets.
+
+        random_state : RandomState instance
+            The random state to use for random number generation
+
+        Returns
+        -------
+        Y : {float, array}, shape = [n_samples, n_targets]
+            Training targets. If Y was originally of shape
+            [n_samples], it is now [n_samples, 1].
+
+        E : {float, array}, shape = [k]
+            Preconditioner for EigenPro
+
+        Lambda : {float, array}, shape = [n_subsamples, k]
+            Top eigenvectors of a subsample kernel matrix
+
+        eta : float
+            The learning rate
+
+        pinx : {int, array}, shape = [sample_size]
+            The rows of X used to calculate E and Lambda
         """
         n, d = X.shape
         n_label = 1 if len(Y.shape) == 1 else Y.shape[1]
@@ -211,7 +247,9 @@ class BaseEigenPro(BaseEstimator, ABC):
         pinx = random_state.choice(n, sample_size, replace=False).astype(
             "int32"
         )
-        max_S, beta, Q, V = self._setup(X[pinx], n_components, mG, alpha=0.95)
+        max_S, beta, E, Lambda = self._setup(
+            X[pinx], n_components, mG, alpha=0.95
+        )
         # Calculate best batch size.
         if self.batch_size == "auto":
             bs = min(np.int32(beta / max_S), mG) + 1
@@ -231,9 +269,13 @@ class BaseEigenPro(BaseEstimator, ABC):
         if len(Y.shape) == 1:
             Y = np.reshape(Y, (Y.shape[0], 1))
             self.was_1D_ = True
-        return Y, Q, V, np.float32(eta), pinx
+        return Y, E, Lambda, np.float32(eta), pinx
 
     def validate_parameters(self):
+        """
+        Validate the parameters of the model to ensure that no unreasonable
+        values were passed in.
+        """
         if self.n_epoch <= 0:
             raise ValueError(
                 "n_epoch should be positive, was " + str(self.n_epoch)
@@ -285,7 +327,7 @@ class BaseEigenPro(BaseEstimator, ABC):
 
         self.validate_parameters()
         """Parameter Initialization"""
-        Y, Q, V, eta, pinx = self._initialize_params(X, Y, random_state)
+        Y, D, V, eta, pinx = self._initialize_params(X, Y, random_state)
 
         """Training loop"""
         n = self.centers_.shape[0]
@@ -311,7 +353,7 @@ class BaseEigenPro(BaseEstimator, ABC):
 
                 # Update 2: Fixed Coordinate Block
                 delta = np.dot(
-                    V * Q, np.dot(V.T, np.dot(kfeat[:, pinx].T, gradient))
+                    V * D, np.dot(V.T, np.dot(kfeat[:, pinx].T, gradient))
                 )
                 self.coef_[pinx] += step * delta
         return self
@@ -355,7 +397,7 @@ class BaseEigenPro(BaseEstimator, ABC):
         return {"multioutput": True}
 
 
-class FKR_EigenPro(BaseEigenPro, RegressorMixin):
+class FKREigenPro(BaseEigenPro, RegressorMixin):
     """Fast kernel regression using EigenPro iteration.
 
     Train least squared kernel regression model with mini-batch EigenPro
@@ -420,17 +462,17 @@ class FKR_EigenPro(BaseEigenPro, RegressorMixin):
 
     Examples
     --------
-    >>> from sklearn_extra.fast_kernel import FKR_EigenPro
+    >>> from sklearn_extra.fast_kernel import FKREigenPro
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
     >>> x_train = rng.randn(n_samples, n_features)
     >>> y_train = rng.randn(n_samples, n_targets)
-    >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs = FKREigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                 kernel='rbf', kernel_params=None, n_components=1000,
-                 n_epoch=3, random_state=None, subsample_size=50)
+    FKREigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
+                kernel='rbf', kernel_params=None, n_components=1000, n_epoch=3,
+                random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
@@ -470,7 +512,7 @@ class FKR_EigenPro(BaseEigenPro, RegressorMixin):
         return self._raw_predict(X)
 
 
-class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
+class FKCEigenPro(BaseEigenPro, ClassifierMixin):
     """Fast kernel classification using EigenPro iteration.
 
     Train least squared kernel classification model with mini-batch EigenPro
@@ -541,17 +583,17 @@ class FKC_EigenPro(BaseEigenPro, ClassifierMixin):
 
     Examples
     --------
-    >>> from sklearn_extra.fast_kernel import FKC_EigenPro
+    >>> from sklearn_extra.fast_kernel import FKCEigenPro
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
     >>> x_train = rng.randn(n_samples, n_features)
     >>> y_train = rng.randint(n_targets, size=n_samples)
-    >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs = FKCEigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    FKC_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                 kernel='rbf', kernel_params=None, n_components=1000,
-                 n_epoch=3, random_state=None, subsample_size=50)
+    FKCEigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
+                kernel='rbf', kernel_params=None, n_components=1000, n_epoch=3,
+                random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """

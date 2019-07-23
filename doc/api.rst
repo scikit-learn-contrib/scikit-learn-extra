@@ -27,5 +27,5 @@ EigenPro
    :toctree: generated/
    :template: class.rst
 
-   fast_kernel.FKR_EigenPro
-   fast_kernel.FKC_EigenPro
+   fast_kernel.FKREigenPro
+   fast_kernel.FKCEigenPro

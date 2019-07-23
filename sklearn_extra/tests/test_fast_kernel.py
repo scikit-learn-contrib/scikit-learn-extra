@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn.datasets import make_regression, make_classification
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn_extra.fast_kernel import FKR_EigenPro, FKC_EigenPro
+from sklearn_extra.fast_kernel import FKREigenPro, FKCEigenPro
 
 import pytest
 
@@ -24,10 +24,7 @@ def gen_classification(params):
 
 @pytest.mark.parametrize(
     "estimator, data",
-    [
-        (FKR_EigenPro, gen_regression({})),
-        (FKC_EigenPro, gen_classification({})),
-    ],
+    [(FKREigenPro, gen_regression({})), (FKCEigenPro, gen_classification({}))],
 )
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -58,21 +55,21 @@ def test_parameter_validation(estimator, data, params, err_msg):
         # Test rbf kernel
         (
             gen_regression({}),
-            FKR_EigenPro(
+            FKREigenPro(
                 kernel="rbf", n_epoch=100, bandwidth=10, random_state=1
             ),
         ),
         # Test laplacian kernel
         (
             gen_regression({}),
-            FKR_EigenPro(
+            FKREigenPro(
                 kernel="laplace", n_epoch=100, bandwidth=8, random_state=1
             ),
         ),
         # Test cauchy kernel
         (
             gen_regression({}),
-            FKR_EigenPro(
+            FKREigenPro(
                 kernel="cauchy",
                 n_epoch=100,
                 bandwidth=10,
@@ -83,21 +80,21 @@ def test_parameter_validation(estimator, data, params, err_msg):
         # Test with multiple outputs
         (
             gen_regression({"n_features": 200, "n_targets": 30}),
-            FKR_EigenPro(
+            FKREigenPro(
                 kernel="rbf", n_epoch=100, bandwidth=14, random_state=1
             ),
         ),
         # Test with a very large number of input features
         (
             gen_regression({"n_features": 10000}),
-            FKR_EigenPro(
+            FKREigenPro(
                 kernel="rbf", n_epoch=100, bandwidth=1, random_state=1
             ),
         ),
         # Test a very simple underlying distribution
         (
             gen_regression({"n_informative": 1}),
-            FKR_EigenPro(
+            FKREigenPro(
                 batch_size=500,
                 kernel="rbf",
                 n_epoch=100,
@@ -108,7 +105,7 @@ def test_parameter_validation(estimator, data, params, err_msg):
         # Test a very complex underlying distribution
         (
             gen_regression({"n_samples": 500, "n_informative": 100}),
-            FKR_EigenPro(
+            FKREigenPro(
                 kernel="rbf", n_epoch=60, bandwidth=10, random_state=1
             ),
         ),
@@ -133,7 +130,7 @@ def test_fast_kernel_regression_duplicate_data():
     X, y = make_regression(random_state=1)
     X, y = np.concatenate([X, X]), np.concatenate([y, y])
     fkr_prediction = (
-        FKR_EigenPro(kernel="rbf", n_epoch=100, bandwidth=5, random_state=1)
+        FKREigenPro(kernel="rbf", n_epoch=100, bandwidth=5, random_state=1)
         .fit(X, y)
         .predict(X)
     )
@@ -147,7 +144,7 @@ def test_fast_kernel_regression_conflict_data():
     y = np.reshape(y, (-1, 1))
     X, y = X, np.hstack([y, y + 2])
     # Make sure we don't throw an error when fitting or predicting
-    FKR_EigenPro(kernel="linear", n_epoch=5, bandwidth=1, random_state=1).fit(
+    FKREigenPro(kernel="linear", n_epoch=5, bandwidth=1, random_state=1).fit(
         X, y
     ).predict(X)
 
@@ -161,7 +158,7 @@ def test_fast_kernel_regression_conflict_data():
         # Test rbf kernel
         (
             gen_classification({"n_samples": 10, "hypercube": False}),
-            FKC_EigenPro(
+            FKCEigenPro(
                 batch_size=9,
                 kernel="rbf",
                 bandwidth=2.5,
@@ -172,14 +169,14 @@ def test_fast_kernel_regression_conflict_data():
         # Test laplacian kernel
         (
             gen_classification({}),
-            FKC_EigenPro(
+            FKCEigenPro(
                 kernel="laplace", n_epoch=100, bandwidth=13, random_state=1
             ),
         ),
         # Test cauchy kernel
         (
             gen_classification({}),
-            FKC_EigenPro(
+            FKCEigenPro(
                 kernel="cauchy", n_epoch=100, bandwidth=10, random_state=1
             ),
         ),
@@ -195,21 +192,21 @@ def test_fast_kernel_regression_conflict_data():
                     "shift": 6,
                 }
             ),
-            FKC_EigenPro(
+            FKCEigenPro(
                 kernel="rbf", n_epoch=100, bandwidth=20, random_state=1
             ),
         ),
         # Test a distribution that has been shifted
         (
             gen_classification({"shift": 1, "hypercube": False}),
-            FKC_EigenPro(
+            FKCEigenPro(
                 kernel="rbf", n_epoch=200, bandwidth=8, random_state=1
             ),
         ),
         # Test with many redundant features.
         (
             gen_classification({"n_redundant": 18}),
-            FKC_EigenPro(
+            FKCEigenPro(
                 kernel="laplace", n_epoch=100, bandwidth=20, random_state=1
             ),
         ),
@@ -236,7 +233,7 @@ def test_fast_kernel_classification_duplicate_data():
     """
     X, y = make_classification(n_features=200, n_repeated=50, random_state=1)
     fkc_prediction = (
-        FKC_EigenPro(kernel="rbf", n_epoch=60, bandwidth=1, random_state=1)
+        FKCEigenPro(kernel="rbf", n_epoch=60, bandwidth=1, random_state=1)
         .fit(X, y)
         .predict(X)
     )
@@ -249,6 +246,6 @@ def test_fast_kernel_classification_conflict_data():
     X, y = make_classification(random_state=1)
     X, y = np.concatenate([X, X]), np.concatenate([y, 1 - y])
     # Make sure we don't throw an error when fitting or predicting
-    FKC_EigenPro(kernel="linear", n_epoch=5, bandwidth=5, random_state=1).fit(
+    FKCEigenPro(kernel="linear", n_epoch=5, bandwidth=5, random_state=1).fit(
         X, y
     ).predict(X)

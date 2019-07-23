@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
-from sklearn_extra.fast_kernel import FKC_EigenPro
+from sklearn_extra.fast_kernel import FKCEigenPro
 from sklearn.svm import SVC
 from sklearn.datasets import fetch_openml
 
@@ -28,7 +28,7 @@ mnist = fetch_openml("Fashion-MNIST")
 mnist.data = mnist.data / 255.0
 print("Data has loaded")
 
-p = np.random.permutation(60000)
+p = rng.permutation(60000)
 x_train = mnist.data[p]
 y_train = np.int32(mnist.target[p])
 x_test = mnist.data[60000:]
@@ -52,9 +52,14 @@ for train_size in train_sizes:
     for name, estimator in [
         (
             "FastKernel",
-            FKC_EigenPro(n_epoch=2, bandwidth=bandwidth, random_state=rng),
+            FKCEigenPro(n_epoch=2, bandwidth=bandwidth, random_state=rng),
         ),
-        ("SupportVector", SVC(C=5, gamma=1.0 / (2 * bandwidth * bandwidth))),
+        (
+            "SupportVector",
+            SVC(
+                C=5, gamma=1.0 / (2 * bandwidth * bandwidth), random_state=rng
+            ),
+        ),
     ]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
