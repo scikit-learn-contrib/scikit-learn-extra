@@ -78,6 +78,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> kmedoids.inertia_
     8.0
 
+    See scikit-learn-extra/examples/plot_kmedoids_digits.py for examples
+    of KMedoids with various distance metrics.
+
     References
     ----------
     Kaufman, L. and Rousseeuw, P.J., Statistical Data Analysis Based on
@@ -98,8 +101,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Examples
     --------
-    See scikit-learn-extra/examples/plot_kmedoids_digits.py for examples
-    of KMedoids with various distance metrics.
+
     
     """
 
