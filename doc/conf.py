@@ -48,12 +48,22 @@ numpydoc_show_class_members = False
 # pngmath / imgmath compatibility layer for different sphinx versions
 import sphinx
 from distutils.version import LooseVersion
-if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
-    extensions.append('sphinx.ext.pngmath')
-else:
-    extensions.append('sphinx.ext.imgmath')
+# if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
+#     extensions.append('sphinx.ext.pngmath')
+# else:
+#     extensions.append('sphinx.ext.imgmath')
 
 autodoc_default_flags = ['members', 'inherited-members']
+
+# For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
+# (useful for viewing the doc offline)
+if os.environ.get('NO_MATHJAX'):
+    extensions.append('sphinx.ext.imgmath')
+    imgmath_image_format = 'svg'
+else:
+    extensions.append('sphinx.ext.mathjax')
+    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
+                    'MathJax.js?config=TeX-AMS_SVG')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
