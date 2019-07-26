@@ -1,4 +1,4 @@
-from .k_medoids_ import KMedoids
+from ._k_medoids import KMedoids
 
 __all__ = [
     'KMedoids',
