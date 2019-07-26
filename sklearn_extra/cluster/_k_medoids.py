@@ -95,6 +95,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     -----
     Since all pairwise distances are calculated and stored in memory for
     the duration of fit, the space complexity is O(n_samples ** 2).
+
+    Examples
+    --------
+    See scikit-learn-extra/examples/plot_kmedoids_digits.py for examples
+    of KMedoids with various distance metrics.
+    
     """
 
     def __init__(self, n_clusters=8, metric='euclidean',
