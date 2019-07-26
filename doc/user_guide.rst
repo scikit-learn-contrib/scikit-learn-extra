@@ -37,6 +37,8 @@ clusters. This makes it more suitable for smaller datasets in comparison to
 
 .. topic:: Examples:
 
+ * :ref:`sphx_glr_auto_examples_plot_kmedoids_digits.py`: Applying K-Medoids on digits
+   with various distance metrics.
 
 
 **Algorithm description:**
