@@ -12,7 +12,10 @@ import warnings
 import numpy as np
 
 from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
-from sklearn.metrics.pairwise import pairwise_distances, pairwise_distances_argmin
+from sklearn.metrics.pairwise import (
+    pairwise_distances,
+    pairwise_distances_argmin,
+)
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
@@ -105,8 +108,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     
     """
 
-    def __init__(self, n_clusters=8, metric='euclidean',
-                 init='heuristic', max_iter=300, random_state=None):
+    def __init__(
+        self,
+        n_clusters=8,
+        metric="euclidean",
+        init="heuristic",
+        max_iter=300,
+        random_state=None,
+    ):
         self.n_clusters = n_clusters
         self.metric = metric
         self.init = init
@@ -116,10 +125,15 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     def _check_nonnegative_int(self, value, desc):
         """Validates if value is a valid integer > 0"""
 
-        if (value is None or value <= 0 or
-                not isinstance(value, (int, np.integer))):
-            raise ValueError("%s should be a nonnegative integer. "
-                             "%s was given" % (desc, value))
+        if (
+            value is None
+            or value <= 0
+            or not isinstance(value, (int, np.integer))
+        ):
+            raise ValueError(
+                "%s should be a nonnegative integer. "
+                "%s was given" % (desc, value)
+            )
 
     def _check_init_args(self):
         """Validates the input arguments. """
@@ -129,11 +143,13 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_nonnegative_int(self.max_iter, "max_iter")
 
         # Check init
-        init_methods = ['random', 'heuristic', 'k-medoids++']
+        init_methods = ["random", "heuristic", "k-medoids++"]
         if self.init not in init_methods:
-            raise ValueError("init needs to be one of " +
-                             "the following: " +
-                             "%s" % init_methods)
+            raise ValueError(
+                "init needs to be one of "
+                + "the following: "
+                + "%s" % init_methods
+            )
 
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
@@ -153,17 +169,18 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state_ = check_random_state(self.random_state)
 
         self._check_init_args()
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=["csr", "csc"])
         if self.n_clusters > X.shape[0]:
-            raise ValueError("The number of medoids (%d) must be less "
-                             "than the number of samples %d."
-                             % (self.n_clusters, X.shape[0]))
+            raise ValueError(
+                "The number of medoids (%d) must be less "
+                "than the number of samples %d."
+                % (self.n_clusters, X.shape[0])
+            )
 
         D = pairwise_distances(X, metric=self.metric)
-        medoid_idxs = self._initialize_medoids(D,
-                                               self.n_clusters,
-                                               random_state_,
-                                               )
+        medoid_idxs = self._initialize_medoids(
+            D, self.n_clusters, random_state_
+        )
         labels = None
 
         # Continue the algorithm as long as
@@ -178,10 +195,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             if np.all(old_medoid_idxs == medoid_idxs):
                 break
             elif self.n_iter_ == self.max_iter - 1:
-                warnings.warn("Maximum number of iteration reached before "
-                              "convergence. Consider increasing max_iter to "
-                              "improve the fit.",
-                              ConvergenceWarning)
+                warnings.warn(
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit.",
+                    ConvergenceWarning,
+                )
 
         # Set the resulting instance variables.
         if self.metric == "precomputed":
@@ -212,11 +231,13 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     "Cluster {k} is empty! "
                     "self.labels_[self.medoid_indices_[{k}]] "
                     "may not be labeled with "
-                    "its corresponding cluster ({k}).".format(k=k))
+                    "its corresponding cluster ({k}).".format(k=k)
+                )
                 continue
 
-            in_cluster_distances = D[cluster_k_idxs,
-                                     cluster_k_idxs[:, np.newaxis]]
+            in_cluster_distances = D[
+                cluster_k_idxs, cluster_k_idxs[:, np.newaxis]
+            ]
 
             # Calculate all costs from each point to all others in the cluster
             in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
@@ -224,7 +245,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             min_cost_idx = np.argmin(in_cluster_all_costs)
             min_cost = in_cluster_all_costs[min_cost_idx]
             curr_cost = in_cluster_all_costs[
-                np.argmax(cluster_k_idxs == medoid_idxs[k])]
+                np.argmax(cluster_k_idxs == medoid_idxs[k])
+            ]
 
             # Adopt a new medoid if its distance is smaller then the current
             if min_cost < curr_cost:
@@ -244,7 +266,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=["csr", "csc"])
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -253,8 +275,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             check_is_fitted(self, "cluster_centers_")
 
             Y = self.cluster_centers_
-            return pairwise_distances(X, Y=Y,
-                                      metric=self.metric)
+            return pairwise_distances(X, Y=Y, metric=self.metric)
 
     def predict(self, X):
         """Predict the closest cluster for each sample in X.
@@ -270,7 +291,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_samples,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=["csr", "csc"])
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -280,8 +301,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Return data points to clusters based on which cluster assignment
             # yields the smallest distance
-            return pairwise_distances_argmin(X, Y=self.cluster_centers_,
-                                             metric=self.metric)
+            return pairwise_distances_argmin(
+                X, Y=self.cluster_centers_, metric=self.metric
+            )
 
     def _compute_inertia(self, distances):
         """Compute inertia of new samples. Inertia is defined as the sum of the
@@ -306,19 +328,21 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     def _initialize_medoids(self, D, n_clusters, random_state_):
         """Select initial mediods when beginning clustering."""
 
-        if self.init == 'random':  # Random initialization
+        if self.init == "random":  # Random initialization
             # Pick random k medoids as the initial ones.
             medoids = random_state_.choice(len(D), n_clusters)
-        elif self.init == 'k-medoids++':
+        elif self.init == "k-medoids++":
             medoids = self._kpp_init(D, n_clusters, random_state_)
         elif self.init == "heuristic":  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
-            medoids = np.argpartition(np.sum(D, axis=1),
-                                      n_clusters-1)[:n_clusters]
+            medoids = np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
+                :n_clusters
+            ]
         else:
-            raise ValueError("init value '{init}' not recognized"
-                             .format(init=self.init))
+            raise ValueError(
+                "init value '{init}' not recognized".format(init=self.init)
+            )
 
         return medoids
 
@@ -370,18 +394,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         centers[0] = center_id
 
         # Initialize list of closest distances and calculate current potential
-        closest_dist_sq = D[centers[0], :]**2
+        closest_dist_sq = D[centers[0], :] ** 2
         current_pot = closest_dist_sq.sum()
 
         # pick the remaining n_clusters-1 points
         for cluster_index in range(1, n_clusters):
-            rand_vals = (random_state_.random_sample(n_local_trials)
-                         * current_pot)
-            candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),
-                                            rand_vals)
+            rand_vals = (
+                random_state_.random_sample(n_local_trials) * current_pot
+            )
+            candidate_ids = np.searchsorted(
+                stable_cumsum(closest_dist_sq), rand_vals
+            )
 
             # Compute distances to center candidates
-            distance_to_candidates = D[candidate_ids, :]**2
+            distance_to_candidates = D[candidate_ids, :] ** 2
 
             # Decide which candidate is the best
             best_candidate = None
@@ -389,8 +415,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             best_dist_sq = None
             for trial in range(n_local_trials):
                 # Compute potential when including center candidate
-                new_dist_sq = np.minimum(closest_dist_sq,
-                                         distance_to_candidates[trial])
+                new_dist_sq = np.minimum(
+                    closest_dist_sq, distance_to_candidates[trial]
+                )
                 new_pot = new_dist_sq.sum()
 
                 # Store result if it is the best local trial so far

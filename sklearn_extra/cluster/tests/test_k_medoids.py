@@ -21,31 +21,51 @@ X = np.random.RandomState(seed).rand(100, 5)
 def test_kmedoids_input_validation_and_fit_check():
     rng = np.random.RandomState(seed)
     # Invalid parameters
-    assert_raise_message(ValueError, "n_clusters should be a nonnegative "
-                                     "integer. 0 was given",
-                         KMedoids(n_clusters=0).fit, X)
+    assert_raise_message(
+        ValueError,
+        "n_clusters should be a nonnegative " "integer. 0 was given",
+        KMedoids(n_clusters=0).fit,
+        X,
+    )
 
-    assert_raise_message(ValueError, "n_clusters should be a nonnegative "
-                                     "integer. None was given",
-                         KMedoids(n_clusters=None).fit, X)
+    assert_raise_message(
+        ValueError,
+        "n_clusters should be a nonnegative " "integer. None was given",
+        KMedoids(n_clusters=None).fit,
+        X,
+    )
 
-    assert_raise_message(ValueError, "max_iter should be a nonnegative "
-                                     "integer. 0 was given",
-                         KMedoids(n_clusters=1, max_iter=0).fit, X)
+    assert_raise_message(
+        ValueError,
+        "max_iter should be a nonnegative " "integer. 0 was given",
+        KMedoids(n_clusters=1, max_iter=0).fit,
+        X,
+    )
 
-    assert_raise_message(ValueError, "max_iter should be a nonnegative "
-                                     "integer. None was given",
-                         KMedoids(n_clusters=1, max_iter=None).fit, X)
+    assert_raise_message(
+        ValueError,
+        "max_iter should be a nonnegative " "integer. None was given",
+        KMedoids(n_clusters=1, max_iter=None).fit,
+        X,
+    )
 
-    assert_raise_message(ValueError, "init needs to be one of the following: "
-                                     "['random', 'heuristic', 'k-medoids++']",
-                         KMedoids(init=None).fit, X)
+    assert_raise_message(
+        ValueError,
+        "init needs to be one of the following: "
+        "['random', 'heuristic', 'k-medoids++']",
+        KMedoids(init=None).fit,
+        X,
+    )
 
     # Trying to fit 3 samples to 8 clusters
     Xsmall = rng.rand(5, 2)
-    assert_raise_message(ValueError, "The number of medoids (8) must be less "
-                                     "than the number of samples 5.",
-                         KMedoids(n_clusters=8).fit, Xsmall)
+    assert_raise_message(
+        ValueError,
+        "The number of medoids (8) must be less "
+        "than the number of samples 5.",
+        KMedoids(n_clusters=8).fit,
+        Xsmall,
+    )
 
 
 def test_random_deterministic():
@@ -55,9 +75,7 @@ def test_random_deterministic():
     X = load_iris()["data"]
     D = euclidean_distances(X)
 
-    medoids = KMedoids(
-        init="random",
-        )._initialize_medoids(D, 4, rng)
+    medoids = KMedoids(init="random")._initialize_medoids(D, 4, rng)
     assert_array_equal(medoids, [47, 117, 67, 103])
 
 
@@ -68,13 +86,9 @@ def test_heuristic_deterministic():
     X = load_iris()["data"]
     D = euclidean_distances(X)
 
-    medoids_1 = KMedoids(
-        init="heuristic",
-        )._initialize_medoids(D, 10, rng1)
+    medoids_1 = KMedoids(init="heuristic")._initialize_medoids(D, 10, rng1)
 
-    medoids_2 = KMedoids(
-        init="heuristic",
-        )._initialize_medoids(D, 10, rng2)
+    medoids_2 = KMedoids(init="heuristic")._initialize_medoids(D, 10, rng2)
 
     assert_array_equal(medoids_1, medoids_2)
 
@@ -102,20 +116,16 @@ def test_kmedoids_empty_clusters():
     assert_warns_message(UserWarning, "Cluster 1 is empty!", kmedoids.fit, X)
 
 
-@mock.patch.object(KMedoids, '_kpp_init', return_value=object())
+@mock.patch.object(KMedoids, "_kpp_init", return_value=object())
 def test_kpp_called(_kpp_init_mocked):
     """KMedoids._kpp_init method should be called by _initialize_medoids"""
     D = np.array([[0, 1], [1, 0]])
     n_clusters = 2
     rng = np.random.RandomState(seed)
     kmedoids = KMedoids()
-    kmedoids.init = 'k-medoids++'
+    kmedoids.init = "k-medoids++"
     # set _kpp_init_mocked.return_value to a singleton
-    initial_medoids = kmedoids._initialize_medoids(
-        D,
-        n_clusters,
-        rng,
-    )
+    initial_medoids = kmedoids._initialize_medoids(D, n_clusters, rng)
 
     # assert that _kpp_init was called and its result was returned.
     _kpp_init_mocked.assert_called_once_with(D, n_clusters, rng)
@@ -126,20 +136,19 @@ def test_kmedoids_pp():
     """Initial clusters should be well-separated for k-medoids++"""
     rng = np.random.RandomState(seed)
     kmedoids = KMedoids()
-    X = [[10, 0],
-         [11, 0],
-         [0, 10],
-         [0, 11],
-         [10, 10],
-         [11, 10],
-         [12, 10],
-         [10, 11],
-         ]
+    X = [
+        [10, 0],
+        [11, 0],
+        [0, 10],
+        [0, 11],
+        [10, 10],
+        [11, 10],
+        [12, 10],
+        [10, 11],
+    ]
     D = euclidean_distances(X)
 
-    centers = kmedoids._kpp_init(D,
-                                 n_clusters=3,
-                                 random_state_=rng)
+    centers = kmedoids._kpp_init(D, n_clusters=3, random_state_=rng)
 
     assert len(centers) == 3
 
@@ -150,23 +159,12 @@ def test_kmedoids_pp():
 def test_precomputed():
     """Test the 'precomputed' distance metric."""
     rng = np.random.RandomState(seed)
-    X_1 = [
-        [1.0, 0.0],
-        [1.1, 0.0],
-        [0.0, 1.0],
-        [0.0, 1.1]
-    ]
+    X_1 = [[1.0, 0.0], [1.1, 0.0], [0.0, 1.0], [0.0, 1.1]]
     D_1 = euclidean_distances(X_1)
-    X_2 = [
-        [1.1, 0.0],
-        [0.0, 0.9]
-    ]
+    X_2 = [[1.1, 0.0], [0.0, 0.9]]
     D_2 = euclidean_distances(X_2, X_1)
 
-    kmedoids = KMedoids(metric="precomputed",
-                        n_clusters=2,
-                        random_state=rng,
-                        )
+    kmedoids = KMedoids(metric="precomputed", n_clusters=2, random_state=rng)
     kmedoids.fit(D_1)
 
     assert_allclose(kmedoids.inertia_, 0.2)
@@ -184,17 +182,18 @@ def test_precomputed():
 
 def test_kmedoids_fit_naive():
     n_clusters = 3
-    metric = 'euclidean'
+    metric = "euclidean"
 
     model = KMedoids(n_clusters=n_clusters, metric=metric)
     Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     model.fit(Xnaive)
 
-    assert_array_equal(model.cluster_centers_,
-                       [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    assert_array_equal(
+        model.cluster_centers_, [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    )
     assert_array_equal(model.labels_, [0, 1, 2])
-    assert model.inertia_ == 0.
+    assert model.inertia_ == 0.0
 
     # diagonal must be zero, off-diagonals must be positive
     X_new = model.transform(Xnaive)
@@ -208,37 +207,35 @@ def test_kmedoids_fit_naive():
 def test_max_iter():
     """Test that warning message is thrown when max_iter is reached."""
     rng = np.random.RandomState(seed)
-    X_iris = load_iris()['data']
+    X_iris = load_iris()["data"]
 
-    model = KMedoids(n_clusters=10,
-                     init='random',
-                     random_state=rng,
-                     max_iter=1,
-                     )
-    assert_warns_message(UserWarning,
-                         "Maximum number of iteration reached before",
-                         model.fit,
-                         X_iris,
-                         )
+    model = KMedoids(
+        n_clusters=10, init="random", random_state=rng, max_iter=1
+    )
+    assert_warns_message(
+        UserWarning,
+        "Maximum number of iteration reached before",
+        model.fit,
+        X_iris,
+    )
 
 
 def test_kmedoids_iris():
     """Test kmedoids on the Iris dataset"""
     rng = np.random.RandomState(seed)
-    X_iris = load_iris()['data']
+    X_iris = load_iris()["data"]
 
     ref_model = KMeans(n_clusters=3).fit(X_iris)
 
-    avg_dist_to_closest_centroid = ref_model\
-        .transform(X_iris).min(axis=1).mean()
+    avg_dist_to_closest_centroid = (
+        ref_model.transform(X_iris).min(axis=1).mean()
+    )
 
-    for init in ['random', 'heuristic', 'k-medoids++']:
-        distance_metric = 'euclidean'
-        model = KMedoids(n_clusters=3,
-                         metric=distance_metric,
-                         init=init,
-                         random_state=rng,
-                         )
+    for init in ["random", "heuristic", "k-medoids++"]:
+        distance_metric = "euclidean"
+        model = KMedoids(
+            n_clusters=3, metric=distance_metric, init=init, random_state=rng
+        )
         model.fit(X_iris)
 
         # test convergence in reasonable number of steps
@@ -254,8 +251,9 @@ def test_kmedoids_iris():
         # we can compare its performance to
         # K-Means. We want the average distance to cluster centers
         # to be similar between K-Means and K-Medoids
-        assert_allclose(avg_dist_to_closest_medoid,
-                        avg_dist_to_closest_centroid, rtol=0.1)
+        assert_allclose(
+            avg_dist_to_closest_medoid, avg_dist_to_closest_centroid, rtol=0.1
+        )
 
 
 def test_kmedoids_fit_predict_transform():
@@ -293,8 +291,7 @@ def test_outlier_robustness():
     kmeans = KMeans(n_clusters=2, random_state=rng)
     kmedoids = KMedoids(n_clusters=2, random_state=rng)
 
-    X = [[-11, 0], [-10, 0], [-9, 0],
-         [0, 0], [1, 0], [2, 0], [1000, 0]]
+    X = [[-11, 0], [-10, 0], [-9, 0], [0, 0], [1, 0], [2, 0], [1000, 0]]
 
     kmeans.fit(X)
     kmedoids.fit(X)
