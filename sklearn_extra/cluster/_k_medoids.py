@@ -357,9 +357,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         n_clusters : integer
             The number of seeds to choose
 
-        x_squared_norms : array, shape (n_samples,)
-            Squared Euclidean norm of each data point.
-
         random_state : RandomState
             The generator used to initialize the centers.
 
