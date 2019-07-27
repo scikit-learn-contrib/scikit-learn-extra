@@ -19,7 +19,7 @@ EigenPro
 .. currentmodule:: doc
 
 .. toctree::
-   modules/fast_kernel
+   modules/eigenpro
 
 .. currentmodule:: sklearn_extra
 
@@ -27,5 +27,5 @@ EigenPro
    :toctree: generated/
    :template: class.rst
 
-   fast_kernel.FKREigenPro
-   fast_kernel.FKCEigenPro
+   eigenpro.EigenProRegressor
+   eigenpro.EigenProClassifier

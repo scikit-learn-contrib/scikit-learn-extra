@@ -2,6 +2,11 @@
 
 .. _user_guide:
 
+.. toctree::
+     :numbered:
+
+     modules/eigenpro.rst
+
 ==========
 User guide
 ==========

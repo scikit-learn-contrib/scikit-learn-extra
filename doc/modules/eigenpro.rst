@@ -4,7 +4,7 @@
 Fast Kernel Machine (EigenPro) for Regression and Classification
 ================================================================
 
-.. currentmodule:: sklearn_extra.fast_kernel
+.. currentmodule:: sklearn_extra.eigenpro
 
 Fast Kernel Machine is a very efficient implementation of kernel regression/classification
 using *EigenPro iteration* [MB17]_,

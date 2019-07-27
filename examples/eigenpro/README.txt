@@ -1,6 +1,6 @@
-.. _fast_kernel_examples:
+.. _eigenpro_examples:
 
-Fast Kernel
-===========
+Eigenpro
+========
 
 Examples concerning the :mod:`sklearn.fast_kernel` module.

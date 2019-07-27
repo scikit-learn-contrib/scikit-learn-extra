@@ -1,11 +1,11 @@
 """
-===================================================
-Comparison of FKC_EigenPro and SVC on Fashion-MNIST
-===================================================
+===============================================
+Comparison of EigenPro and SVC on Fashion-MNIST
+===============================================
 
-Here we train a Fast Kernel Classifier (EigenPro) and a Support
+Here we train a EigenPro Classifier and a Support
 Vector Classifier (SVC) on subsets of MNIST of various sizes.
-We halt the training of EigenPro in two epochs.
+We halt the training of EigenPro after two epochs.
 Experimental results on MNIST demonstrate more than 3 times
 speedup of EigenPro over SVC in training time. EigenPro also
 shows consistently lower classification error on test set.
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
-from sklearn_extra.fast_kernel import FKCEigenPro
+from sklearn_extra.eigenpro import EigenProClassifier
 from sklearn.svm import SVC
 from sklearn.datasets import fetch_openml
 
@@ -34,10 +34,10 @@ y_train = np.int32(mnist.target[p])
 x_test = mnist.data[60000:]
 y_test = np.int32(mnist.target[60000:])
 
-# Run tests comparing fkc to svc
-fkc_fit_times = []
-fkc_pred_times = []
-fkc_err = []
+# Run tests comparing eig to svc
+eig_fit_times = []
+eig_pred_times = []
+eig_err = []
 svc_fit_times = []
 svc_pred_times = []
 svc_err = []
@@ -51,8 +51,10 @@ bandwidth = 5.0
 for train_size in train_sizes:
     for name, estimator in [
         (
-            "FastKernel",
-            FKCEigenPro(n_epoch=2, bandwidth=bandwidth, random_state=rng),
+            "EigenPro",
+            EigenProClassifier(
+                n_epoch=2, bandwidth=bandwidth, random_state=rng
+            ),
         ),
         (
             "SupportVector",
@@ -70,10 +72,10 @@ for train_size in train_sizes:
         pred_t = time() - stime
 
         err = 100.0 * np.sum(y_pred_test != y_test) / len(y_test)
-        if name == "FastKernel":
-            fkc_fit_times.append(fit_t)
-            fkc_pred_times.append(pred_t)
-            fkc_err.append(err)
+        if name == "EigenPro":
+            eig_fit_times.append(fit_t)
+            eig_pred_times.append(pred_t)
+            eig_err.append(err)
         else:
             svc_fit_times.append(fit_t)
             svc_pred_times.append(pred_t)
@@ -90,7 +92,9 @@ ax = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
 # Graph fit(train) time
 train_size_labels = [str(s) for s in train_sizes]
 ax.plot(train_sizes, svc_fit_times, "o--", color="g", label="SVC")
-ax.plot(train_sizes, fkc_fit_times, "o-", color="r", label="FKC (EigenPro)")
+ax.plot(
+    train_sizes, eig_fit_times, "o-", color="r", label="EigenPro Classifier"
+)
 ax.set_xscale("log")
 ax.set_yscale("log", nonposy="clip")
 ax.set_xlabel("train size")
@@ -104,7 +108,7 @@ ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 
 # Graph prediction(test) time
 ax = plt.subplot2grid((2, 2), (0, 1), rowspan=1)
-ax.plot(train_sizes, fkc_pred_times, "o-", color="r")
+ax.plot(train_sizes, eig_pred_times, "o-", color="r")
 ax.plot(train_sizes, svc_pred_times, "o--", color="g")
 ax.set_xscale("log")
 ax.set_yscale("log", nonposy="clip")
@@ -115,7 +119,7 @@ ax.set_xticks([], minor=True)
 
 # Graph training error
 ax = plt.subplot2grid((2, 2), (1, 1), rowspan=1)
-ax.plot(train_sizes, fkc_err, "o-", color="r")
+ax.plot(train_sizes, eig_err, "o-", color="r")
 ax.plot(train_sizes, svc_err, "o-", color="g")
 ax.set_xscale("log")
 ax.set_xticks(train_sizes)
