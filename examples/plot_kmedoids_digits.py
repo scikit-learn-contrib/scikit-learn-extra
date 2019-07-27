@@ -9,7 +9,6 @@ metrics for K-Medoids.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from collections import namedtuple
 from sklearn.cluster import KMeans
 from sklearn_extra.cluster import KMedoids
 from sklearn.datasets import load_digits
@@ -47,21 +46,18 @@ plt.suptitle(
     fontsize=14,
 )
 
-Algorithm = namedtuple("ClusterAlgorithm", ["model", "description"])
 
 selected_models = [
-    Algorithm(
+    (
         KMedoids(metric="manhattan", n_clusters=n_digits),
         "KMedoids (manhattan)",
     ),
-    Algorithm(
+    (
         KMedoids(metric="euclidean", n_clusters=n_digits),
         "KMedoids (euclidean)",
     ),
-    Algorithm(
-        KMedoids(metric="cosine", n_clusters=n_digits), "KMedoids (cosine)"
-    ),
-    Algorithm(KMeans(n_clusters=n_digits), "KMeans"),
+    (KMedoids(metric="cosine", n_clusters=n_digits), "KMedoids (cosine)"),
+    (KMeans(n_clusters=n_digits), "KMeans"),
 ]
 
 plot_rows = int(np.ceil(len(selected_models) / 2.0))
