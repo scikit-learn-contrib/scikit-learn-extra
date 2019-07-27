@@ -111,11 +111,11 @@ class BaseEigenPro(BaseEstimator):
         m, _ = X.shape
         K = self._kernel(X, X)
 
-        # Use float64 so eigh doesn't occassionally crash and burn and fail
         W = K / m
         try:
             E, Lambda = eigh(W, eigvals=(m - n_components, m - 1))
         except LinAlgError:
+            # Use float64 when eigh fails due to precision
             W = np.float64(W)
             E, Lambda = eigh(W, eigvals=(m - n_components, m - 1))
             E, Lambda = np.float32(E), np.float32(Lambda)
@@ -509,7 +509,7 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
 
 
 class EigenProClassifier(BaseEigenPro, ClassifierMixin):
-    """Fast kernel classification using EigenPro iteration.
+    """Classification using EigenPro iteration.
 
     Train least squared kernel classification model with mini-batch EigenPro
     iteration.
@@ -546,6 +546,7 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
         gamma = .5/(bandwidth^2). Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
+
     gamma : float, default=None
         Gamma parameter for the RBF, polynomial, exponential chi2
         and sigmoid kernels. Interpretation of the default value is left
