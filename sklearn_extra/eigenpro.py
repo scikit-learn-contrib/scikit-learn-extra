@@ -3,7 +3,6 @@
 
 import numpy as np
 from scipy.linalg import eigh, LinAlgError
-from abc import ABC, abstractmethod
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
 from sklearn.utils import check_random_state
@@ -11,12 +10,11 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
 
-class BaseEigenPro(BaseEstimator, ABC):
+class BaseEigenPro(BaseEstimator):
     """
-    Base class for Fast Kernel/Eigenpro iteration.
+    Base class for EigenPro iteration.
     """
 
-    @abstractmethod
     def __init__(
         self,
         batch_size="auto",
@@ -300,7 +298,7 @@ class BaseEigenPro(BaseEstimator, ABC):
             )
 
     def _raw_fit(self, X, Y):
-        """Train fast kernel regression model
+        """Train eigenpro regression model
 
         Parameters
         ----------
@@ -347,9 +345,7 @@ class BaseEigenPro(BaseEstimator, ABC):
                 # Update 1: Sampled Coordinate Block.
                 gradient = np.dot(kfeat, self.coef_) - batch_y
 
-                self.coef_[batch_inds] = (
-                    self.coef_[batch_inds] - step * gradient
-                )
+                self.coef_[batch_inds] -= step * gradient
 
                 # Update 2: Fixed Coordinate Block
                 delta = np.dot(
@@ -397,8 +393,8 @@ class BaseEigenPro(BaseEstimator, ABC):
         return {"multioutput": True}
 
 
-class FKREigenPro(BaseEigenPro, RegressorMixin):
-    """Fast kernel regression using EigenPro iteration.
+class EigenProRegressor(BaseEigenPro, RegressorMixin):
+    """Regression using EigenPro iteration.
 
     Train least squared kernel regression model with mini-batch EigenPro
     iteration.
@@ -408,7 +404,7 @@ class FKREigenPro(BaseEigenPro, RegressorMixin):
     batch_size : int, default = 'auto'
         Mini-batch size for gradient descent.
 
-    n_epoch : int, default = 1
+    n_epoch : int, default = 2
         The number of passes over the training data.
 
     n_components : int, default = 1000
@@ -422,11 +418,11 @@ class FKREigenPro(BaseEigenPro, RegressorMixin):
         The number of subsamples used for estimating the largest
         n_component eigenvalues and eigenvectors. When it is set to 'auto',
         it will be 4000 if there are less than 100,000 samples
-        (for training), and otherwise 10000.
+        (for training), and otherwise 12000.
 
     kernel : string or callable, default = "rbf"
         Kernel mapping used internally. Strings can be anything supported
-        by sklearn's library, however, there is special support for the
+        by scikit-learn, however, there is special support for the
         rbf, laplace, and cauchy kernels. If a callable is given, it should
         accept two arguments and return a floating point number.
 
@@ -462,17 +458,17 @@ class FKREigenPro(BaseEigenPro, RegressorMixin):
 
     Examples
     --------
-    >>> from sklearn_extra.fast_kernel import FKREigenPro
+    >>> from sklearn_extra.eigenpro import EigenProRegressor
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
     >>> x_train = rng.randn(n_samples, n_features)
     >>> y_train = rng.randn(n_samples, n_targets)
-    >>> rgs = FKREigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs = EigenProRegressor(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    FKREigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                kernel='rbf', kernel_params=None, n_components=1000, n_epoch=3,
-                random_state=None, subsample_size=50)
+    EigenProRegressor(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
+                      kernel='rbf', kernel_params=None, n_components=1000,
+                      n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
@@ -512,7 +508,7 @@ class FKREigenPro(BaseEigenPro, RegressorMixin):
         return self._raw_predict(X)
 
 
-class FKCEigenPro(BaseEigenPro, ClassifierMixin):
+class EigenProClassifier(BaseEigenPro, ClassifierMixin):
     """Fast kernel classification using EigenPro iteration.
 
     Train least squared kernel classification model with mini-batch EigenPro
@@ -523,7 +519,7 @@ class FKCEigenPro(BaseEigenPro, ClassifierMixin):
     batch_size : int, default = 'auto'
         Mini-batch size for gradient descent.
 
-    n_epoch : int, default = 1
+    n_epoch : int, default = 2
         The number of passes over the training data.
 
     n_components : int, default = 1000
@@ -537,11 +533,11 @@ class FKCEigenPro(BaseEigenPro, ClassifierMixin):
         The size of subsamples used for estimating the largest
         n_component eigenvalues and eigenvectors. When it is set to
         'auto', it will be 4000 if there are less than 100,000 samples
-        (for training), and otherwise 10000.
+        (for training), and otherwise 12000.
 
     kernel : string or callable, default = "rbf"
         Kernel mapping used internally. Strings can be anything supported
-        by sklearn's library, however, there is special support for the
+        by scikit-learn, however, there is special support for the
         rbf, laplace, and cauchy kernels. If a callable is given, it should
         accept two arguments and return a floating point number.
 
@@ -583,17 +579,18 @@ class FKCEigenPro(BaseEigenPro, ClassifierMixin):
 
     Examples
     --------
-    >>> from sklearn_extra.fast_kernel import FKCEigenPro
+    >>> from sklearn_extra.eigenpro import EigenProClassifier
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
     >>> x_train = rng.randn(n_samples, n_features)
     >>> y_train = rng.randint(n_targets, size=n_samples)
-    >>> rgs = FKCEigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs = EigenProClassifier(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    FKCEigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                kernel='rbf', kernel_params=None, n_components=1000, n_epoch=3,
-                random_state=None, subsample_size=50)
+    EigenProClassifier(bandwidth=1, batch_size='auto', coef0=1, degree=3,
+                       gamma=None, kernel='rbf', kernel_params=None,
+                       n_components=1000, n_epoch=3, random_state=None,
+                       subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """
@@ -627,7 +624,7 @@ class FKCEigenPro(BaseEigenPro, ClassifierMixin):
         )
 
     def fit(self, X, Y):
-        """ Train fast kernel classification model
+        """ Train eigenpro classification model
 
         Parameters
         ----------
@@ -659,7 +656,7 @@ class FKCEigenPro(BaseEigenPro, ClassifierMixin):
         class_matrix = np.zeros((Y.shape[0], self.classes_.shape[0]))
 
         for ind, label in enumerate(Y):
-            class_matrix[ind][loc[label]] = 1
+            class_matrix[ind, loc[label]] = 1
         self._raw_fit(X, class_matrix)
         return self
 

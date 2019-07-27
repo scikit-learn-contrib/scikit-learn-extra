@@ -1,13 +1,12 @@
 import numpy as np
 
 from sklearn.datasets import make_regression, make_classification
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn_extra.fast_kernel import FKREigenPro, FKCEigenPro
+from sklearn.utils.testing import assert_allclose
+from sklearn_extra.eigenpro import EigenProRegressor, EigenProClassifier
 
 import pytest
 
-np.random.seed(1)
-# Tests for Fast Kernel Regression and Classification.
+# Tests for EigenPro Regression and Classification.
 
 
 def gen_regression(params):
@@ -24,7 +23,10 @@ def gen_classification(params):
 
 @pytest.mark.parametrize(
     "estimator, data",
-    [(FKREigenPro, gen_regression({})), (FKCEigenPro, gen_classification({}))],
+    [
+        (EigenProRegressor, gen_regression({})),
+        (EigenProClassifier, gen_classification({})),
+    ],
 )
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -55,21 +57,21 @@ def test_parameter_validation(estimator, data, params, err_msg):
         # Test rbf kernel
         (
             gen_regression({}),
-            FKREigenPro(
+            EigenProRegressor(
                 kernel="rbf", n_epoch=100, bandwidth=10, random_state=1
             ),
         ),
         # Test laplacian kernel
         (
             gen_regression({}),
-            FKREigenPro(
+            EigenProRegressor(
                 kernel="laplace", n_epoch=100, bandwidth=8, random_state=1
             ),
         ),
         # Test cauchy kernel
         (
             gen_regression({}),
-            FKREigenPro(
+            EigenProRegressor(
                 kernel="cauchy",
                 n_epoch=100,
                 bandwidth=10,
@@ -80,21 +82,21 @@ def test_parameter_validation(estimator, data, params, err_msg):
         # Test with multiple outputs
         (
             gen_regression({"n_features": 200, "n_targets": 30}),
-            FKREigenPro(
+            EigenProRegressor(
                 kernel="rbf", n_epoch=100, bandwidth=14, random_state=1
             ),
         ),
         # Test with a very large number of input features
         (
             gen_regression({"n_features": 10000}),
-            FKREigenPro(
+            EigenProRegressor(
                 kernel="rbf", n_epoch=100, bandwidth=1, random_state=1
             ),
         ),
         # Test a very simple underlying distribution
         (
             gen_regression({"n_informative": 1}),
-            FKREigenPro(
+            EigenProRegressor(
                 batch_size=500,
                 kernel="rbf",
                 n_epoch=100,
@@ -105,7 +107,7 @@ def test_parameter_validation(estimator, data, params, err_msg):
         # Test a very complex underlying distribution
         (
             gen_regression({"n_samples": 500, "n_informative": 100}),
-            FKREigenPro(
+            EigenProRegressor(
                 kernel="rbf", n_epoch=60, bandwidth=10, random_state=1
             ),
         ),
@@ -113,7 +115,7 @@ def test_parameter_validation(estimator, data, params, err_msg):
 )
 def test_regressor_accuracy(data, estimator):
     """
-    Test the accuracy of the Fast Kernel Regressor on multiple
+    Test the accuracy of the EigenPro Regressor on multiple
     data sets with different parameter inputs. We expect that the
     regressor should achieve near-zero training error after sufficient
     training time.
@@ -122,31 +124,33 @@ def test_regressor_accuracy(data, estimator):
     """
     X, y = data
     prediction = estimator.fit(X, y).predict(X)
-    assert_array_almost_equal(abs(prediction / y) / 2.0, 0.5, decimal=2)
+    assert_allclose(prediction, y, rtol=5e-3)
 
 
-def test_fast_kernel_regression_duplicate_data():
+def test_eigenpro_regression_duplicate_data():
     """Test the performance when some data is repeated"""
     X, y = make_regression(random_state=1)
     X, y = np.concatenate([X, X]), np.concatenate([y, y])
-    fkr_prediction = (
-        FKREigenPro(kernel="rbf", n_epoch=100, bandwidth=5, random_state=1)
+    prediction = (
+        EigenProRegressor(
+            kernel="rbf", n_epoch=100, bandwidth=5, random_state=1
+        )
         .fit(X, y)
         .predict(X)
     )
-    assert_array_almost_equal(abs(fkr_prediction / y) / 2.0, 0.5, decimal=2)
+    assert_allclose(prediction, y, rtol=5e-3)
 
 
-def test_fast_kernel_regression_conflict_data():
+def test_eigenpro_regression_conflict_data():
     """Make sure the regressor doesn't crash when conflicting
     data is given"""
     X, y = make_regression(random_state=1)
     y = np.reshape(y, (-1, 1))
     X, y = X, np.hstack([y, y + 2])
     # Make sure we don't throw an error when fitting or predicting
-    FKREigenPro(kernel="linear", n_epoch=5, bandwidth=1, random_state=1).fit(
-        X, y
-    ).predict(X)
+    EigenProRegressor(
+        kernel="linear", n_epoch=5, bandwidth=1, random_state=1
+    ).fit(X, y).predict(X)
 
 
 # Tests for FastKernelClassification
@@ -158,7 +162,7 @@ def test_fast_kernel_regression_conflict_data():
         # Test rbf kernel
         (
             gen_classification({"n_samples": 10, "hypercube": False}),
-            FKCEigenPro(
+            EigenProClassifier(
                 batch_size=9,
                 kernel="rbf",
                 bandwidth=2.5,
@@ -169,14 +173,14 @@ def test_fast_kernel_regression_conflict_data():
         # Test laplacian kernel
         (
             gen_classification({}),
-            FKCEigenPro(
+            EigenProClassifier(
                 kernel="laplace", n_epoch=100, bandwidth=13, random_state=1
             ),
         ),
         # Test cauchy kernel
         (
             gen_classification({}),
-            FKCEigenPro(
+            EigenProClassifier(
                 kernel="cauchy", n_epoch=100, bandwidth=10, random_state=1
             ),
         ),
@@ -192,21 +196,21 @@ def test_fast_kernel_regression_conflict_data():
                     "shift": 6,
                 }
             ),
-            FKCEigenPro(
+            EigenProClassifier(
                 kernel="rbf", n_epoch=100, bandwidth=20, random_state=1
             ),
         ),
         # Test a distribution that has been shifted
         (
             gen_classification({"shift": 1, "hypercube": False}),
-            FKCEigenPro(
+            EigenProClassifier(
                 kernel="rbf", n_epoch=200, bandwidth=8, random_state=1
             ),
         ),
         # Test with many redundant features.
         (
             gen_classification({"n_redundant": 18}),
-            FKCEigenPro(
+            EigenProClassifier(
                 kernel="laplace", n_epoch=100, bandwidth=20, random_state=1
             ),
         ),
@@ -214,7 +218,7 @@ def test_fast_kernel_regression_conflict_data():
 )
 def test_classifier_accuracy(data, estimator):
     """
-    Test the accuracy of the Fast Kernel Classification on multiple
+    Test the accuracy of the EigenPro Classification on multiple
     data sets with different parameter inputs. We expect that the
     classification should achieve zero training error after sufficient
     training time.
@@ -223,29 +227,31 @@ def test_classifier_accuracy(data, estimator):
     """
     X, y = data
     prediction = estimator.fit(X, y).predict(X)
-    assert_array_almost_equal(prediction, y)
+    assert_allclose(prediction, y, rtol=5e-3)
 
 
-def test_fast_kernel_classification_duplicate_data():
+def test_eigenpro_classification_duplicate_data():
     """
     Make sure that the classifier correctly handles cases
     where some data is repeated.
     """
     X, y = make_classification(n_features=200, n_repeated=50, random_state=1)
-    fkc_prediction = (
-        FKCEigenPro(kernel="rbf", n_epoch=60, bandwidth=1, random_state=1)
+    prediction = (
+        EigenProClassifier(
+            kernel="rbf", n_epoch=60, bandwidth=1, random_state=1
+        )
         .fit(X, y)
         .predict(X)
     )
-    assert_array_almost_equal(fkc_prediction, y)
+    assert_allclose(prediction, y, rtol=5e-3)
 
 
-def test_fast_kernel_classification_conflict_data():
+def test_eigenpro_classification_conflict_data():
     """Make sure that the classifier doesn't crash
     when given conflicting input data"""
     X, y = make_classification(random_state=1)
     X, y = np.concatenate([X, X]), np.concatenate([y, 1 - y])
     # Make sure we don't throw an error when fitting or predicting
-    FKCEigenPro(kernel="linear", n_epoch=5, bandwidth=5, random_state=1).fit(
-        X, y
-    ).predict(X)
+    EigenProClassifier(
+        kernel="linear", n_epoch=5, bandwidth=5, random_state=1
+    ).fit(X, y).predict(X)
