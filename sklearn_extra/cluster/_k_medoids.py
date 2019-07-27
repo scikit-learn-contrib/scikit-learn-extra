@@ -346,6 +346,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return medoids
 
+    # Copied from sklearn.cluster.k_means_._k_init
     def _kpp_init(self, D, n_clusters, random_state_, n_local_trials=None):
         """Init n_clusters seeds with a method similar to k-means++
 
