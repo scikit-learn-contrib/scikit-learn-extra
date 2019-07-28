@@ -263,7 +263,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Returns
         -------
-        X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
+        X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
         X = check_array(X, accept_sparse=["csr", "csc"])
@@ -288,7 +288,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Returns
         -------
-        labels : array, shape = (n_samples,)
+        labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
         X = check_array(X, accept_sparse=["csr", "csc"])
