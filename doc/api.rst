@@ -12,3 +12,13 @@ Kernel approximation
    :template: class.rst
 
    kernel_approximation.Fastfood
+
+Clustering
+====================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   cluster.KMedoids
+
