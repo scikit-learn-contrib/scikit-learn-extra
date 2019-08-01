@@ -78,7 +78,8 @@ class BaseEigenPro(BaseEstimator):
         distance = euclidean_distances(X, Y, squared=True)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "rbf":
-            K = np.exp(-distance / (2.0 * bandwidth * bandwidth))
+            distance = distance / (-2.0 * bandwidth * bandwidth)
+            K = np.exp(distance)
         elif self.kernel == "laplace":
             d = np.maximum(distance, 0)
             K = np.exp(-np.sqrt(d) / bandwidth)
@@ -236,8 +237,9 @@ class BaseEigenPro(BaseEstimator):
         n_components = min(sample_size - 1, self.n_components)
         n_components = max(1, n_components)
 
-        # Each batch will require about 1 gb memory
-        mem_bytes = 1024 ** 3
+        # Approximate amount of memory that we want to use
+        mem_bytes = 0.1 * 1024 ** 3
+        # Memory used with a certain sample size
         mem_usages = (d + n_label + 2 * np.arange(sample_size)) * n * 4
         mG = np.int32(np.sum(mem_usages < mem_bytes))
 
@@ -368,7 +370,7 @@ class BaseEigenPro(BaseEstimator):
             Predicted targets.
         """
         check_is_fitted(self, ["bs_", "centers_", "coef_", "was_1D_"])
-        X = np.asarray(X, dtype=np.float64)
+        X = np.asarray(X, dtype=np.float32)
 
         if len(X.shape) == 1:
             raise ValueError(
@@ -458,7 +460,7 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
 
     Examples
     --------
-    >>> from sklearn_extra.eigenpro import EigenProRegressor
+    >>> from sklearn_extra.kernel_methods import EigenProRegressor
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
@@ -580,7 +582,7 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
 
     Examples
     --------
-    >>> from sklearn_extra.eigenpro import EigenProClassifier
+    >>> from sklearn_extra.kernel_methods import EigenProClassifier
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
     >>> rng = np.random.RandomState(1)
