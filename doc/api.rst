@@ -27,15 +27,5 @@ EigenPro
    :toctree: generated/
    :template: class.rst
 
-   kernel_methods.EigenProRegressor
-   kernel_methods.EigenProClassifier
-
-Clustering
-====================
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   cluster.KMedoids
-
+   eigenpro.EigenProRegressor
+   eigenpro.EigenProClassifier

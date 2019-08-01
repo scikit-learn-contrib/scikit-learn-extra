@@ -4,7 +4,7 @@ import numpy as np
 from time import time
 
 from sklearn.datasets import fetch_openml
-from sklearn_extra.kernel_methods import EigenProClassifier
+from sklearn_extra.eigenpro import EigenProClassifier
 from sklearn.svm import SVC
 
 rng = np.random.RandomState(1)

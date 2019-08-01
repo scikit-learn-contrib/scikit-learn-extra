@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
-from sklearn_extra.kernel_methods import EigenProClassifier
+from sklearn_extra.eigenpro import EigenProClassifier
 from sklearn.svm import SVC
 from sklearn.datasets import fetch_openml
 
@@ -43,7 +43,6 @@ svc_pred_times = []
 svc_err = []
 
 train_sizes = [500, 1000, 2000]
-
 print("Train Sizes: " + str(train_sizes))
 
 bandwidth = 5.0
@@ -127,6 +126,6 @@ ax.set_xticks(train_sizes)
 ax.set_xticklabels(train_size_labels)
 ax.set_xticks([], minor=True)
 ax.set_xlabel("train size")
-ax.set_ylabel("Classification error %")
+ax.set_ylabel("classification error %")
 plt.tight_layout()
 plt.show()

@@ -4,7 +4,7 @@
 EigenPro for Regression and Classification
 ==========================================
 
-.. currentmodule:: sklearn_extra.kernel_methods
+.. currentmodule:: sklearn_extra.eigenpro
 
 *EigenPro iteration* [MB17]_ is a very efficient implementation of kernel
 regression/classification that uses an optimization method based on
@@ -18,7 +18,7 @@ This results in a simple and user-friendly interface.
 
 Next, we present several experimental results using a server equipped with one
 Intel Xeon E5-1620 CPU.
-The figure below compares the EigenPro Classifier and the Support Vector
+The figure below compares the Fast Kernel Classifier (EigenPro) and the Support Vector
 Classifier (:class:`SVC`) on MNIST digits classification task.
 We see that EigenPro and SVC give competitive and similar accuracy on test set.
 Notably, on the full MNIST training and testing using EigenPro are
