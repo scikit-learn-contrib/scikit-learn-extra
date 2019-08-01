@@ -3,7 +3,7 @@ import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
 from sklearn_extra.kernel_approximation import Fastfood
-from sklearn_extra.kernel_methods import eigenpro
+from sklearn_extra.kernel_methods import _eigenpro
 from sklearn_extra.cluster import KMedoids
 
 
@@ -12,8 +12,8 @@ from sklearn_extra.cluster import KMedoids
     [
         Fastfood,
         KMedoids,
-        eigenpro.EigenProClassifier,
-        eigenpro.EigenProRegressor,
+        _eigenpro.EigenProClassifier,
+        _eigenpro.EigenProRegressor,
     ],
 )
 def test_all_estimators(Estimator, request):

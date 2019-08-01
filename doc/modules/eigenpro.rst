@@ -4,7 +4,7 @@
 EigenPro for Regression and Classification
 ==========================================
 
-.. currentmodule:: sklearn_extra.kernel_methods.eigenpro
+.. currentmodule:: sklearn_extra.kernel_methods
 
 *EigenPro iteration* [MB17]_ is a very efficient implementation of kernel
 regression/classification that uses an optimization method based on
