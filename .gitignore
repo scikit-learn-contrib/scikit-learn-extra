@@ -8,6 +8,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Text Editors
+.vscode/
+
 # scikit-learn specific
 doc/_build/
 doc/auto_examples/
@@ -17,6 +20,7 @@ doc/datasets/generated/
 # Distribution / packaging
 
 .Python
+venv/
 env/
 build/
 develop-eggs/

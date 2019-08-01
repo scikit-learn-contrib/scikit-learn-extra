@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn.datasets import make_regression, make_classification
 from sklearn.utils.testing import assert_allclose
-from sklearn_extra.eigenpro import EigenProRegressor, EigenProClassifier
+from sklearn_extra.kernel_methods import EigenProRegressor, EigenProClassifier
 
 import pytest
 
