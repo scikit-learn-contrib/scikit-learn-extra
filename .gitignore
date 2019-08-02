@@ -71,3 +71,7 @@ doc/generated/
 
 # PyBuilder
 target/
+
+# Pycharm
+.idea
+venv/
