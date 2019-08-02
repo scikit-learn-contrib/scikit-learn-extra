@@ -370,7 +370,7 @@ class BaseEigenPro(BaseEstimator):
             Predicted targets.
         """
         check_is_fitted(self, ["bs_", "centers_", "coef_", "was_1D_"])
-        X = np.asarray(X, dtype=np.float32)
+        X = np.asarray(X, dtype=np.float64)
 
         if len(X.shape) == 1:
             raise ValueError(
