@@ -13,7 +13,7 @@ from sklearn_extra.cluster import KMedoids
         Fastfood,
         KMedoids,
         _eigenpro.EigenProClassifier,
-        pytest.param(_eigenpro.EigenProRegressor, marks=pytest.mark.xfail),
+        _eigenpro.EigenProRegressor,
     ],
 )
 def test_all_estimators(Estimator, request):
