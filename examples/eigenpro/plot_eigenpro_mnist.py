@@ -46,7 +46,7 @@ train_sizes = [500, 1000, 2000]
 
 print("Train Sizes: " + str(train_sizes))
 
-bandwidth = 5.0
+gamma = .02
 
 # Fit models to data
 for train_size in train_sizes:
@@ -54,13 +54,13 @@ for train_size in train_sizes:
         (
             "EigenPro",
             EigenProClassifier(
-                n_epoch=2, bandwidth=bandwidth, random_state=rng
+                n_epoch=2, gamma=gamma, random_state=rng
             ),
         ),
         (
             "SupportVector",
             SVC(
-                C=5, gamma=1.0 / (2 * bandwidth * bandwidth), random_state=rng
+                C=5, gamma=gamma, random_state=rng
             ),
         ),
     ]:

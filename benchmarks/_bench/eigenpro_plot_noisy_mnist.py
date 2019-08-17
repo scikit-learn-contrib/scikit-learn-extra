@@ -35,17 +35,18 @@ svc_err = []
 
 train_sizes = [500, 1000, 2000, 5000, 10000, 20000, 40000, 60000]
 
-bandwidth = 5.0
+gamma = .02
+
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
         (
             "EigenPro",
             EigenProClassifier(
-                n_epoch=2, bandwidth=bandwidth, random_state=rng
+                n_epoch=2, gamma=gamma, random_state=rng
             ),
         ),
-        ("SupportVector", SVC(C=5, gamma=1.0 / (2 * bandwidth * bandwidth))),
+        ("SupportVector", SVC(C=5, gamma=gamma)),
     ]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
