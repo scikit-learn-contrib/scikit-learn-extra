@@ -195,7 +195,7 @@ def test_eigenpro_regression_conflict_data():
                 }
             ),
             EigenProClassifier(
-                kernel="rbf", n_epoch=50, gamma='scale', random_state=1
+                kernel="rbf", n_epoch=50, gamma="scale", random_state=1
             ),
         ),
         # Test a distribution that has been shifted
@@ -250,6 +250,6 @@ def test_eigenpro_classification_conflict_data():
     X, y = make_classification(random_state=1)
     X, y = np.concatenate([X, X]), np.concatenate([y, 1 - y])
     # Make sure we don't throw an error when fitting or predicting
-    EigenProClassifier(
-        kernel="linear", n_epoch=5, random_state=1
-    ).fit(X, y).predict(X)
+    EigenProClassifier(kernel="linear", n_epoch=5, random_state=1).fit(
+        X, y
+    ).predict(X)
