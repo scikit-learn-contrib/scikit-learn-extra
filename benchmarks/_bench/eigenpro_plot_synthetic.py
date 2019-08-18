@@ -35,7 +35,7 @@ svc_err = []
 
 train_sizes = [2000, 5000, 10000, 20000, 50000]
 
-gamma = .005
+gamma = 0.005
 for train_size in train_sizes:
     for name, estimator in [
         (

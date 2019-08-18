@@ -46,23 +46,16 @@ train_sizes = [500, 1000, 2000]
 
 print("Train Sizes: " + str(train_sizes))
 
-gamma = .02
+gamma = 0.02
 
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
         (
             "EigenPro",
-            EigenProClassifier(
-                n_epoch=2, gamma=gamma, random_state=rng
-            ),
+            EigenProClassifier(n_epoch=2, gamma=gamma, random_state=rng),
         ),
-        (
-            "SupportVector",
-            SVC(
-                C=5, gamma=gamma, random_state=rng
-            ),
-        ),
+        ("SupportVector", SVC(C=5, gamma=gamma, random_state=rng)),
     ]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])

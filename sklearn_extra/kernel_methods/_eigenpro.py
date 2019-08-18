@@ -14,6 +14,7 @@ class BaseEigenPro(BaseEstimator):
     """
     Base class for EigenPro iteration.
     """
+
     def __init__(
         self,
         batch_size="auto",
@@ -71,7 +72,7 @@ class BaseEigenPro(BaseEstimator):
                 X, Y, metric=self.kernel, filter_params=True, **params
             )
         distance = euclidean_distances(X, Y, squared=True)
-        bandwidth = np.float32(1.0 / np.sqrt(2.0*self.gamma_))
+        bandwidth = np.float32(1.0 / np.sqrt(2.0 * self.gamma_))
         if self.kernel == "rbf":
             distance = -self.gamma_ * distance
             K = np.exp(distance)
@@ -242,8 +243,8 @@ class BaseEigenPro(BaseEstimator):
         pinx = random_state.choice(n, sample_size, replace=False).astype(
             "int32"
         )
-        if self.gamma == 'scale':
-            self.gamma_ = np.float32(1.0/(X.var()*d))
+        if self.gamma == "scale":
+            self.gamma_ = np.float32(1.0 / (X.var() * d))
         else:
             self.gamma_ = self.gamma
         max_S, beta, E, Lambda = self._setup(X[pinx], n_components, mG, 0.95)
@@ -366,7 +367,9 @@ class BaseEigenPro(BaseEstimator):
         Y : {float, array}, shape = [n_samples, n_targets]
             Predicted targets.
         """
-        check_is_fitted(self, ["bs_", "centers_", "coef_", "was_1D_", "gamma_"])
+        check_is_fitted(
+            self, ["bs_", "centers_", "coef_", "was_1D_", "gamma_"]
+        )
         X = np.asarray(X, dtype=np.float64)
 
         if len(X.shape) == 1:
@@ -479,7 +482,7 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
         n_components=1000,
         subsample_size="auto",
         kernel="rbf",
-        gamma='scale',
+        gamma="scale",
         degree=3,
         coef0=1,
         kernel_params=None,
@@ -593,7 +596,7 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
         n_components=1000,
         subsample_size="auto",
         kernel="rbf",
-        gamma=.02,
+        gamma=0.02,
         degree=3,
         coef0=1,
         kernel_params=None,
