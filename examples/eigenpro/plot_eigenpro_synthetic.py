@@ -1,14 +1,15 @@
 """
-===============================================
-Comparison of EigenPro and SVC on Fashion-MNIST
-===============================================
+======================================================
+Comparison of EigenPro and SVC on Digit Classification
+======================================================
 
 Here we train a EigenPro Classifier and a Support
-Vector Classifier (SVC) on subsets of MNIST of various sizes.
-We halt the training of EigenPro after two epochs.
-Experimental results on MNIST demonstrate more than 3 times
-speedup of EigenPro over SVC in training time. EigenPro also
-shows consistently lower classification error on test set.
+Vector Classifier (SVC) on a synthetically generated
+binary classification problem. We halt the training
+of EigenPro after two epochs.
+While EigenPro is slower on low dimensional datasets, as
+the number of features exceeds 500, it begins to outperform
+SVM in terms of both time and training error.
 """
 print(__doc__)
 
@@ -17,22 +18,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
+from sklearn.datasets import make_classification
 from sklearn_extra.kernel_methods import EigenProClassifier
 from sklearn.svm import SVC
-from sklearn.datasets import fetch_openml
 
 rng = np.random.RandomState(1)
 
-#  Generate sample data from mnist
-mnist = fetch_openml("Fashion-MNIST")
-mnist.data = mnist.data / 255.0
-print("Data has loaded")
-
-p = rng.permutation(60000)
-x_train = mnist.data[p]
-y_train = np.int32(mnist.target[p])
-x_test = mnist.data[60000:]
-y_test = np.int32(mnist.target[60000:])
+train_size = 2000
+test_size = 1000
 
 # Run tests comparing eig to svc
 eig_fit_times = []
@@ -42,30 +35,38 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [500, 1000, 2000]
-
-print("Train Sizes: " + str(train_sizes))
-
-bandwidth = 5.0
+feature_counts = [15, 50, 150, 500, 1500]
+bandwidth = 8.0
 
 # Fit models to data
-for train_size in train_sizes:
+for n_features in feature_counts:
+    x, y = make_classification(
+        n_samples=train_size + test_size,
+        n_features=n_features,
+        random_state=rng,
+    )
+
+    x_train = x[:train_size]
+    y_train = y[:train_size]
+    x_test = x[train_size:]
+    y_test = y[train_size:]
     for name, estimator in [
         (
             "EigenPro",
             EigenProClassifier(
-                n_epoch=2, bandwidth=bandwidth, random_state=rng
+                n_epoch=2,
+                bandwidth=bandwidth,
+                n_components=400,
+                random_state=rng,
             ),
         ),
         (
             "SupportVector",
-            SVC(
-                C=5, gamma=1.0 / (2 * bandwidth * bandwidth), random_state=rng
-            ),
+            SVC(gamma=1.0 / (2 * bandwidth * bandwidth), random_state=rng),
         ),
     ]:
         stime = time()
-        estimator.fit(x_train[:train_size], y_train[:train_size])
+        estimator.fit(x_train, y_train)
         fit_t = time() - stime
 
         stime = time()
@@ -82,8 +83,8 @@ for train_size in train_sizes:
             svc_pred_times.append(pred_t)
             svc_err.append(err)
         print(
-            "%s Classification with %i training samples in %0.2f seconds."
-            % (name, train_size, fit_t + pred_t)
+            "%s Classification with %i features in %0.2f seconds. Error: %0.1f"
+            % (name, n_features, fit_t + pred_t, err)
         )
 
 # set up grid for figures
@@ -91,26 +92,26 @@ fig = plt.figure(num=None, figsize=(6, 4), dpi=160)
 ax = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
 
 # Graph fit(train) time
-train_size_labels = [str(s) for s in train_sizes]
-ax.plot(train_sizes, svc_fit_times, "o--", color="g", label="SVC")
+feature_number_labels = [str(s) for s in feature_counts]
+ax.plot(feature_counts, svc_fit_times, "o--", color="g", label="SVC")
 ax.plot(
-    train_sizes, eig_fit_times, "o-", color="r", label="EigenPro Classifier"
+    feature_counts, eig_fit_times, "o-", color="r", label="EigenPro Classifier"
 )
 ax.set_xscale("log")
 ax.set_yscale("log", nonposy="clip")
-ax.set_xlabel("train size")
+ax.set_xlabel("Number of features")
 ax.set_ylabel("time (seconds)")
 ax.legend()
 ax.set_title("Training Time")
-ax.set_xticks(train_sizes)
-ax.set_xticklabels(train_size_labels)
+ax.set_xticks(feature_counts)
+ax.set_xticklabels(feature_number_labels)
 ax.set_xticks([], minor=True)
 ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 
 # Graph prediction(test) time
 ax = plt.subplot2grid((2, 2), (0, 1), rowspan=1)
-ax.plot(train_sizes, eig_pred_times, "o-", color="r")
-ax.plot(train_sizes, svc_pred_times, "o--", color="g")
+ax.plot(feature_counts, eig_pred_times, "o-", color="r")
+ax.plot(feature_counts, svc_pred_times, "o--", color="g")
 ax.set_xscale("log")
 ax.set_yscale("log", nonposy="clip")
 ax.set_ylabel("time (seconds)")
@@ -120,13 +121,13 @@ ax.set_xticks([], minor=True)
 
 # Graph training error
 ax = plt.subplot2grid((2, 2), (1, 1), rowspan=1)
-ax.plot(train_sizes, eig_err, "o-", color="r")
-ax.plot(train_sizes, svc_err, "o-", color="g")
+ax.plot(feature_counts, eig_err, "o-", color="r")
+ax.plot(feature_counts, svc_err, "o-", color="g")
 ax.set_xscale("log")
-ax.set_xticks(train_sizes)
-ax.set_xticklabels(train_size_labels)
+ax.set_xticks(feature_counts)
+ax.set_xticklabels(feature_number_labels)
 ax.set_xticks([], minor=True)
-ax.set_xlabel("train size")
+ax.set_xlabel("Number of features")
 ax.set_ylabel("Classification error %")
 plt.tight_layout()
 plt.show()
