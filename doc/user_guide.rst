@@ -2,14 +2,15 @@
 
 .. _user_guide:
 
-.. toctree::
-     :numbered:
-
-     modules/eigenpro.rst
 
 ==========
 User guide
 ==========
+
+.. toctree::
+     :numbered:
+
+     modules/eigenpro.rst
 
 .. _k_medoids:
 
