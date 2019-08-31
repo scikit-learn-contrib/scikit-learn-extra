@@ -25,7 +25,7 @@ Notably, on the full MNIST training and testing using EigenPro are
 approximately 2 times and 5 times faster than that using SVC, respectively.
 
 .. |mnist| image:: ../images/eigenpro_mnist.png
-    :target: ../auto_examples/eigenpro/plot_mnist.html
+    :target: ../auto_examples/eigenpro/eigenpro_mnist.html
     :scale: 70
 
 .. centered:: |mnist|
@@ -36,8 +36,8 @@ We see that EigenPro has a significant advantage over SVC
 on this noisy MNIST. Training and testing using EigenPro are
 both 10 to 20 times faster than they are when using SVC.
 
-.. |mnist_noisy| image:: ../images/eigenpro_noisy_mnist.png
-    :target: ../auto_examples/eigenpro/plot_noisy_mnist.html
+.. |mnist_noisy| image:: ../images/eigenpro_mnist_noisy.png
+    :target: ../auto_examples/eigenpro/eigenpro_mnist_noisy.html
     :scale: 70
 
 .. centered:: |mnist_noisy|
@@ -48,7 +48,7 @@ with 400 synthetic features. Again, EigenPro demonstrates 10~20 times
 acceleration on training and testing without loss of accuracy.
 
 .. |synthetic| image:: ../images/eigenpro_synthetic.png
-    :target: ../auto_examples/eigenpro/plot_synthetic.html
+    :target: ../auto_examples/eigenpro/eigenpro_synthetic.html
     :scale: 70
 
 .. centered:: |synthetic|
