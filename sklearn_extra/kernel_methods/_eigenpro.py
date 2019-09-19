@@ -247,7 +247,9 @@ class BaseEigenPro(BaseEstimator):
             self.gamma_ = np.float32(1.0 / (X.var() * d))
         else:
             self.gamma_ = self.gamma
-        max_S, beta, E, Lambda = self._setup(X[pinx], n_components, mG, 0.95)
+        max_S, beta, E, Lambda = self._setup(
+            X[pinx], n_components, mG, alpha=0.95
+        )
         # Calculate best batch size.
         if self.batch_size == "auto":
             bs = min(np.int32(beta / max_S), mG) + 1
