@@ -3,4 +3,4 @@
 Eigenpro
 ========
 
-Examples concerning the :mod:`sklearn.fast_kernel` module.
+Examples concerning the :mod:`sklearn_extra.kernel_methods.eigenpro` module.
