@@ -22,8 +22,7 @@ class BaseEigenPro(BaseEstimator):
         n_components=1000,
         subsample_size="auto",
         kernel="rbf",
-        bandwidth=5,
-        gamma=None,
+        gamma="scale",
         degree=3,
         coef0=1,
         kernel_params=None,
@@ -34,7 +33,6 @@ class BaseEigenPro(BaseEstimator):
         self.n_components = n_components
         self.subsample_size = subsample_size
         self.kernel = kernel
-        self.bandwidth = bandwidth
         self.gamma = gamma
         self.degree = degree
         self.coef0 = coef0
@@ -66,9 +64,7 @@ class BaseEigenPro(BaseEstimator):
                 params = self.kernel_params or {}
             else:
                 params = {
-                    "gamma": np.float32(
-                        0.5 / (self.bandwidth * self.bandwidth)
-                    ),
+                    "gamma": self.gamma_,
                     "degree": self.degree,
                     "coef0": self.coef0,
                 }
@@ -76,15 +72,15 @@ class BaseEigenPro(BaseEstimator):
                 X, Y, metric=self.kernel, filter_params=True, **params
             )
         distance = euclidean_distances(X, Y, squared=True)
-        bandwidth = np.float32(self.bandwidth)
+        bandwidth = np.float32(1.0 / np.sqrt(2.0 * self.gamma_))
         if self.kernel == "rbf":
-            distance = distance / (-2.0 * bandwidth * bandwidth)
+            distance = -self.gamma_ * distance
             K = np.exp(distance)
         elif self.kernel == "laplace":
             d = np.maximum(distance, 0)
             K = np.exp(-np.sqrt(d) / bandwidth)
         else:  # self.kernel == "cauchy":
-            K = 1 / (1 + distance / (bandwidth * bandwidth))
+            K = 1 / (1 + 2.0 * self.gamma_ * distance)
         return K
 
     def _nystrom_svd(self, X, n_components):
@@ -247,6 +243,10 @@ class BaseEigenPro(BaseEstimator):
         pinx = random_state.choice(n, sample_size, replace=False).astype(
             "int32"
         )
+        if self.gamma == "scale":
+            self.gamma_ = np.float32(1.0 / (X.var() * d))
+        else:
+            self.gamma_ = self.gamma
         max_S, beta, E, Lambda = self._setup(
             X[pinx], n_components, mG, alpha=0.95
         )
@@ -294,9 +294,9 @@ class BaseEigenPro(BaseEstimator):
             raise ValueError(
                 "batch_size should be positive, was " + str(self.batch_size)
             )
-        if self.bandwidth <= 0:
+        if self.gamma != "scale" and self.gamma <= 0:
             raise ValueError(
-                "bandwidth should be positive, was " + str(self.bandwidth)
+                "gamma should be positive, was " + str(self.gamma)
             )
 
     def _raw_fit(self, X, Y):
@@ -369,7 +369,9 @@ class BaseEigenPro(BaseEstimator):
         Y : {float, array}, shape = [n_samples, n_targets]
             Predicted targets.
         """
-        check_is_fitted(self, ["bs_", "centers_", "coef_", "was_1D_"])
+        check_is_fitted(
+            self, ["bs_", "centers_", "coef_", "was_1D_", "gamma_"]
+        )
         X = np.asarray(X, dtype=np.float64)
 
         if len(X.shape) == 1:
@@ -428,11 +430,11 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
         rbf, laplace, and cauchy kernels. If a callable is given, it should
         accept two arguments and return a floating point number.
 
-    bandwidth : float, default=5
-        Bandwidth to use with the given kernel. For kernels that use gamma,
-        gamma = .5/(bandwidth^2). Interpretation of the default value is left to
-        the kernel; see the documentation for sklearn.metrics.pairwise.
-        Ignored by other kernels.
+    gamma : float, default='scale'
+        Kernel coefficient. If 'scale', gamma = 1/(n_features*X.var()).
+        Interpretation of the default value is left to the kernel;
+        see the documentation for sklearn.metrics.pairwise.
+        For kernels that use bandwidth, bandwidth = 1/sqrt(2*gamma).
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
@@ -466,11 +468,11 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
     >>> rng = np.random.RandomState(1)
     >>> x_train = rng.randn(n_samples, n_features)
     >>> y_train = rng.randn(n_samples, n_targets)
-    >>> rgs = EigenProRegressor(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs = EigenProRegressor(n_epoch=3, gamma=.5, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    EigenProRegressor(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-                      kernel='rbf', kernel_params=None, n_components=1000,
-                      n_epoch=3, random_state=None, subsample_size=50)
+    EigenProRegressor(batch_size='auto', coef0=1, degree=3, gamma=0.5, kernel='rbf',
+                      kernel_params=None, n_components=1000, n_epoch=3,
+                      random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
@@ -482,8 +484,7 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
         n_components=1000,
         subsample_size="auto",
         kernel="rbf",
-        bandwidth=5,
-        gamma=None,
+        gamma="scale",
         degree=3,
         coef0=1,
         kernel_params=None,
@@ -495,7 +496,6 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
             n_components=n_components,
             subsample_size=subsample_size,
             kernel=kernel,
-            bandwidth=bandwidth,
             gamma=gamma,
             degree=degree,
             coef0=coef0,
@@ -543,17 +543,11 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
         rbf, laplace, and cauchy kernels. If a callable is given, it should
         accept two arguments and return a floating point number.
 
-    bandwidth : float, default=5
-        Bandwidth to use with the given kernel. For kernels that use gamma,
-        gamma = .5/(bandwidth^2). Interpretation of the default value is left to
-        the kernel; see the documentation for sklearn.metrics.pairwise.
-        Ignored by other kernels.
-
-    gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi2
-        and sigmoid kernels. Interpretation of the default value is left
-        to the kernel; see the documentation for
-        sklearn.metrics.pairwise. Ignored by other kernels.
+    gamma : float, default='scale'
+        Kernel coefficient. If 'scale', gamma = 1/(n_features*X.var()).
+        Interpretation of the default value is left to the kernel;
+        see the documentation for sklearn.metrics.pairwise.
+        For kernels that use bandwidth, bandwidth = 1/sqrt(2*gamma).
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
@@ -588,12 +582,11 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
     >>> rng = np.random.RandomState(1)
     >>> x_train = rng.randn(n_samples, n_features)
     >>> y_train = rng.randint(n_targets, size=n_samples)
-    >>> rgs = EigenProClassifier(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs = EigenProClassifier(n_epoch=3, gamma=.01, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    EigenProClassifier(bandwidth=1, batch_size='auto', coef0=1, degree=3,
-                       gamma=None, kernel='rbf', kernel_params=None,
-                       n_components=1000, n_epoch=3, random_state=None,
-                       subsample_size=50)
+    EigenProClassifier(batch_size='auto', coef0=1, degree=3, gamma=0.01,
+                       kernel='rbf', kernel_params=None, n_components=1000,
+                       n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """
@@ -605,8 +598,7 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
         n_components=1000,
         subsample_size="auto",
         kernel="rbf",
-        bandwidth=5,
-        gamma=None,
+        gamma=0.02,
         degree=3,
         coef0=1,
         kernel_params=None,
@@ -618,7 +610,6 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
             n_components=n_components,
             subsample_size=subsample_size,
             kernel=kernel,
-            bandwidth=bandwidth,
             gamma=gamma,
             degree=degree,
             coef0=coef0,

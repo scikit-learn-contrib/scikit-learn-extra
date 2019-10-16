@@ -16,13 +16,6 @@ Kernel approximation
 EigenPro
 ========
 
-.. currentmodule:: doc
-
-.. toctree::
-   modules/eigenpro
-
-.. currentmodule:: sklearn_extra
-
 .. autosummary::
    :toctree: generated/
    :template: class.rst

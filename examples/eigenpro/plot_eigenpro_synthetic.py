@@ -9,7 +9,7 @@ binary classification problem. We halt the training
 of EigenPro after two epochs.
 While EigenPro is slower on low dimensional datasets, as
 the number of features exceeds 500, it begins to outperform
-SVM in terms of both time and training error.
+SVM and shows more stability.
 """
 print(__doc__)
 
@@ -35,8 +35,8 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-feature_counts = [15, 50, 150, 500, 1500]
-bandwidth = 8.0
+feature_counts = [20, 50, 150, 500, 1500]
+gamma = 0.008
 
 # Fit models to data
 for n_features in feature_counts:
@@ -54,16 +54,10 @@ for n_features in feature_counts:
         (
             "EigenPro",
             EigenProClassifier(
-                n_epoch=2,
-                bandwidth=bandwidth,
-                n_components=400,
-                random_state=rng,
+                n_epoch=2, gamma=gamma, n_components=400, random_state=rng
             ),
         ),
-        (
-            "SupportVector",
-            SVC(gamma=1.0 / (2 * bandwidth * bandwidth), random_state=rng),
-        ),
+        ("SupportVector", SVC(gamma=gamma, random_state=rng)),
     ]:
         stime = time()
         estimator.fit(x_train, y_train)
