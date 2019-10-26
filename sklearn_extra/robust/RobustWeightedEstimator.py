@@ -23,13 +23,15 @@ from .mean_estimators import MOM, blockMOM, huber
 
 def _huber_psisx(x, c):
     """Huber-loss weight for RobustWeightedEstimator algorithm"""
+
     def psisx(x):
-        if not(np.isfinite(x)):
+        if not (np.isfinite(x)):
             return 0
         elif np.abs(x) < c:
             return 1
         else:
-            return (2*(x > 0)-1)*c/x
+            return (2 * (x > 0) - 1) * c / x
+
     return np.vectorize(psisx)(x)
 
 
@@ -150,8 +152,18 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
         arXiv preprint (2019). arXiv:1910.07485.
 
     """
-    def __init__(self, base_estimator=None, weighting="huber", max_iter=100,
-                 burn_in=10, eta0=0.01, c=None, K=3, loss=None):
+
+    def __init__(
+        self,
+        base_estimator=None,
+        weighting="huber",
+        max_iter=100,
+        burn_in=10,
+        eta0=0.01,
+        c=None,
+        K=3,
+        loss=None,
+    ):
         self.base_estimator = base_estimator
         self.weighting = weighting
         self.eta0 = eta0
@@ -161,18 +173,19 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
         self.loss = loss
         self.max_iter = max_iter
         if self.loss is None:
-            warnings.warn("RobustWeightedEstimator: No loss"
-                          " function given. Using squared loss"
-                          " function for regression.")
+            warnings.warn(
+                "RobustWeightedEstimator: No loss"
+                " function given. Using squared loss"
+                " function for regression."
+            )
             self.loss = "squared_loss"
 
         self.loss_functions = {
-                "hinge": (Hinge, 1.0),
-                "squared_hinge": (SquaredHinge, 1.0),
-                "log": (Log, ),
-                "squared_loss": (SquaredLoss, )
-
-            }
+            "hinge": (Hinge, 1.0),
+            "squared_hinge": (SquaredHinge, 1.0),
+            "log": (Log,),
+            "squared_loss": (SquaredLoss,),
+        }
 
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
@@ -213,7 +226,7 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
 
         # Weight initialization : do one non-robust epoch.
 
-        if self.loss in ['log', 'hinge', 'squared_hinge']:
+        if self.loss in ["log", "hinge", "squared_hinge"]:
             # If in a classification task, precise the classes.
             base_estimator.partial_fit(X, y, classes=list(set(y)))
         else:
@@ -221,11 +234,11 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
 
         # Optimization algorithm
         for epoch in range(self.max_iter):
-            if base_estimator.loss == 'log':
+            if base_estimator.loss == "log":
                 # If log-loss use probabilties. Select only the probability
                 # that it is 1.
                 pred = base_estimator.predict_proba(X)[:, 1]
-            elif base_estimator.loss == 'hinge':
+            elif base_estimator.loss == "hinge":
                 # If in classification, not using log-loss use
                 # decision_function
                 pred = base_estimator.decision_function(X)
@@ -266,39 +279,50 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
         # Check the hyperparameters.
 
         if self.max_iter <= 0:
-            raise ValueError("RobustWeightedEstimator: "
-                             "max_iter must be > 0, got %s." % self.max_iter)
+            raise ValueError(
+                "RobustWeightedEstimator: "
+                "max_iter must be > 0, got %s." % self.max_iter
+            )
 
         if not (self.c is None) and (self.c <= 0):
-            raise ValueError("RobustWeightedEstimator: "
-                             "c must be > 0, got %s." % self.c)
+            raise ValueError(
+                "RobustWeightedEstimator: " "c must be > 0, got %s." % self.c
+            )
 
         if self.burn_in < 0:
-            raise ValueError("RobustWeightedEstimator: "
-                             "burn_in must be >= 0, got %s." % self.c)
+            raise ValueError(
+                "RobustWeightedEstimator: "
+                "burn_in must be >= 0, got %s." % self.c
+            )
 
         if (self.burn_in > 0) and (self.eta0 <= 0):
-            raise ValueError("RobustWeightedEstimator: "
-                             "eta0 must be > 0, got %s." % self.eta0)
+            raise ValueError(
+                "RobustWeightedEstimator: "
+                "eta0 must be > 0, got %s." % self.eta0
+            )
 
         if not isinstance(self.K, int):
-            raise ValueError("RobustWeightedEstimator: "
-                             "K must be integer, got %s." % self.K)
+            raise ValueError(
+                "RobustWeightedEstimator: "
+                "K must be integer, got %s." % self.K
+            )
 
     def _weighting(self, loss_values):
         # Compute the robust weight of the samples.
-        if self.weighting == 'huber':
+        if self.weighting == "huber":
             if self.c is None:
                 # If no c parameter given, estimate using inter quartile range.
-                self.c = iqr(np.abs(loss_values-np.median(loss_values)))/2
+                self.c = iqr(np.abs(loss_values - np.median(loss_values))) / 2
                 if self.c == 0:
-                    warnings.warn("RobustWeightedEstimator: "
-                                  "too many sampled are parfectly predicted "
-                                  "according to the loss function. "
-                                  "Switching to constant c = 1.35. "
-                                  "Consider using another weighting scheme, "
-                                  "or using a constant c value to remove "
-                                  "this warning.")
+                    warnings.warn(
+                        "RobustWeightedEstimator: "
+                        "too many sampled are parfectly predicted "
+                        "according to the loss function. "
+                        "Switching to constant c = 1.35. "
+                        "Consider using another weighting scheme, "
+                        "or using a constant c value to remove "
+                        "this warning."
+                    )
                     self.c = 1.35
 
             def psisx(x):
@@ -307,7 +331,7 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
             # Robust estimation of the risk is in mu.
             mu = huber(loss_values, self.c)
 
-        elif self.weighting == 'mom':
+        elif self.weighting == "mom":
             # Choose (randomly) K (almost-)equal blocks of data.
             blocks = blockMOM(loss_values, self.K)
             # Compute the median-of-means of the losses using these blocks.
@@ -315,11 +339,12 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
             mu, idmom = MOM(loss_values, blocks)
             psisx = _mom_psisx(blocks[idmom], len(loss_values))
         else:
-            raise ValueError("RobustWeightedEstimator: "
-                             "no such weighting scheme")
+            raise ValueError(
+                "RobustWeightedEstimator: " "no such weighting scheme"
+            )
         # Compute the unnormalized weights.
-        w = psisx(loss_values-mu)
-        return w/np.sum(w)*len(loss_values)
+        w = psisx(loss_values - mu)
+        return w / np.sum(w) * len(loss_values)
 
     def predict(self, X):
         """Predict using the estimator trained with RobustWeightedEstimator.

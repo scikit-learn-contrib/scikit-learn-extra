@@ -9,14 +9,18 @@ for regression with various robust regression algorithms from scikit-learn.
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn_extra.robust import RobustWeightedEstimator
-from sklearn.linear_model import (SGDRegressor, LinearRegression,
-                                  TheilSenRegressor, RANSACRegressor,
-                                  HuberRegressor)
+from sklearn.linear_model import (
+    SGDRegressor,
+    LinearRegression,
+    TheilSenRegressor,
+    RANSACRegressor,
+    HuberRegressor,
+)
 
 # Sample along a line with a Gaussian noise.
 np.random.seed(42)
 X = np.random.uniform(-1, 1, size=[100])
-y = X+0.1*np.random.normal(size=100)
+y = X + 0.1 * np.random.normal(size=100)
 
 # Change the 5 last entries to an outlier.
 X[-5:] = 10
@@ -28,36 +32,57 @@ perm = np.random.permutation(len(X))
 X = X[perm]
 y = y[perm]
 
-estimators = [('OLS', LinearRegression()),
-              ('Theil-Sen', TheilSenRegressor(random_state=42)),
-              ('RANSAC', RANSACRegressor(random_state=42)),
-              ('HuberRegressor', HuberRegressor()),
-              ('SGD epsilon loss', SGDRegressor(loss='epsilon_insensitive')),
-              ('RobustWeightedEstimator',
-               RobustWeightedEstimator(loss='squared_loss',
-                                       weighting='mom', K=11))]
+estimators = [
+    ("OLS", LinearRegression()),
+    ("Theil-Sen", TheilSenRegressor(random_state=42)),
+    ("RANSAC", RANSACRegressor(random_state=42)),
+    ("HuberRegressor", HuberRegressor()),
+    ("SGD epsilon loss", SGDRegressor(loss="epsilon_insensitive")),
+    (
+        "RobustWeightedEstimator",
+        RobustWeightedEstimator(loss="squared_loss", weighting="mom", K=11),
+    ),
+]
 
 
-colors = {'OLS': 'turquoise', 'Theil-Sen': 'gold', 'RANSAC': 'lightgreen',
-          'HuberRegressor': 'black', 'RobustWeightedEstimator': 'magenta',
-          'SGD epsilon loss': 'purple'}
-linestyle = {'OLS': '-', 'SGD epsilon loss': '-', 'Theil-Sen': '-.',
-             'RANSAC': '--', 'HuberRegressor': '--',
-             'RobustWeightedEstimator': '--'}
+colors = {
+    "OLS": "turquoise",
+    "Theil-Sen": "gold",
+    "RANSAC": "lightgreen",
+    "HuberRegressor": "black",
+    "RobustWeightedEstimator": "magenta",
+    "SGD epsilon loss": "purple",
+}
+linestyle = {
+    "OLS": "-",
+    "SGD epsilon loss": "-",
+    "Theil-Sen": "-.",
+    "RANSAC": "--",
+    "HuberRegressor": "--",
+    "RobustWeightedEstimator": "--",
+}
 lw = 3
 
 x_plot = np.linspace(X.min(), X.max())
 
-plt.plot(X, y, 'b+')
+plt.plot(X, y, "b+")
 
 for name, estimator in estimators:
     estimator.fit(X, y)
     y_plot = estimator.predict(x_plot[:, np.newaxis])
-    plt.plot(x_plot, y_plot, color=colors[name], linestyle=linestyle[name],
-             linewidth=lw, label='%s' % (name))
+    plt.plot(
+        x_plot,
+        y_plot,
+        color=colors[name],
+        linestyle=linestyle[name],
+        linewidth=lw,
+        label="%s" % (name),
+    )
 
-legend = plt.legend(loc='upper right', prop=dict(size='x-small'))
+legend = plt.legend(loc="upper right", prop=dict(size="x-small"))
 
-plt.title('Scatter plot of training set and representation of'
-          ' estimation functions')
+plt.title(
+    "Scatter plot of training set and representation of"
+    " estimation functions"
+)
 plt.show()

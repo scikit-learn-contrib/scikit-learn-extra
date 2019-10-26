@@ -1,1 +1,3 @@
-from sklearn_extra.robust.RobustWeightedEstimator import RobustWeightedEstimator
+from sklearn_extra.robust.RobustWeightedEstimator import (
+    RobustWeightedEstimator,
+)
