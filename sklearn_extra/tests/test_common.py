@@ -13,10 +13,9 @@ if hasattr(estimator_checks, "parametrize_with_checks"):
     @estimator_checks.parametrize_with_checks(ALL_ESTIMATORS)
     def test_all_estimators(estimator, check, request):
         # TODO: fix this common test failure cf #41
-        if (
-            isinstance(estimator, EigenProClassifier)
-            and "function check_classifier_multioutput" in str(check)
-        ):
+        if isinstance(
+            estimator, EigenProClassifier
+        ) and "function check_classifier_multioutput" in str(check):
             request.applymarker(
                 pytest.mark.xfail(run=False, reason="See issue #41")
             )
