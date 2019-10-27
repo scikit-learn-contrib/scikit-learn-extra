@@ -18,9 +18,9 @@ from sklearn.linear_model import (
 )
 
 # Sample along a line with a Gaussian noise.
-np.random.seed(42)
-X = np.random.uniform(-1, 1, size=[100])
-y = X + 0.1 * np.random.normal(size=100)
+rng = np.random.RandomState(42)
+X = rng.uniform(-1, 1, size=[100])
+y = X + 0.1 * rng.normal(size=100)
 
 # Change the 5 last entries to an outlier.
 X[-5:] = 10
@@ -28,19 +28,23 @@ X = X.reshape(-1, 1)
 y[-5:] = -1
 
 # Shuffle the data so that we don't know where the outlier is.
-perm = np.random.permutation(len(X))
+perm = rng.permutation(len(X))
 X = X[perm]
 y = y[perm]
 
 estimators = [
     ("OLS", LinearRegression()),
-    ("Theil-Sen", TheilSenRegressor(random_state=42)),
-    ("RANSAC", RANSACRegressor(random_state=42)),
+    ("Theil-Sen", TheilSenRegressor(random_state=rng)),
+    ("RANSAC", RANSACRegressor(random_state=rng)),
     ("HuberRegressor", HuberRegressor()),
-    ("SGD epsilon loss", SGDRegressor(loss="epsilon_insensitive")),
+    ("SGD epsilon loss", SGDRegressor(loss="epsilon_insensitive",
+                                      random_state=rng)),
     (
         "RobustWeightedEstimator",
-        RobustWeightedEstimator(loss="squared_loss", weighting="mom", K=11),
+        RobustWeightedEstimator(loss="squared_loss", weighting="mom",
+                                K=15, random_state=rng),
+        # The parameter K is set larger to 2 times the number of outliers
+        # because here we know it. 
     ),
 ]
 

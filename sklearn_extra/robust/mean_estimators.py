@@ -4,9 +4,11 @@
 # License: BSD 3 clause
 
 import numpy as np
+from sklearn.utils import check_random_state
 
 
-def blockMOM(x, K):
+
+def blockMOM(x, K, random_state):
     """Sample the indices of K blocks for data x using a random permutation
 
     Parameters
@@ -19,6 +21,13 @@ def blockMOM(x, K):
         sample whose size correspong to the size of the sample we want to do
         blocks for.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data. If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by np.random.
+
     Returns
     -------
 
@@ -29,7 +38,8 @@ def blockMOM(x, K):
     nb = K - (len(x) - b * K)
     nbpu = len(x) - b * K
     # Sample a permutation to shuffle the data.
-    perm = np.random.permutation(len(x))
+    random_state = check_random_state(random_state)
+    perm = random_state.permutation(len(x))
     # Construct K blocks of approximately equal size
     blocks = [[(b + 1) * g + f for f in range(b + 1)] for g in range(nbpu)]
     blocks += [
@@ -38,7 +48,7 @@ def blockMOM(x, K):
     return [perm[b] for b in blocks]
 
 
-def MOM(x, blocks):
+def median_of_means_blocked(x, blocks):
     """Compute the median of means of x using the blocks blocks
 
     Parameters
@@ -62,7 +72,7 @@ def MOM(x, blocks):
     return means_blocks[indice], indice
 
 
-def mom(x, K):
+def median_of_means(x, K):
     """Compute the median of means of x using K blocks
 
     Parameters
@@ -115,7 +125,7 @@ def huber(x, c=1.35, T=20):
         else:
             return 1 if np.abs(x) < c else (2 * (x > 0) - 1) * c / x
 
-    def weight(x, mu, c):
+    def get_weight(x, mu, c):
         # Compute weight.
         if x - mu == 0:
             return 1
@@ -125,7 +135,7 @@ def huber(x, c=1.35, T=20):
     # Run the iterative reweighting algorithm to compute M-estimator.
     for t in range(T):
         # Compute the weights
-        w = np.array([weight(xx, mu, c) for xx in x])
+        w = np.array([get_weight(xx, mu, c) for xx in x])
 
         # Infinite coordinates in x gives zero weight, we take them out.
         ind_pos = w > 0

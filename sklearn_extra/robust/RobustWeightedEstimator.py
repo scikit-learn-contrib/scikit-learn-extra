@@ -8,6 +8,7 @@ import warnings
 from scipy.stats import iqr
 
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
+from sklearn.utils import check_random_state
 from sklearn.linear_model import SGDRegressor
 
 # Loss functions import. Taken from scikit-learn linear SGD estimators.
@@ -16,9 +17,22 @@ from sklearn.linear_model.sgd_fast import SquaredHinge
 from sklearn.linear_model.sgd_fast import Log
 from sklearn.linear_model.sgd_fast import SquaredLoss
 
+try:
+    from sklearn.linear_model._sgd_fast import (Log, SquaredLoss, Hinge,
+                                                SquaredHinge)
+except ImportError:
+    from sklearn.linear_model.sgd_fast import (Log, SquaredLoss, Hinge,
+                                                SquaredHinge)
 
 # Tool library in which we get robust mean estimators.
-from .mean_estimators import MOM, blockMOM, huber
+from .mean_estimators import median_of_means_blocked, blockMOM, huber
+
+LOSS_FUNCTIONS = {
+            "hinge": (Hinge, 1.0),
+            "squared_hinge": (SquaredHinge, 1.0),
+            "log": (Log,),
+            "squared_loss": (SquaredLoss,),
+        }
 
 
 def _huber_psisx(x, c):
@@ -48,7 +62,6 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
     This model use iterative reweighting of samples to make a regression or
     classification estimator robust.
 
-    This algorithm is stille very new and still in development.
     The principle of the algorithm is to use an empirical risk minimization
     principle where the risk is estimated using a robust estimator (for example
     Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
@@ -68,30 +81,30 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
     Parameters
     ----------
 
-    base_estimator : object or None, optional (default=None)
+    base_estimator : object or None, default=None
         The base estimator to fit. For now only SGDRegressor and SGDClassifier
         are supported.
         If None, then the base estimator is SGDRegressor with squared loss.
 
-    weighting : string, optional (default="huber")
+    weighting : string, default="huber"
         Weighting scheme used to make the estimator robust.
         Can be 'huber' for huber-type weights or  'mom' for median-of-means
         type weights.
 
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         Maximum number of iterations.
         For more information, see the optimization scheme of base_estimator
         and the eta0 and burn_in parameter.
 
-    burn_in : int, optional (delaut=10)
+    burn_in : int, default=10
         Number of steps used without changing the learning rate.
         Can be useful to make the weight estimation better at the beginning.
 
-    eta0 : float, optional (default=0.01)
+    eta0 : float, default=0.01
         Constant step-size used during the burn_in period. Used only if
         burn_in>0. Can have a big effect on efficiency.
 
-    c : float>0 or None, optional (default None)
+    c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
         is 'huber'. Measure the robustness of the weightint procedure. A small
         value of c means a more robust estimator.
@@ -99,19 +112,27 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
         If None, c is estimated at each step using half the Inter-quartile
         range.
 
-    K : int, optional (default=3)
+    K : int, default=3
         Parameter used for mom weighting procedure, used only if weightings
         is 'huber'. It is the number of blocks used for median-of-means
         estimation, higher value of K means a more robust estimator.
         Can have a big effect on efficiency.
 
-    loss : string or None, optional (default=None)
+    loss : string or None, default=None
         Name of the loss used, must be the same loss as the one optimized in
         base_estimator.
         Classification losses supported : 'log', 'hinge'.
         If 'log', then the base_estimator must support predict_proba.
         Regression losses supported : 'squared_loss'.
         If None, loss='squared_loss'
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data. If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by np.random.
+
 
 
     Attributes
@@ -163,6 +184,7 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
         c=None,
         K=3,
         loss=None,
+        random_state=None
     ):
         self.base_estimator = base_estimator
         self.weighting = weighting
@@ -172,20 +194,8 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
         self.K = K
         self.loss = loss
         self.max_iter = max_iter
-        if self.loss is None:
-            warnings.warn(
-                "RobustWeightedEstimator: No loss"
-                " function given. Using squared loss"
-                " function for regression."
-            )
-            self.loss = "squared_loss"
+        self.random_state = check_random_state(random_state)
 
-        self.loss_functions = {
-            "hinge": (Hinge, 1.0),
-            "squared_hinge": (SquaredHinge, 1.0),
-            "log": (Log,),
-            "squared_loss": (SquaredLoss,),
-        }
 
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
@@ -210,16 +220,13 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
             base_estimator = clone(self.base_estimator)
         else:
             base_estimator = SGDRegressor()
-        base_estimator.warm_start = True
-        base_estimator.shuffle = False
-
-        # Set one batch as the entirety of the data.
-        base_estimator.batch_size = len(X)
 
         learning_rate = base_estimator.learning_rate
-        base_estimator.learning_rate = "constant"
-        base_estimator.loss = self.loss
-        base_estimator.eta0 = self.eta0
+
+        base_estimator.set_params(warm_start = True, shuffle = False,
+                                  learning_rate = "constant",
+                                  loss = self.loss,
+                                  eta0 = self.eta0)
 
         # Get actual loss function from its name.
         loss = self._get_loss_function()
@@ -228,7 +235,7 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
 
         if self.loss in ["log", "hinge", "squared_hinge"]:
             # If in a classification task, precise the classes.
-            base_estimator.partial_fit(X, y, classes=list(set(y)))
+            base_estimator.partial_fit(X, y, classes=np.unique(y))
         else:
             base_estimator.partial_fit(X, y)
 
@@ -251,7 +258,7 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
             # Compute the weight associated with each losses.
             # Samples whose loss is far from the mean loss (robust estimation)
             # will have a small weight.
-            weights = self._weighting(loss_values)
+            weights = self._get_weights(loss_values)
 
             # Use the optimization algorithm of self.base_estimator for one
             # epoch using the previously computed weights.
@@ -260,20 +267,34 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
             if epoch > self.burn_in:
                 # If not in the burn_in phase anymore, change the learning_rate
                 # calibration to the one edicted by self.base_estimator.
-                base_estimator.learning_rate = learning_rate
+                base_estimator.set_params(learning_rate = learning_rate)
+
+            # Shuffle the data at each step.
+
+            perm = self.random_state.permutation(len(X))
+            X = X[perm]
+            y = y[perm]
+            weights = weights[perm]
 
         self.weights = weights
         self.estimator = base_estimator
         return self
 
     def _get_loss_function(self):
-        """Get concrete ``LossFunction`` object for str ``loss``. """
-        try:
-            loss_ = self.loss_functions[self.loss]
-            loss_class, args = loss_[0], loss_[1:]
-            return np.vectorize(loss_class(*args).dloss)
-        except KeyError:
+        """Get concrete ''LossFunction'' object for str ''loss''. """
+        if self.loss is None:
+            warnings.warn(
+                "RobustWeightedEstimator: No loss"
+                " function given. Using squared loss"
+                " function for regression."
+            )
+            self.loss = "squared_loss"
+        loss_ = LOSS_FUNCTIONS.get(self.loss)
+        if loss_ is None:
             raise ValueError("The loss %s is not supported. " % self.loss)
+
+        loss_class, args = loss_[0], loss_[1:]
+        return np.vectorize(loss_class(*args).dloss)
 
     def _validate_hyperparameters(self):
         # Check the hyperparameters.
@@ -307,7 +328,7 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
                 "K must be integer, got %s." % self.K
             )
 
-    def _weighting(self, loss_values):
+    def _get_weights(self, loss_values):
         # Compute the robust weight of the samples.
         if self.weighting == "huber":
             if self.c is None:
@@ -333,10 +354,10 @@ class RobustWeightedEstimator(MetaEstimatorMixin, BaseEstimator):
 
         elif self.weighting == "mom":
             # Choose (randomly) K (almost-)equal blocks of data.
-            blocks = blockMOM(loss_values, self.K)
+            blocks = blockMOM(loss_values, self.K, self.random_state)
             # Compute the median-of-means of the losses using these blocks.
             # Return also the index at which this median-of-means is attained.
-            mu, idmom = MOM(loss_values, blocks)
+            mu, idmom = median_of_means_blocked(loss_values, blocks)
             psisx = _mom_psisx(blocks[idmom], len(loss_values))
         else:
             raise ValueError(
