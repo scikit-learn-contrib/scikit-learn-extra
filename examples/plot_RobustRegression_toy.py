@@ -42,9 +42,9 @@ estimators = [
     (
         "RobustWeightedEstimator",
         RobustWeightedEstimator(loss="squared_loss", weighting="mom",
-                                K=15, random_state=rng),
-        # The parameter K is set larger to 2 times the number of outliers
-        # because here we know it. 
+                                k=7, random_state=rng),
+        # The parameter k is set larger to the number of outliers
+        # because here we know it.
     ),
 ]
 

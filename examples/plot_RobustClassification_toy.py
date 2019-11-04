@@ -39,9 +39,9 @@ estimators = [
         "RobustWeightedEstimator",
         RobustWeightedEstimator(
             base_estimator=SGDClassifier(), loss="log", max_iter=100,
-            weighting="mom", K=11, random_state=rng
+            weighting="mom", k=5, random_state=rng
         ),
-        # The parameter K is set larger to 2 times the number of outliers
+        # The parameter k is set larger the number of outliers
         # because here we know it. max_iter is set to 100. One may want
         # to play with the number of iteration or the optimization scheme of
         # the base_estimator to get good results.

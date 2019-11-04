@@ -7,15 +7,14 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 
-
-def blockMOM(x, K, random_state):
-    """Sample the indices of K blocks for data x using a random permutation
+def blockMOM(x, k, random_state):
+    """Sample the indices of 2k+1 blocks for data x using a random permutation
 
     Parameters
     ----------
 
-    K : int
-        number of blocks
+    k : int
+        we use 2k+1 blocks
 
     x : array like, length = n_sample
         sample whose size correspong to the size of the sample we want to do
@@ -34,6 +33,7 @@ def blockMOM(x, K, random_state):
     list of size K containing the lists of the indices of the blocks,
     the size of the lists are contained in [n_sample/K,2n_sample/K]
     """
+    K = 2 * k + 1
     b = int(np.floor(len(x) / K))
     nb = K - (len(x) - b * K)
     nbpu = len(x) - b * K
@@ -72,8 +72,8 @@ def median_of_means_blocked(x, blocks):
     return means_blocks[indice], indice
 
 
-def median_of_means(x, K):
-    """Compute the median of means of x using K blocks
+def median_of_means(x, k):
+    """Compute the median of means of x using 2k+1 blocks
 
     Parameters
     ----------
@@ -81,15 +81,15 @@ def median_of_means(x, K):
     x : array like, length = n_sample
         sample from which we want an estimator of the mean
 
-    K : int.
+    k : int.
 
     Return
     ------
 
-    The median of means of x using K random blocks, a float.
+    The median of means of x using 2k+1 random blocks, a float.
     """
-    blocks = blockMOM(K, x)
-    return MOM(x, blocks)[0]
+    blocks = blockMOM(k, x)
+    return median_of_means_blocked(x, blocks)[0]
 
 
 def huber(x, c=1.35, T=20):
@@ -120,22 +120,16 @@ def huber(x, c=1.35, T=20):
 
     def psisx(x, c):
         # Huber weight function.
-        if not (np.isfinite(x)):
-            return 0
-        else:
-            return 1 if np.abs(x) < c else (2 * (x > 0) - 1) * c / x
-
-    def get_weight(x, mu, c):
-        # Compute weight.
-        if x - mu == 0:
-            return 1
-        else:
-            return psisx(x - mu, c)
+        res = np.ones(len(x))
+        res[x != 0] = (2 * (x[x != 0] > 0) - 1) * c / x[x != 0]
+        res[np.abs(x) < c] = 1
+        res[~np.isfinite(x)] = 0
+        return res
 
     # Run the iterative reweighting algorithm to compute M-estimator.
     for t in range(T):
         # Compute the weights
-        w = np.array([get_weight(xx, mu, c) for xx in x])
+        w = psisx(x - mu, c)
 
         # Infinite coordinates in x gives zero weight, we take them out.
         ind_pos = w > 0
