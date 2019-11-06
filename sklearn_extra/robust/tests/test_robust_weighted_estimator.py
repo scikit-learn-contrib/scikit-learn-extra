@@ -4,6 +4,7 @@ from sklearn_extra.robust import RobustWeightedEstimator
 from sklearn.datasets import make_blobs
 from sklearn.metrics import accuracy_score, median_absolute_error
 from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.utils import shuffle
 
 
 # Check if estimator adheres to scikit-learn conventions.
@@ -16,9 +17,7 @@ X_cc, y_cc = make_blobs(
 for f in range(3):
     X_cc[f] = [20, 5] + rng.normal(size=2) * 0.1
     y_cc[f] = 0
-perm = rng.permutation(len(X_cc))
-X_cc = X_cc[perm]
-y_cc = y_cc[perm]
+X_cc, y_cc = shuffle(X_cc, y_cc, random_state=rng)
 
 classif_losses = ["log", "hinge"]
 
@@ -77,9 +76,7 @@ y_rc = X_rc + 0.1 * rng.normal(size=200)
 X_rc[-1] = 10
 X_rc = X_rc.reshape(-1, 1)
 y_rc[-1] = -1
-perm = rng.permutation(len(X_rc))
-X_rc = X_rc[perm]
-y_rc = y_rc[perm]
+X_rc, y_rc = shuffle(X_rc, y_rc, random_state=rng)
 regression_losses = ["squared_loss"]
 
 

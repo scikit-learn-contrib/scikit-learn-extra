@@ -12,6 +12,7 @@ from sklearn.utils import (
     check_random_state,
     check_array,
     check_consistent_length,
+    shuffle,
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import SGDRegressor
@@ -134,11 +135,11 @@ class RobustWeightedEstimator(BaseEstimator):
 
     Attributes
     ----------
-    estimator : object,
+    estimator_ : object,
         estimator trained using the RobustWeightedEstimator scheme, can be used
         as any sklearn estimator.
 
-    weights : array like, length = n_sample.
+    weights_ : array like, length = n_sample.
         Weight of each sample at the end of the algorithm. Can be used as a
         measure of how much of an outlier a sample is.
 
@@ -300,11 +301,7 @@ class RobustWeightedEstimator(BaseEstimator):
             base_estimator.partial_fit(X, y, sample_weight=weights)
 
             # Shuffle the data at each step.
-
-            perm = random_state.permutation(len(X))
-            X = X[perm]
-            y = y[perm]
-            weights = weights[perm]
+            X, y, weights = shuffle(X, y, weights, random_state=random_state)
 
             if self.weighting == "mom":
                 final_weight += weights
@@ -330,27 +327,16 @@ class RobustWeightedEstimator(BaseEstimator):
         # Check the hyperparameters.
 
         if self.max_iter <= 0:
-            raise ValueError(
-                "RobustWeightedEstimator: "
-                "max_iter must be > 0, got %s." % self.max_iter
-            )
+            raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
 
         if not (self.c_ is None) and (self.c_ <= 0):
-            raise ValueError(
-                "RobustWeightedEstimator: " "c must be > 0, got %s." % self.c_
-            )
+            raise ValueError("c must be > 0, got %s." % self.c_)
 
         if self.burn_in < 0:
-            raise ValueError(
-                "RobustWeightedEstimator: "
-                "burn_in must be >= 0, got %s." % self.burn_in
-            )
+            raise ValueError("burn_in must be >= 0, got %s." % self.burn_in)
 
         if (self.burn_in > 0) and (self.eta0 <= 0):
-            raise ValueError(
-                "RobustWeightedEstimator: "
-                "eta0 must be > 0, got %s." % self.eta0
-            )
+            raise ValueError("eta0 must be > 0, got %s." % self.eta0)
 
         if not (self.k is None) and (
             not isinstance(self.k, int)
@@ -358,7 +344,6 @@ class RobustWeightedEstimator(BaseEstimator):
             or self.k > np.floor(n / 2)
         ):
             raise ValueError(
-                "RobustWeightedEstimator: "
                 "k must be integer >= 0, and smaller than floor(sample_size/2)"
                 " got %s." % self.k
             )
@@ -371,8 +356,7 @@ class RobustWeightedEstimator(BaseEstimator):
                 self.c_ = iqr(np.abs(loss_values - np.median(loss_values))) / 2
                 if self.c_ == 0:
                     warnings.warn(
-                        "RobustWeightedEstimator: "
-                        "too many sampled are parfectly predicted "
+                        "Too many samples are parfectly predicted "
                         "according to the loss function. "
                         "Switching to constant c = 1.35. "
                         "Consider using another weighting scheme, "
@@ -402,9 +386,7 @@ class RobustWeightedEstimator(BaseEstimator):
             mu, idmom = median_of_means_blocked(loss_values, blocks)
             psisx = _mom_psisx(blocks[idmom], len(loss_values))
         else:
-            raise ValueError(
-                "RobustWeightedEstimator: " "no such weighting scheme"
-            )
+            raise ValueError("No such weighting scheme")
         # Compute the unnormalized weights.
         w = psisx(loss_values - mu)
         return w / np.sum(w) * len(loss_values)
@@ -422,19 +404,19 @@ class RobustWeightedEstimator(BaseEstimator):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self, attributes=['estimator_','weights_'])
+        check_is_fitted(self, attributes=["estimator_", "weights_"])
         return self.estimator_.predict(X)
 
     def _check_proba(self):
         if self.loss != "log":
             raise AttributeError(
-                "probability estimates are not available for"
+                "Probability estimates are not available for"
                 " loss=%r" % self.loss
             )
 
     @property
     def predict_proba(self):
-        check_is_fitted(self, attributes=['estimator_','weights_'])
+        check_is_fitted(self, attributes=["estimator_", "weights_"])
         self._check_proba()
         return semf._predict_proba
 

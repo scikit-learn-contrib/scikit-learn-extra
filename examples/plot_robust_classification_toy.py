@@ -11,6 +11,8 @@ import numpy as np
 from sklearn_extra.robust import RobustWeightedEstimator
 from sklearn.linear_model import SGDClassifier
 from sklearn.datasets import make_blobs
+from sklearn.utils import shuffle
+
 
 rng = np.random.RandomState(42)
 
@@ -25,9 +27,7 @@ for f in range(3):
     y[f] = 0
 
 # Shuffle the data so that we don't know where the outlier is.
-perm = rng.permutation(len(X))
-X = X[perm]
-y = y[perm]
+X, y = shuffle(X, y, random_state=rng)
 
 estimators = [
     (

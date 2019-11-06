@@ -8,7 +8,9 @@ for regression with various robust regression algorithms from scikit-learn.
 """
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn_extra.robust import RobustWeightedEstimator
+from sklearn.utils import shuffle
 from sklearn.linear_model import (
     SGDRegressor,
     LinearRegression,
@@ -28,10 +30,7 @@ X = X.reshape(-1, 1)
 y[-5:] = -1
 
 # Shuffle the data so that we don't know where the outlier is.
-perm = rng.permutation(len(X))
-X = X[perm]
-y = y[perm]
-
+X, y = shuffle(X, y, random_state=rng)
 estimators = [
     ("OLS", LinearRegression()),
     ("Theil-Sen", TheilSenRegressor(random_state=rng)),
