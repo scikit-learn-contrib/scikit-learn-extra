@@ -136,8 +136,7 @@ class RobustWeightedEstimator(BaseEstimator):
     Attributes
     ----------
     estimator_ : object,
-        estimator trained using the RobustWeightedEstimator scheme, can be used
-        as any sklearn estimator.
+        The fitted base_estimator.
 
     weights_ : array like, length = n_sample.
         Weight of each sample at the end of the algorithm. Can be used as a
@@ -148,9 +147,8 @@ class RobustWeightedEstimator(BaseEstimator):
     For now only scikit-learn SGDRegressor and SGDClassifier are officially
     supported but one can use any estimator compatible with scikit-learn,
     as long as this estimator support partial_fit, warm_start and sample_weight
-    . It must have the parameters max_iter and batch_size if the computation is
-    done on batches. It must also support "constant" learning rate with
-    learning rate called "eta0".
+    . It must have the parameters max_iter and support "constant" learning rate
+    with learning rate called "eta0".
 
     For now, only binary classification is implemented. See sklearn.multiclass
     if you want to use this algorithm in multiclass classification.
