@@ -6,6 +6,8 @@ A demo of Robust Classification on Real dataset "diabetes" from OpenML
 In this example we compare the RobustWeightedEstimator using SGDClassifier
 for classification on the real dataset "diabetes".
 WARNING: running this example can take some time (<1hour).
+We only compare the estimator with SGDClassifier as there is no robust
+classification estimator in scikit-learn.
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,7 +50,7 @@ clf_rob = RobustWeightedEstimator(
 M = 30
 res = []
 for f in range(M):
-    print("\r Progress: epoch %s / %s" % (f + 1, M), end="")
+    print("\r Progress: %s / %s" % (f + 1, M), end="")
     clf = SGDClassifier(average=10, learning_rate="optimal", loss="hinge")
 
     cv_not_rob = cross_val_score(

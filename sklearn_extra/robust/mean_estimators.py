@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-from sklearn.utils import check_random_state
 
 
 def blockMOM(x, k, random_state):
@@ -20,12 +19,9 @@ def blockMOM(x, k, random_state):
         sample whose size correspong to the size of the sample we want to do
         blocks for.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : RandomState instance
         The seed of the pseudo random number generator to use when shuffling
-        the data. If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by np.random.
+        the data.
 
     Returns
     -------
@@ -38,7 +34,6 @@ def blockMOM(x, k, random_state):
     nb = K - (len(x) - b * K)
     nbpu = len(x) - b * K
     # Sample a permutation to shuffle the data.
-    random_state = check_random_state(random_state)
     perm = random_state.permutation(len(x))
     # Construct K blocks of approximately equal size
     blocks = [[(b + 1) * g + f for f in range(b + 1)] for g in range(nbpu)]
@@ -72,7 +67,7 @@ def median_of_means_blocked(x, blocks):
     return means_blocks[indice], indice
 
 
-def median_of_means(x, k):
+def median_of_means(x, k, random_state=np.random.RandomState(42)):
     """Compute the median of means of x using 2k+1 blocks
 
     Parameters
@@ -83,12 +78,16 @@ def median_of_means(x, k):
 
     k : int.
 
+    random_state : RandomState instance
+        The seed of the pseudo random number generator to use when shuffling
+        the data.
+
     Return
     ------
 
     The median of means of x using 2k+1 random blocks, a float.
     """
-    blocks = blockMOM(k, x)
+    blocks = blockMOM(x, k, random_state)
     return median_of_means_blocked(x, blocks)[0]
 
 

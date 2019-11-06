@@ -37,12 +37,15 @@ estimators = [
     ("Theil-Sen", TheilSenRegressor(random_state=rng)),
     ("RANSAC", RANSACRegressor(random_state=rng)),
     ("HuberRegressor", HuberRegressor()),
-    ("SGD epsilon loss", SGDRegressor(loss="epsilon_insensitive",
-                                      random_state=rng)),
+    (
+        "SGD epsilon loss",
+        SGDRegressor(loss="epsilon_insensitive", random_state=rng),
+    ),
     (
         "RobustWeightedEstimator",
-        RobustWeightedEstimator(loss="squared_loss", weighting="mom",
-                                k=7, random_state=rng),
+        RobustWeightedEstimator(
+            loss="squared_loss", weighting="mom", k=7, random_state=rng
+        ),
         # The parameter k is set larger to the number of outliers
         # because here we know it.
     ),

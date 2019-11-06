@@ -15,8 +15,9 @@ from sklearn.datasets import make_blobs
 rng = np.random.RandomState(42)
 
 # Sample two Gaussian blobs
-X, y = make_blobs(n_samples=100, centers=np.array([[-1, -1], [1, 1]]),
-                  random_state=rng)
+X, y = make_blobs(
+    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+)
 
 # Change the first 5 entries to outliers
 for f in range(3):
@@ -29,7 +30,10 @@ X = X[perm]
 y = y[perm]
 
 estimators = [
-    ("SGDClassifier, Hinge loss", SGDClassifier(loss="hinge", random_state=rng)),
+    (
+        "SGDClassifier, Hinge loss",
+        SGDClassifier(loss="hinge", random_state=rng),
+    ),
     ("SGDClassifier, log loss", SGDClassifier(loss="log", random_state=rng)),
     (
         "SGDClassifier, modified_huber loss",
@@ -38,8 +42,12 @@ estimators = [
     (
         "RobustWeightedEstimator",
         RobustWeightedEstimator(
-            base_estimator=SGDClassifier(), loss="log", max_iter=100,
-            weighting="mom", k=5, random_state=rng
+            base_estimator=SGDClassifier(),
+            loss="log",
+            max_iter=100,
+            weighting="mom",
+            k=6,
+            random_state=rng,
         ),
         # The parameter k is set larger the number of outliers
         # because here we know it. max_iter is set to 100. One may want
@@ -64,12 +72,13 @@ def plot_classif(clf, X, y, ax):
     ax.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
     ax.scatter(X[:, 0], X[:, 1], c=y)
 
-fig, axes = plt.subplots(2,2)
+
+fig, axes = plt.subplots(2, 2)
 
 for i, (name, estimator) in enumerate(estimators):
     ax = axes.flat[i]
     estimator.fit(X, y)
-    plot_classif(estimator, X, y,ax)
+    plot_classif(estimator, X, y, ax)
     ax.set_title(name)
 
 fig.suptitle(

@@ -125,7 +125,9 @@ estimation.
   exactly the empirical mean (similar behavior as the vanilla base_estimator) and
   when k=sample_size/2 the estimator is the median (low efficiency and high
   robustness). A good heuristic would be to choose k as an estimate of
-  the number of outliers. In practice, one can estimate k via cross-validation.
+  the number of outliers. In practice, if k=None, it is estimated using the number of points
+  distant from the median of more than a constant times the inter-quartile range
+  but it can also be fixed to a constant and then tuned via `cross-validation <https://scikit-learn.org/stable/modules/cross_validation.html>`__.
 
 The choice of the optimization parameters max_iter and eta0 are also very
 important for the efficiency of this estimator and one can want to use
