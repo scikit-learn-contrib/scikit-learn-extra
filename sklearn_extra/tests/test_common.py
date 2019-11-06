@@ -6,8 +6,13 @@ from sklearn_extra.kernel_methods import EigenProClassifier, EigenProRegressor
 from sklearn_extra.cluster import KMedoids
 from sklearn_extra.robust import RobustWeightedEstimator
 
-ALL_ESTIMATORS = [Fastfood, KMedoids, EigenProClassifier, EigenProRegressor,
-                  RobustWeightedEstimator]
+ALL_ESTIMATORS = [
+    Fastfood,
+    KMedoids,
+    EigenProClassifier,
+    EigenProRegressor,
+    RobustWeightedEstimator,
+]
 
 if hasattr(estimator_checks, "parametrize_with_checks"):
     # Common tests are only run on scikit-learn 0.22+

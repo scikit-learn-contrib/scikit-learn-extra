@@ -4,14 +4,15 @@ from sklearn_extra.robust import RobustWeightedEstimator
 from sklearn.datasets import make_blobs
 from sklearn.metrics import accuracy_score, median_absolute_error
 from sklearn.linear_model import SGDClassifier, SGDRegressor
-from numpy.testing import assert_almost_equal
+
 
 # Check if estimator adheres to scikit-learn conventions.
 
 # Classification test with outliers
 rng = np.random.RandomState(42)
-X_cc, y_cc = make_blobs(n_samples=100, centers=np.array([[-1, -1], [1, 1]]),
-                      random_state=rng)
+X_cc, y_cc = make_blobs(
+    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+)
 for f in range(3):
     X_cc[f] = [20, 5] + rng.normal(size=2) * 0.1
     y_cc[f] = 0
@@ -24,37 +25,50 @@ classif_losses = ["log", "hinge"]
 
 def test_corrupted_classif():
     for loss in classif_losses:
-        for weighting in ['huber','mom']:
-            clf = RobustWeightedEstimator(SGDClassifier(),
-                                          loss=loss, max_iter=50,
-                                          weighting=weighting, k=5, c=None,
-                                          random_state=rng)
+        for weighting in ["huber", "mom"]:
+            clf = RobustWeightedEstimator(
+                SGDClassifier(),
+                loss=loss,
+                max_iter=50,
+                weighting=weighting,
+                k=5,
+                c=None,
+                random_state=rng,
+            )
             clf.fit(X_cc, y_cc)
             score = accuracy_score(clf.predict(X_cc), y_cc)
             assert score > 0.75
 
+
 # Classification test without outliers
 rng = np.random.RandomState(42)
-X_c, y_c = make_blobs(n_samples=100, centers=np.array([[-1, -1], [1, 1]]),
-                      random_state=rng)
+X_c, y_c = make_blobs(
+    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+)
 
 # Check that the fit is close to SGD when in extremal parameter cases
 def test_not_robust_classif():
     for loss in classif_losses:
-        for weighting in ['huber','mom']:
-            clf = RobustWeightedEstimator(SGDClassifier(),
-                                          loss=loss, max_iter=100,
-                                          weighting=weighting, k=0, c=1e7,
-                                          burn_in=0,
-                                          random_state=rng)
+        for weighting in ["huber", "mom"]:
+            clf = RobustWeightedEstimator(
+                SGDClassifier(),
+                loss=loss,
+                max_iter=100,
+                weighting=weighting,
+                k=0,
+                c=1e7,
+                burn_in=0,
+                random_state=rng,
+            )
             clf_not_rob = SGDClassifier(loss=loss, random_state=rng)
             clf.fit(X_c, y_c)
             clf_not_rob.fit(X_c, y_c)
             pred1 = clf.estimator_.decision_function(X_c)
             pred2 = clf_not_rob.decision_function(X_c)
 
-            assert (np.linalg.norm(pred1-pred2)/np.linalg.norm(pred2) <
-                    np.linalg.norm(pred1-y_c)/np.linalg.norm(y_c))
+            assert np.linalg.norm(pred1 - pred2) / np.linalg.norm(
+                pred2
+            ) < np.linalg.norm(pred1 - y_c) / np.linalg.norm(y_c)
 
 
 # Regression test with outliers
@@ -71,10 +85,15 @@ regression_losses = ["squared_loss"]
 
 def test_corrupted_regression():
     for loss in regression_losses:
-        for weighting in ['huber','mom']:
+        for weighting in ["huber", "mom"]:
             reg = RobustWeightedEstimator(
-                SGDRegressor(), loss=loss, max_iter=50,
-                weighting=weighting, k=4, c=None, random_state=rng
+                SGDRegressor(),
+                loss=loss,
+                max_iter=50,
+                weighting=weighting,
+                k=4,
+                c=None,
+                random_state=rng,
             )
             reg.fit(X_rc, y_rc)
             score = median_absolute_error(reg.predict(X_rc), y_rc)
@@ -88,17 +107,23 @@ X_r = X_r.reshape(-1, 1)
 # Check that the fit is close to SGD when in extremal parameter cases
 def test_not_robust_regression():
     for loss in regression_losses:
-        for weighting in ['huber','mom']:
-            clf = RobustWeightedEstimator(SGDRegressor(),
-                                          loss=loss, max_iter=100,
-                                          weighting=weighting, k=0, c=1e7,
-                                          burn_in=0,
-                                          random_state=rng)
+        for weighting in ["huber", "mom"]:
+            clf = RobustWeightedEstimator(
+                SGDRegressor(),
+                loss=loss,
+                max_iter=100,
+                weighting=weighting,
+                k=0,
+                c=1e7,
+                burn_in=0,
+                random_state=rng,
+            )
             clf_not_rob = SGDRegressor(loss=loss, random_state=rng)
             clf.fit(X_r, y_r)
             clf_not_rob.fit(X_r, y_r)
-            pred1=clf.predict(X_r)
-            pred2=clf_not_rob.predict(X_r)
+            pred1 = clf.predict(X_r)
+            pred2 = clf_not_rob.predict(X_r)
 
-            assert (np.linalg.norm(pred1-pred2)/np.linalg.norm(pred2) <
-                    np.linalg.norm(pred1-y_r)/np.linalg.norm(y_r))
+            assert np.linalg.norm(pred1 - pred2) / np.linalg.norm(
+                pred2
+            ) < np.linalg.norm(pred1 - y_r) / np.linalg.norm(y_r)
