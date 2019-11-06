@@ -422,7 +422,7 @@ class RobustWeightedEstimator(BaseEstimator):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, attributes=['estimator_','weights_'])
         return self.estimator_.predict(X)
 
     def _check_proba(self):
@@ -434,6 +434,7 @@ class RobustWeightedEstimator(BaseEstimator):
 
     @property
     def predict_proba(self):
+        check_is_fitted(self, attributes=['estimator_','weights_'])
         self._check_proba()
         return semf._predict_proba
 
