@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ======================================================================
-A demo of Robust Classification on Real dataset "diabetes" from OpenML
+A demo of Robust Classification on real dataset "diabetes" from OpenML
 ======================================================================
 In this example we compare the RobustWeightedEstimator using SGDClassifier
 for classification on the real dataset "diabetes".

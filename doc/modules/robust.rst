@@ -10,7 +10,7 @@ model assumptions." In particular, in machine learning, we want to bound the
 influence that any minority of the dataset can have on the prediction.
 
 .. |robust_regression| image:: ../robust_plot_regression.png
-       :target: ../examples/plot_RobustRegression.py
+       :target: ../examples/plot_robust_regression_toy.py
        :scale: 70
 
 .. centered:: |robust_regression|

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ================================================================
-A demo of Robust Regression on Real dataset "california housing"
+A demo of Robust Regression on real dataset "california housing"
 ================================================================
 In this example we compare the RobustWeightedEstimator using SGDRegressor
 for regression on the real dataset california housing.

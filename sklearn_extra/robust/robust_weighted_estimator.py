@@ -19,17 +19,9 @@ from sklearn.linear_model import SGDRegressor
 # Loss functions import. Taken from scikit-learn linear SGD estimators.
 
 try:
-    from sklearn.linear_model._sgd_fast import (
-        Log,
-        SquaredLoss,
-        Hinge,
-    )
+    from sklearn.linear_model._sgd_fast import Log, SquaredLoss, Hinge
 except ImportError:
-    from sklearn.linear_model.sgd_fast import (
-        Log,
-        SquaredLoss,
-        Hinge,
-    )
+    from sklearn.linear_model.sgd_fast import Log, SquaredLoss, Hinge
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, blockMOM, huber
@@ -240,7 +232,7 @@ class RobustWeightedEstimator(BaseEstimator):
 
         self.c_ = self.c
         self.k_ = self.k
-        self.loss_=self.loss
+        self.loss_ = self.loss
         check_consistent_length(X, y)
         random_state = check_random_state(self.random_state)
 
@@ -265,7 +257,7 @@ class RobustWeightedEstimator(BaseEstimator):
             learning_rate="constant",
             loss=self.loss_,
             eta0=self.eta0,
-            random_state=random_state
+            random_state=random_state,
         )
 
         # Get actual loss function from its name.
@@ -289,7 +281,7 @@ class RobustWeightedEstimator(BaseEstimator):
                 # calibration to the one edicted by self.base_estimator.
                 base_estimator.set_params(learning_rate=learning_rate)
 
-            if base_estimator.loss in ['log',"hinge"]:
+            if base_estimator.loss in ["log", "hinge"]:
                 # If in classification, use decision_function
                 pred = base_estimator.decision_function(X)
             else:
@@ -360,10 +352,10 @@ class RobustWeightedEstimator(BaseEstimator):
                 "eta0 must be > 0, got %s." % self.eta0
             )
 
-        if (not (self.k is None)
-            and (not isinstance(self.k, int)
+        if not (self.k is None) and (
+            not isinstance(self.k, int)
             or self.k < 0
-            or self.k > np.floor(n / 2))
+            or self.k > np.floor(n / 2)
         ):
             raise ValueError(
                 "RobustWeightedEstimator: "
@@ -401,7 +393,7 @@ class RobustWeightedEstimator(BaseEstimator):
                 # scale estimator using iqr, rescaled by what would be if the
                 # loss was Gaussian.
                 scale = iqr(np.abs(loss_values - med)) / 1.37
-                self.k_ = np.sum(np.abs(loss_values-med)>2*scale)
+                self.k_ = np.sum(np.abs(loss_values - med) > 2 * scale)
                 print(self.k_)
             # Choose (randomly) 2k+1 (almost-)equal blocks of data.
             blocks = blockMOM(loss_values, self.k_, random_state)
@@ -435,8 +427,11 @@ class RobustWeightedEstimator(BaseEstimator):
 
     def _check_proba(self):
         if self.loss != "log":
-            raise AttributeError("probability estimates are not available for"
-                                 " loss=%r" % self.loss)
+            raise AttributeError(
+                "probability estimates are not available for"
+                " loss=%r" % self.loss
+            )
+
     @property
     def predict_proba(self):
         self._check_proba()
