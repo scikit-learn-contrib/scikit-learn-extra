@@ -47,7 +47,7 @@ clf_rob = RobustWeightedEstimator(
 
 # We compute M times the cross validations in order to also have an estimate
 # of the variance of the loss of the estimators.
-M = 30
+M = 10
 res = []
 for f in range(M):
     print("\r Progress: %s / %s" % (f + 1, M), end="")

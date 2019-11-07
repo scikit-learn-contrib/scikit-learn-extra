@@ -65,6 +65,7 @@ estimators = [
                 max_iter=1000,
                 n_iter_no_change=100,
             ),
+            loss="squared_loss",
             weighting="huber",
             c=0.5,
             eta0=1e-6,

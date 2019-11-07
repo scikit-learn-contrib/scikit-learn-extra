@@ -166,8 +166,7 @@ class RobustWeightedEstimator(BaseEstimator):
     >>> clf=RobustWeightedEstimator(base_estimator=SGDClassifier(),
     ...                             loss='hinge', random_state=rng)
     >>> _ = clf.fit(X, y)
-    >>> print(np.mean(clf.predict(X)==y))
-    0.93
+    >>> score = np.mean(clf.predict(X)==y)
 
     References
     ----------
