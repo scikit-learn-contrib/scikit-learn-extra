@@ -135,7 +135,7 @@ class RobustWeightedEstimator(BaseEstimator):
 
     Attributes
     ----------
-    estimator_ : object,
+    base_estimator_ : object,
         The fitted base_estimator.
 
     weights_ : array like, length = n_sample.
@@ -229,9 +229,6 @@ class RobustWeightedEstimator(BaseEstimator):
         X = check_array(X)
         y = check_array(y, ensure_2d=False)
 
-        self.c_ = self.c
-        self.k_ = self.k
-        self.loss_ = self.loss
         check_consistent_length(X, y)
         random_state = check_random_state(self.random_state)
 
@@ -243,27 +240,35 @@ class RobustWeightedEstimator(BaseEstimator):
 
         if self.base_estimator is None:
             base_estimator = SGDRegressor()
+            if self.loss is None:
+                loss_str = "squared_loss"
+            else:
+                loss_str = self.loss
         else:
             base_estimator = clone(self.base_estimator)
+            loss_str = self.loss
+
+        if loss_str is None:
+            raise ValueError(
+                "If base_estimator is not None, loss cannot "
+                "be None. Please specify a loss."
+            )
 
         learning_rate = base_estimator.learning_rate
-
-        if self.loss_ is None:
-            self.loss_ = "squared_loss"
 
         base_estimator.set_params(
             warm_start=True,
             learning_rate="constant",
-            loss=self.loss_,
+            loss=loss_str,
             eta0=self.eta0,
             random_state=random_state,
         )
 
         # Get actual loss function from its name.
-        loss = self._get_loss_function()
+        loss = self._get_loss_function(loss_str)
 
         # Weight initialization : do one non-robust epoch.
-        if self.loss_ in ["log", "hinge"]:
+        if loss_str in ["log", "hinge"]:
             # If in a classification task, precise the classes.
             base_estimator.partial_fit(X, y, classes=classes)
         else:
@@ -308,17 +313,17 @@ class RobustWeightedEstimator(BaseEstimator):
             self.weights_ = final_weight / self.max_iter
         else:
             self.weights_ = weights
-        self.estimator_ = base_estimator
+        self.base_estimator_ = base_estimator
         return self
 
-    def _get_loss_function(self):
+    def _get_loss_function(self, loss):
         """Get concrete ''LossFunction'' object for str ''loss''. """
 
-        loss_ = LOSS_FUNCTIONS.get(self.loss_)
-        if loss_ is None:
-            raise ValueError("The loss %s is not supported. " % self.loss_)
+        eff_loss = LOSS_FUNCTIONS.get(loss)
+        if eff_loss is None:
+            raise ValueError("The loss %s is not supported. " % self.loss)
 
-        loss_class, args = loss_[0], loss_[1:]
+        loss_class, args = eff_loss[0], eff_loss[1:]
         return np.vectorize(loss_class(*args).dloss)
 
     def _validate_hyperparameters(self, n):
@@ -327,8 +332,8 @@ class RobustWeightedEstimator(BaseEstimator):
         if self.max_iter <= 0:
             raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
 
-        if not (self.c_ is None) and (self.c_ <= 0):
-            raise ValueError("c must be > 0, got %s." % self.c_)
+        if not (self.c is None) and (self.c <= 0):
+            raise ValueError("c must be > 0, got %s." % self.c)
 
         if self.burn_in < 0:
             raise ValueError("burn_in must be >= 0, got %s." % self.burn_in)
@@ -349,10 +354,10 @@ class RobustWeightedEstimator(BaseEstimator):
     def _get_weights(self, loss_values, random_state):
         # Compute the robust weight of the samples.
         if self.weighting == "huber":
-            if self.c_ is None:
+            if self.c is None:
                 # If no c parameter given, estimate using inter quartile range.
-                self.c_ = iqr(np.abs(loss_values - np.median(loss_values))) / 2
-                if self.c_ == 0:
+                c = iqr(np.abs(loss_values - np.median(loss_values))) / 2
+                if c == 0:
                     warnings.warn(
                         "Too many samples are parfectly predicted "
                         "according to the loss function. "
@@ -361,24 +366,27 @@ class RobustWeightedEstimator(BaseEstimator):
                         "or using a constant c value to remove "
                         "this warning."
                     )
-                    self.c_ = 1.35
+                    c = 1.35
+            else:
+                c = self.c
 
             def psisx(x):
-                return _huber_psisx(x, self.c_)
+                return _huber_psisx(x, c)
 
             # Robust estimation of the risk is in mu.
-            mu = huber(loss_values, self.c_)
+            mu = huber(loss_values, c)
 
         elif self.weighting == "mom":
-            if self.k_ is None:
+            if self.k is None:
                 med = np.median(loss_values)
                 # scale estimator using iqr, rescaled by what would be if the
                 # loss was Gaussian.
                 scale = iqr(np.abs(loss_values - med)) / 1.37
-                self.k_ = np.sum(np.abs(loss_values - med) > 2 * scale)
-                print(self.k_)
+                k = np.sum(np.abs(loss_values - med) > 2 * scale)
+            else:
+                k = self.k
             # Choose (randomly) 2k+1 (almost-)equal blocks of data.
-            blocks = blockMOM(loss_values, self.k_, random_state)
+            blocks = blockMOM(loss_values, k, random_state)
             # Compute the median-of-means of the losses using these blocks.
             # Return also the index at which this median-of-means is attained.
             mu, idmom = median_of_means_blocked(loss_values, blocks)
@@ -402,8 +410,8 @@ class RobustWeightedEstimator(BaseEstimator):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self, attributes=["estimator_", "weights_"])
-        return self.estimator_.predict(X)
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.predict(X)
 
     def _check_proba(self):
         if self.loss != "log":
@@ -414,9 +422,31 @@ class RobustWeightedEstimator(BaseEstimator):
 
     @property
     def predict_proba(self):
-        check_is_fitted(self, attributes=["estimator_", "weights_"])
+        check_is_fitted(self, attributes=["base_estimator_"])
         self._check_proba()
-        return semf._predict_proba
+        return self._predict_proba
 
     def _predict_proba(self, X):
-        return self.estimator_.predict_proba(X)
+        return self.base_estimator_.predict_proba(X)
+
+    @property
+    def _estimator_type(self):
+        return self.base_estimator._estimator_type
+
+    def score(self, X, y=None):
+        """Returns the score on the given data, using
+        ``base_estimator_.score``.
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
+        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+        Returns
+        -------
+        score : float
+        """
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.score(X, y)

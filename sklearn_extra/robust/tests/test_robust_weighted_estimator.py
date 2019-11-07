@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn_extra.robust import RobustWeightedEstimator
 from sklearn.datasets import make_blobs
-from sklearn.metrics import accuracy_score, median_absolute_error
+from sklearn.metrics import median_absolute_error
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.utils import shuffle
 
@@ -35,7 +35,7 @@ def test_corrupted_classif():
                 random_state=rng,
             )
             clf.fit(X_cc, y_cc)
-            score = accuracy_score(clf.predict(X_cc), y_cc)
+            score = clf.score(X_cc, y_cc)
             assert score > 0.75
 
 
@@ -62,12 +62,40 @@ def test_not_robust_classif():
             clf_not_rob = SGDClassifier(loss=loss, random_state=rng)
             clf.fit(X_c, y_c)
             clf_not_rob.fit(X_c, y_c)
-            pred1 = clf.estimator_.decision_function(X_c)
+            pred1 = clf.base_estimator_.decision_function(X_c)
             pred2 = clf_not_rob.decision_function(X_c)
 
-            assert np.linalg.norm(pred1 - pred2) / np.linalg.norm(
-                pred2
-            ) < np.linalg.norm(pred1 - y_c) / np.linalg.norm(y_c)
+            assert (
+                np.linalg.norm(pred1 - pred2) / np.linalg.norm(pred2)
+                - np.linalg.norm(pred1 - y_c) / np.linalg.norm(y_c)
+                < 0.1
+            )
+
+
+# Case "log" loss, test predict_proba
+def test_predict_proba():
+    for weighting in ["huber", "mom"]:
+        clf = RobustWeightedEstimator(
+            SGDClassifier(loss="log"),
+            loss="log",
+            max_iter=100,
+            weighting=weighting,
+            k=0,
+            c=1e7,
+            burn_in=0,
+            random_state=rng,
+        )
+        clf_not_rob = SGDClassifier(loss="log", random_state=rng)
+        clf.fit(X_c, y_c)
+        clf_not_rob.fit(X_c, y_c)
+        pred1 = clf.base_estimator_.predict_proba(X_c)[:, 1]
+        pred2 = clf_not_rob.predict_proba(X_c)[:, 1]
+
+        assert (
+            np.linalg.norm(pred1 - pred2) / np.linalg.norm(pred2)
+            - np.linalg.norm(pred1 - y_c) / np.linalg.norm(y_c)
+            < 0.1
+        )
 
 
 # Regression test with outliers
