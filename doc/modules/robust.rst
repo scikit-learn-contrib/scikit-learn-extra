@@ -95,7 +95,8 @@ We use a meta algorithm that take into entry a base estimator (for example a
 stochastic gradient descent algorithm like SGDClassifier or SGDRegressor), the
 conditions for an estimator to be used are mainly that it must support
 partial_fit and sample_weight but for now only SGDClassifier and SGDRegressor
-are officially supported.
+are officially supported. See the example using kmeans as an example if you want to
+adapt the method to other estimators.
 
 At each step we estimates some sample weights that are meant to be small for
 outliers and large for inliers and then we do one optimization step using the
@@ -179,6 +180,8 @@ with neural networks and as such it can be used with non-linear estimators.
 This feature has not been implement yet but can be coded by the user as long
 as the neural network estimator support partial_fit and sample_weight and if it
 has the parameters learning_rate, warm_start, loss and eta0 (same as in scikit-learn SGD estimators).
+This algorithm can also be used to do unsupervised learning, an example of which
+is given using KMeans algorithm. 
 
 Speed and limits of the algorithm
 ---------------------------------

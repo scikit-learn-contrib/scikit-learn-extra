@@ -21,7 +21,7 @@ X, y = make_blobs(
     n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
 )
 
-# Change the first 5 entries to outliers
+# Change the first 3 entries to outliers
 for f in range(3):
     X[f] = [20, 3] + rng.normal(size=2) * 0.1
     y[f] = 0

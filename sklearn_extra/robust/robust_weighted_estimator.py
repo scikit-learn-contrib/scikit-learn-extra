@@ -116,13 +116,15 @@ class RobustWeightedEstimator(BaseEstimator):
         (using the inter-quartile range), this tends to be conservative
         (robust).
 
-    loss : string or None, default=None
+    loss : string, None or callable, default=None
         Name of the loss used, must be the same loss as the one optimized in
         base_estimator.
         Classification losses supported : 'log', 'hinge'.
         If 'log', then the base_estimator must support predict_proba.
         Regression losses supported : 'squared_loss'.
-        If None, loss='squared_loss'
+        If None and if base_estimator is None, loss='squared_loss'
+        If callable, the function is used as loss function ro construct
+        the weights.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -209,7 +211,7 @@ class RobustWeightedEstimator(BaseEstimator):
         self.max_iter = max_iter
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters
@@ -226,12 +228,10 @@ class RobustWeightedEstimator(BaseEstimator):
         self : returns an estimator trained with RobustWeightedEstimator.
         """
         X = check_array(X)
-        y = check_array(y, ensure_2d=False)
-
-        check_consistent_length(X, y)
+        if y is not None:
+            y = check_array(y, ensure_2d=False)
+            check_consistent_length(X, y)
         random_state = check_random_state(self.random_state)
-
-        classes = np.unique(y)
 
         self._validate_hyperparameters(len(X))
 
@@ -240,34 +240,37 @@ class RobustWeightedEstimator(BaseEstimator):
         if self.base_estimator is None:
             base_estimator = SGDRegressor()
             if self.loss is None:
-                loss_str = "squared_loss"
+                loss_param = "squared_loss"
             else:
-                loss_str = self.loss
+                loss_param = self.loss
         else:
             base_estimator = clone(self.base_estimator)
-            loss_str = self.loss
+            loss_param = self.loss
 
-        if loss_str is None:
+        if loss_param is None:
             raise ValueError(
                 "If base_estimator is not None, loss cannot "
                 "be None. Please specify a loss."
             )
 
-        learning_rate = base_estimator.learning_rate
+        parameters = list(base_estimator.get_params().keys())
+        if "warm_start" in parameters:
+            base_estimator.set_params(warm_start=True)
 
-        base_estimator.set_params(
-            warm_start=True,
-            learning_rate="constant",
-            loss=loss_str,
-            eta0=self.eta0,
-            random_state=random_state,
-        )
+        if "loss" in parameters:
+            base_estimator.set_params(loss=loss_param)
+
+        base_estimator.set_params(random_state=random_state)
+        if self.burn_in > 0:
+            learning_rate = base_estimator.learning_rate
+            base_estimator.set_params(learning_rate="constant", eta0=self.eta0)
 
         # Get actual loss function from its name.
-        loss = self._get_loss_function(loss_str)
+        loss = self._get_loss_function(loss_param)
 
         # Weight initialization : do one non-robust epoch.
-        if loss_str in ["log", "hinge"]:
+        if loss_param in ["log", "hinge"]:
+            classes = np.unique(y)
             # If in a classification task, precise the classes.
             base_estimator.partial_fit(X, y, classes=classes)
         else:
@@ -279,19 +282,22 @@ class RobustWeightedEstimator(BaseEstimator):
         # Optimization algorithm
         for epoch in range(self.max_iter):
 
-            if epoch > self.burn_in:
+            if epoch > self.burn_in and self.burn_in > 0:
                 # If not in the burn_in phase anymore, change the learning_rate
                 # calibration to the one edicted by self.base_estimator.
                 base_estimator.set_params(learning_rate=learning_rate)
 
-            if base_estimator.loss in ["log", "hinge"]:
+            if loss_param in ["log", "hinge"]:
                 # If in classification, use decision_function
                 pred = base_estimator.decision_function(X)
             else:
                 pred = base_estimator.predict(X)
 
             # Compute the loss of each sample
-            loss_values = loss(y, pred)
+            if self._estimator_type == "clusterer":
+                loss_values = loss(X, pred)
+            else:
+                loss_values = loss(y.flatten(), pred)
 
             # Compute the weight associated with each losses.
             # Samples whose loss is far from the mean loss (robust estimation)
@@ -303,7 +309,12 @@ class RobustWeightedEstimator(BaseEstimator):
             base_estimator.partial_fit(X, y, sample_weight=weights)
 
             # Shuffle the data at each step.
-            X, y, weights = shuffle(X, y, weights, random_state=random_state)
+            if self._estimator_type == "clusterer":
+                X, weights = shuffle(X, weights, random_state=random_state)
+            else:
+                X, y, weights = shuffle(
+                    X, y, weights, random_state=random_state
+                )
 
             if self.weighting == "mom":
                 final_weight += weights
@@ -313,17 +324,20 @@ class RobustWeightedEstimator(BaseEstimator):
         else:
             self.weights_ = weights
         self.base_estimator_ = base_estimator
+        self.n_iter_ = self.max_iter * len(X)
         return self
 
     def _get_loss_function(self, loss):
         """Get concrete ''LossFunction'' object for str ''loss''. """
+        if type(loss) == str:
+            eff_loss = LOSS_FUNCTIONS.get(loss)
+            if eff_loss is None:
+                raise ValueError("The loss %s is not supported. " % self.loss)
 
-        eff_loss = LOSS_FUNCTIONS.get(loss)
-        if eff_loss is None:
-            raise ValueError("The loss %s is not supported. " % self.loss)
-
-        loss_class, args = eff_loss[0], eff_loss[1:]
-        return np.vectorize(loss_class(*args).dloss)
+            loss_class, args = eff_loss[0], eff_loss[1:]
+            return np.vectorize(loss_class(*args).dloss)
+        else:
+            return loss
 
     def _validate_hyperparameters(self, n):
         # Check the hyperparameters.
@@ -430,7 +444,10 @@ class RobustWeightedEstimator(BaseEstimator):
 
     @property
     def _estimator_type(self):
-        return self.base_estimator._estimator_type
+        if self.base_estimator is None:
+            return SGDRegressor()._estimator_type
+        else:
+            return self.base_estimator._estimator_type
 
     def score(self, X, y=None):
         """Returns the score on the given data, using

@@ -6,18 +6,18 @@
 import numpy as np
 
 
-def blockMOM(x, k, random_state):
+def blockMOM(X, k, random_state):
     """Sample the indices of 2k+1 blocks for data x using a random permutation
 
     Parameters
     ----------
 
-    k : int
-        we use 2k+1 blocks
-
-    x : array like, length = n_sample
+    X : array like, length = n_sample
         sample whose size correspong to the size of the sample we want to do
         blocks for.
+
+    k : int
+        we use 2k+1 blocks
 
     random_state : RandomState instance
         The seed of the pseudo random number generator to use when shuffling
@@ -29,6 +29,7 @@ def blockMOM(x, k, random_state):
     list of size K containing the lists of the indices of the blocks,
     the size of the lists are contained in [n_sample/K,2n_sample/K]
     """
+    x = X.flatten()
     K = 2 * k + 1
     b = int(np.floor(len(x) / K))
     nb = K - (len(x) - b * K)
@@ -43,13 +44,13 @@ def blockMOM(x, k, random_state):
     return [perm[b] for b in blocks]
 
 
-def median_of_means_blocked(x, blocks):
-    """Compute the median of means of x using the blocks blocks
+def median_of_means_blocked(X, blocks):
+    """Compute the median of means of X using the blocks blocks
 
     Parameters
     ----------
 
-    x : array like, length = n_sample
+    X : array like, length = n_sample
         sample from which we want an estimator of the mean
 
     blocks : list of list, provided by the function blockMOM.
@@ -59,6 +60,8 @@ def median_of_means_blocked(x, blocks):
 
     The median of means of x using the block blocks, a float.
     """
+    x = X.flatten()
+
     # Compute the mean of each block
     means_blocks = [np.mean([x[f] for f in ind]) for ind in blocks]
 
@@ -67,13 +70,13 @@ def median_of_means_blocked(x, blocks):
     return means_blocks[indice], indice
 
 
-def median_of_means(x, k, random_state=np.random.RandomState(42)):
-    """Compute the median of means of x using 2k+1 blocks
+def median_of_means(X, k, random_state=np.random.RandomState(42)):
+    """Compute the median of means of X using 2k+1 blocks
 
     Parameters
     ----------
 
-    x : array like, length = n_sample
+    X : array like, length = n_sample
         sample from which we want an estimator of the mean
 
     k : int.
@@ -87,17 +90,19 @@ def median_of_means(x, k, random_state=np.random.RandomState(42)):
 
     The median of means of x using 2k+1 random blocks, a float.
     """
+    x = X.flatten()
+
     blocks = blockMOM(x, k, random_state)
     return median_of_means_blocked(x, blocks)[0]
 
 
-def huber(x, c=1.35, T=20):
-    """Compute the Huber estimator of location of x with parameter c
+def huber(X, c=1.35, T=20):
+    """Compute the Huber estimator of location of X with parameter c
 
     Parameters
     ----------
 
-    x : array like, length = n_sample
+    X : array like, length = n_sample
         sample from which we want an estimator of the mean
 
     c : float >0, default = 1.35
@@ -114,6 +119,8 @@ def huber(x, c=1.35, T=20):
     The Huber estimator of location on x with parameter c, a float.
 
     """
+    x = X.flatten()
+
     # Initialize the algorithm with a robust first-guess : the median.
     mu = np.median(x)
 
