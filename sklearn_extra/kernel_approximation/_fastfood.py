@@ -171,7 +171,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
         d_orig = X.shape[1]
         rng = check_random_state(self.random_state)
 
-        self._d, self._n, self._times_to_stack_v = Fastfood._enforce_dimensionality_constraints(
+        (
+            self._d,
+            self._n,
+            self._times_to_stack_v,
+        ) = Fastfood._enforce_dimensionality_constraints(
             d_orig, self.n_components
         )
         self._number_of_features_to_pad_with_zeros = self._d - d_orig
