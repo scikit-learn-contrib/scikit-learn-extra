@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 =============================================================
-A demo of Robust Regression on Simulated corrupted dataset
+Robust regression on simulated corrupted dataset
 =============================================================
 In this example we compare the RobustWeightedEstimator using SGDRegressor
 for regression with various robust regression algorithms from scikit-learn.
