@@ -192,8 +192,8 @@ Complexity and limitation:
   moreovoer, it is advised only with sufficiently large dataset
   (thumb rule sample_size > 500 the specifics depend on the dataset).
 
-**Warning:** On a real dataset, one should be aware that there can be outliers in the
-training set but also in the test set when the loss is not bounded. See
+**Warning:** On a real dataset, one should be aware that there can be outliers
+in the training set but also in the test set when the loss is not bounded. See
 the example with California housing real dataset, for further discussion.
 
 .. topic:: References:
