@@ -80,7 +80,7 @@ for i, (name, estimator) in enumerate(estimators):
     estimator.fit(X, y)
     plot_classif(estimator, X, y, ax)
     ax.set_title(name)
-    ax.axis('off')
+    ax.axis("off")
 
 fig.suptitle(
     "Scatter plot of training set and representation of"

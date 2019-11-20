@@ -50,14 +50,14 @@ def kmeans_loss(X, pred):
 
 kmeans_rob = RobustWeightedEstimator(
     MiniBatchKMeans(3, batch_size=len(X)),
-    burn_in=0, # Important because it does not mean anything to have burn-in
-               # steps for kmeans. It must be 0.
+    burn_in=0,  # Important because it does not mean anything to have burn-in
+    # steps for kmeans. It must be 0.
     weighting="huber",
     loss=kmeans_loss,
     max_iter=200,
-    c=0.1, # Measure the robustness of our estimation.
+    c=0.1,  # Measure the robustness of our estimation.
     random_state=rng,
-    )
+)
 kmeans_rob.fit(X)
 yrob = kmeans_rob.predict(X)
 
