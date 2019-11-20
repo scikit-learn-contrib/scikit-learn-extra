@@ -33,7 +33,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import RobustScaler
 
 
-def eval(est, X, y, X_test, y_test):
+def quadratic_loss(est, X, y, X_test, y_test):
     est.fit(X, y)
     return (est.predict(X_test) - y_test) ** 2
 
@@ -86,7 +86,7 @@ for f in range(M):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
     for i, (name, est) in enumerate(estimators):
-        cv = eval(est, X_train, y_train, X_test, y_test)
+        cv = quadratic_loss(est, X_train, y_train, X_test, y_test)
 
         # It is preferable to use the median of the validation losses
         # because it is possible that some outliers are present in the test set.
@@ -94,7 +94,7 @@ for f in range(M):
         res[i, f, 0] = np.mean(cv)
         res[i, f, 1] = np.median(cv)
 
-fig, (axe1, axe2) = plt.subplots(1, 2)
+fig, (axe1, axe2) = plt.subplots(2, 1)
 names = [name for name, est in estimators]
 
 axe1.boxplot(res[:, :, 0].T, labels=names)

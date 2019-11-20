@@ -22,7 +22,7 @@ rng = np.random.RandomState(42)
 centers = [[1, 1], [-1, -1], [1, -1]]
 n_clusters = len(centers)
 X, labels_true = make_blobs(
-    n_samples=300, centers=centers, cluster_std=0.5, random_state=rng
+    n_samples=300, centers=centers, cluster_std=0.3, random_state=rng
 )
 
 # Change the first 3 entries to outliers
@@ -50,12 +50,14 @@ def kmeans_loss(X, pred):
 
 kmeans_rob = RobustWeightedEstimator(
     MiniBatchKMeans(3, batch_size=len(X)),
-    burn_in=0,
-    weighting="mom",
+    burn_in=0, # Important because it does not mean anything to have burn-in
+               # steps for kmeans. It must be 0.
+    weighting="huber",
     loss=kmeans_loss,
-    max_iter=100,
-    k=3,
-)
+    max_iter=200,
+    c=0.1, # Measure the robustness of our estimation.
+    random_state=rng,
+    )
 kmeans_rob.fit(X)
 yrob = kmeans_rob.predict(X)
 

@@ -66,10 +66,7 @@ for f in range(M):
 
 plt.boxplot(np.array(res), labels=["RobustWeightedEstimator", "SGDClassifier"])
 plt.ylabel("AUC")
-plt.title(
-    "Boxplot of the AUC for two different linear estimators on the "
-    '"diabetes" dataset.'
-)
+
 plt.show()
 
 # Remark : when using accuracy score, the optimal hyperparameters change and

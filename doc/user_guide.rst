@@ -11,6 +11,7 @@ User guide
      :numbered:
 
      modules/eigenpro.rst
+     modules/robust.rst
 
 .. _k_medoids:
 
