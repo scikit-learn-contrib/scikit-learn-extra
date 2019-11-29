@@ -231,6 +231,7 @@ class RobustWeightedEstimator(BaseEstimator):
         if y is not None:
             y = check_array(y, ensure_2d=False)
             check_consistent_length(X, y)
+
         random_state = check_random_state(self.random_state)
 
         self._validate_hyperparameters(len(X))
@@ -271,6 +272,8 @@ class RobustWeightedEstimator(BaseEstimator):
         # Weight initialization : do one non-robust epoch.
         if loss_param in ["log", "hinge"]:
             classes = np.unique(y)
+            if len(classes)>2:
+                raise ValueError('y must be binary.')
             # If in a classification task, precise the classes.
             base_estimator.partial_fit(X, y, classes=classes)
         else:
@@ -466,3 +469,18 @@ class RobustWeightedEstimator(BaseEstimator):
         """
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.score(X, y)
+
+    def decision_function(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+
+        Returns
+        -------
+        array, shape (n_samples,)
+           Predicted target values per element in X.
+        """
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.decision_function(X)
