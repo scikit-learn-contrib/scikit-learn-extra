@@ -272,8 +272,8 @@ class RobustWeightedEstimator(BaseEstimator):
         # Weight initialization : do one non-robust epoch.
         if loss_param in ["log", "hinge"]:
             classes = np.unique(y)
-            if len(classes)>2:
-                raise ValueError('y must be binary.')
+            if len(classes) > 2:
+                raise ValueError("y must be binary.")
             # If in a classification task, precise the classes.
             base_estimator.partial_fit(X, y, classes=classes)
         else:

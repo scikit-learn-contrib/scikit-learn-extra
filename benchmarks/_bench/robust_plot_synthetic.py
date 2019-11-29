@@ -17,8 +17,8 @@ from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(42)
 
-dimensions = np.linspace(50,5000,num=8).astype(int)
-sample_sizes = np.linspace(50,5000,num=8).astype(int)
+dimensions = np.linspace(50, 5000, num=8).astype(int)
+sample_sizes = np.linspace(50, 5000, num=8).astype(int)
 accuracies = []
 times = []
 
@@ -28,21 +28,25 @@ times = []
 for d in dimensions:
     # Make an example in dimension d. Use a scale factor for the problem to be
     # easy even in high dimension.
-    X, y = make_classification(n_samples=200, n_features=d,
-                               scale=1/np.sqrt(2*d), random_state=rng)
+    X, y = make_classification(
+        n_samples=200, n_features=d, scale=1 / np.sqrt(2 * d), random_state=rng
+    )
     stime = time()
-    clf= RobustWeightedEstimator(SGDClassifier(loss='hinge', penalty='l1'),
-                                                loss='hinge', random_state=rng)
+    clf = RobustWeightedEstimator(
+        SGDClassifier(loss="hinge", penalty="l1"),
+        loss="hinge",
+        random_state=rng,
+    )
     accuracies.append(np.mean(cross_val_score(clf, X, y, cv=10)))
-    times.append(time()-stime)
+    times.append(time() - stime)
 
 fig, axs = plt.subplots(2, 2)
-axs[0,0].plot(dimensions, accuracies)
-axs[0,0].set_xlabel('Number of features')
-axs[0,0].set_ylabel('accuracy')
-axs[0,1].plot(dimensions, times)
-axs[0,1].set_xlabel('Number of features')
-axs[0,1].set_ylabel('Time to fit and predict (s)')
+axs[0, 0].plot(dimensions, accuracies)
+axs[0, 0].set_xlabel("Number of features")
+axs[0, 0].set_ylabel("accuracy")
+axs[0, 1].plot(dimensions, times)
+axs[0, 1].set_xlabel("Number of features")
+axs[0, 1].set_ylabel("Time to fit and predict (s)")
 
 accuracies = []
 times = []
@@ -51,19 +55,22 @@ times = []
 # of samples
 
 for n in sample_sizes:
-    X, y = make_classification(n_samples=n, n_features=5,random_state=rng)
+    X, y = make_classification(n_samples=n, n_features=5, random_state=rng)
     stime = time()
-    clf= RobustWeightedEstimator(SGDClassifier(loss='hinge', penalty='l1'),
-                                                loss='hinge', random_state=rng)
+    clf = RobustWeightedEstimator(
+        SGDClassifier(loss="hinge", penalty="l1"),
+        loss="hinge",
+        random_state=rng,
+    )
     accuracies.append(np.mean(cross_val_score(clf, X, y, cv=10)))
-    times.append(time()-stime)
+    times.append(time() - stime)
 
-axs[1,0].plot(dimensions, accuracies)
-axs[1,0].set_xlabel('Number of features')
-axs[1,0].set_ylabel('accuracy')
-axs[1,1].plot(dimensions, times)
-axs[1,1].set_xlabel('Number of features')
-axs[1,1].set_ylabel('Time to fit and predict (s)')
+axs[1, 0].plot(dimensions, accuracies)
+axs[1, 0].set_xlabel("Number of features")
+axs[1, 0].set_ylabel("accuracy")
+axs[1, 1].plot(dimensions, times)
+axs[1, 1].set_xlabel("Number of features")
+axs[1, 1].set_ylabel("Time to fit and predict (s)")
 
 
 plt.show()
