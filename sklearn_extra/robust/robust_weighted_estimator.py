@@ -470,7 +470,7 @@ class RobustWeightedEstimator(BaseEstimator):
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.score(X, y)
 
-    def decision_function(self, X):
+    def _decision_function(self, X):
         """Predict using the linear model
 
         Parameters
