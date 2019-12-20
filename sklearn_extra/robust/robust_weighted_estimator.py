@@ -426,7 +426,7 @@ class RobustWeightedEstimator(BaseEstimator):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self, attributes=["base_estimator_"])
+        check_is_fitted(self)
         return self.base_estimator_.predict(X)
 
     def _check_proba(self):
@@ -438,7 +438,7 @@ class RobustWeightedEstimator(BaseEstimator):
 
     @property
     def predict_proba(self):
-        check_is_fitted(self, attributes=["base_estimator_"])
+        check_is_fitted(self)
         self._check_proba()
         return self._predict_proba
 
@@ -467,7 +467,7 @@ class RobustWeightedEstimator(BaseEstimator):
         -------
         score : float
         """
-        check_is_fitted(self, attributes=["base_estimator_"])
+        check_is_fitted(self)
         return self.base_estimator_.score(X, y)
 
     def _decision_function(self, X):
@@ -482,5 +482,5 @@ class RobustWeightedEstimator(BaseEstimator):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        check_is_fitted(self, attributes=["base_estimator_"])
+        check_is_fitted(self)
         return self.base_estimator_.decision_function(X)
