@@ -15,7 +15,7 @@ from sklearn_extra.feature_weighting import TfigmTransformer
 
 if "CI" in os.environ:
     # make this example run faster in CI
-    categories = ["sci.crypt", "comp.graphics", 'comp.sys.mac.hardware']
+    categories = ["sci.crypt", "comp.graphics", "comp.sys.mac.hardware"]
 else:
     categories = None
 
@@ -28,18 +28,12 @@ X = vect.fit_transform(docs)
 res = []
 
 for scaler_label, scaler in [
-        ("identity", FunctionTransformer(lambda x: x)),
-        ("TF-IDF(sublinear_tf=False)", TfidfTransformer()),
-        ("TF-IDF(sublinear_tf=True)", TfidfTransformer(sublinear_tf=True)),
-        ("TF-IGM(tf_scale=None)", TfigmTransformer(alpha=5)),
-        (
-            "TF-IGM(tf_scale='sqrt')",
-            TfigmTransformer(alpha=5, tf_scale="sqrt"),
-        ),
-        (
-            "TF-IGM(tf_scale='log1p')",
-            TfigmTransformer(alpha=5, tf_scale="log1p"),
-        ),
+    ("identity", FunctionTransformer(lambda x: x)),
+    ("TF-IDF(sublinear_tf=False)", TfidfTransformer()),
+    ("TF-IDF(sublinear_tf=True)", TfidfTransformer(sublinear_tf=True)),
+    ("TF-IGM(tf_scale=None)", TfigmTransformer()),
+    ("TF-IGM(tf_scale='sqrt')", TfigmTransformer(tf_scale="sqrt"),),
+    ("TF-IGM(tf_scale='log1p')", TfigmTransformer(tf_scale="log1p"),),
 ]:
     pipe = make_pipeline(scaler, Normalizer())
     X_tr = pipe.fit_transform(X, y)
@@ -50,20 +44,17 @@ for scaler_label, scaler in [
         ),
         "balanced_accuracy": "balanced_accuracy",
     }
-    scores = cross_validate(
-        est,
-        X_tr,
-        y,
-        scoring=scoring,
-    )
+    scores = cross_validate(est, X_tr, y, scoring=scoring,)
     for key, val in scores.items():
         if not key.endswith("_time"):
-            res.append({
-                "metric": "_".join(key.split("_")[1:]),
-                "subset": key.split("_")[0],
-                "preprocessing": scaler_label,
-                "score": f"{val.mean():.3f}+-{val.std():.3f}",
-            })
+            res.append(
+                {
+                    "metric": "_".join(key.split("_")[1:]),
+                    "subset": key.split("_")[0],
+                    "preprocessing": scaler_label,
+                    "score": f"{val.mean():.3f}+-{val.std():.3f}",
+                }
+            )
 scores = (
     pd.DataFrame(res)
     .set_index(["preprocessing", "metric", "subset"])["score"]
