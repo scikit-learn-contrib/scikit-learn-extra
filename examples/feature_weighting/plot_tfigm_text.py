@@ -1,4 +1,6 @@
-import os
+# License: BSD 3 clause
+#
+# Authors: Roman Yurchak <rth.yurchak@gmail.com>
 
 import pandas as pd
 import numpy as np
@@ -22,13 +24,13 @@ else:
 docs, y = fetch_20newsgroups(return_X_y=True, categories=categories)
 
 
-vect = CountVectorizer(min_df=5, stop_words="english", ngram_range=(1, 2))
+vect = CountVectorizer(min_df=5, stop_words="english", ngram_range=(1, 1))
 X = vect.fit_transform(docs)
 
 res = []
 
 for scaler_label, scaler in [
-    ("identity", FunctionTransformer(lambda x: x)),
+    ("TF", FunctionTransformer(lambda x: x)),
     ("TF-IDF(sublinear_tf=False)", TfidfTransformer()),
     ("TF-IDF(sublinear_tf=True)", TfidfTransformer(sublinear_tf=True)),
     ("TF-IGM(tf_scale=None)", TfigmTransformer()),
@@ -52,7 +54,7 @@ for scaler_label, scaler in [
                     "metric": "_".join(key.split("_")[1:]),
                     "subset": key.split("_")[0],
                     "preprocessing": scaler_label,
-                    "score": f"{val.mean():.3f}+-{val.std():.3f}",
+                    "score": f"{val.mean():.3f}±{val.std():.3f}",
                 }
             )
 scores = (

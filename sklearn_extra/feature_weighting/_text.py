@@ -1,3 +1,7 @@
+# License: BSD 3 clause
+#
+# Authors: Roman Yurchak <rth.yurchak@gmail.com>
+
 import numpy as np
 import scipy.sparse as sp
 
