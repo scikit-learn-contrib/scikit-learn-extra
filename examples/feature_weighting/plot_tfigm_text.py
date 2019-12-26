@@ -3,7 +3,6 @@
 # Authors: Roman Yurchak <rth.yurchak@gmail.com>
 
 import pandas as pd
-import numpy as np
 
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import Normalizer, FunctionTransformer
