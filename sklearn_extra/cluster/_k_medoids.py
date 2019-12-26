@@ -90,6 +90,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     References
     ----------
+    A different algorithm, that finds higher quality results, is explained in:
+    
     Kaufman, L. and Rousseeuw, P.J., Statistical Data Analysis Based on
     the L1–Norm and Related Methods, edited by Y. Dodge, North-Holland,
     405–416. 1987
