@@ -44,7 +44,10 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
         f1 = class_freq_sort[-1, :]
 
         fk = (class_freq_sort * np.arange(n_class, 0, -1)[:, None]).sum(axis=0)
-        self.coef_ = 1 + self.alpha * (f1 / fk)
+        weight = f1 / fk
+        # scale weights to [0, 1]
+        weight = ((1 + n_class)*n_class*weight - 2) / ((1 + n_class)*n_class - 2)
+        self.coef_ = 1 + self.alpha * weight
         return self
 
     def fit(self, X, y):
