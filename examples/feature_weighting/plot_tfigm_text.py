@@ -53,7 +53,7 @@ for scaler_label, scaler in [
                     "metric": "_".join(key.split("_")[1:]),
                     "subset": key.split("_")[0],
                     "preprocessing": scaler_label,
-                    "score": f"{val.mean():.3f}±{val.std():.3f}",
+                    "score": "{:.3f}±{:.3f}".format(val.mean(), val.std()),
                 }
             )
 scores = (

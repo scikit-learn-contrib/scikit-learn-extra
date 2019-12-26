@@ -80,4 +80,18 @@ def test_tfigm_valid_target():
     y = [1, 1, 1, 1]
     est = TfigmTransformer()
     est.fit(X, y)
-    assert_allclose(est.igm_[0], np.ones(3))
+    assert_allclose(est.igm_, np.ones(3))
+
+
+def test_tfigm_valid_target():
+    X = np.array([[0, 1, 1], [1, 0, 1], [0, 0, 1], [1, 1, 1]])
+    y = [1, 1, 2, 2]
+
+    est = TfigmTransformer(alpha=-1)
+    with pytest.raises(ValueError, match="alpha=-1 must be a positive number"):
+        est.fit(X, y)
+
+    est = TfigmTransformer(tf_scale="unknown")
+    msg = r"tf_scale=unknown should be one of \[None, 'sqrt'"
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)

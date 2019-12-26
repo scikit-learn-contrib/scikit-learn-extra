@@ -82,6 +82,21 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
         y : array-like of shape (n_samples,)
             target classes
         """
+        tf_scale_map = {None: None, "sqrt": np.sqrt, "log1p": np.log1p}
+
+        if self.tf_scale not in tf_scale_map:
+            raise ValueError(
+                "tf_scale={} should be one of {}.".format(
+                    self.tf_scale, list(tf_scale_map)
+                )
+            )
+        self._tf_scale_func = tf_scale_map[self.tf_scale]
+
+        if not isinstance(self.alpha, float) or self.alpha < 0:
+            raise ValueError(
+                "alpha={} must be a positive number.".format(self.alpha)
+            )
+
         self._le = LabelEncoder().fit(y)
         n_class = len(self._le.classes_)
         class_freq = np.zeros((n_class, X.shape[1]))
@@ -103,12 +118,16 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
         # avoid division by zero
         igm = np.divide(f1, fk, out=np.zeros_like(f1), where=(fk != 0))
         if n_class > 1:
-            # scale weights to [0, 1]
+            # although Chen et al. paper states that it is not mandatory, we
+            # allways re-scale weights to [0, 1], otherwise with 2 classes
+            # we would get a minimal IGM value of 1/3.
             self.igm_ = ((1 + n_class) * n_class * igm - 2) / (
                 (1 + n_class) * n_class - 2
             )
         else:
             self.igm_ = igm
+        # In the Chen et al. paper the regularization parameter is defined
+        # as 1/alpha.
         self.coef_ = self.alpha + self.igm_
         return self
 
@@ -139,14 +158,8 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
         vectors : {ndarray, sparse matrix} of shape (n_samples, n_features)
             transformed matrix
         """
-        if self.tf_scale is None:
-            pass
-        elif self.tf_scale == "sqrt":
-            X = np.sqrt(X)
-        elif self.tf_scale == "log1p":
-            X = np.log1p(X)
-        else:
-            raise ValueError
+        if self._tf_scale_func is not None:
+            X = self._tf_scale_func(X)
 
         if sp.issparse(X):
             X_tr = X @ sp.diags(self.coef_)
