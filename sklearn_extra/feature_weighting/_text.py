@@ -63,6 +63,7 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
     in text classification." Expert Systems with Applications 66 (2016):
     245-260.
     """
+
     def __init__(self, alpha=0.15, tf_scale=None):
         self.alpha = alpha
         self.tf_scale = tf_scale
@@ -97,10 +98,13 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
         fk = (class_freq_sort * np.arange(n_class, 0, -1)[:, None]).sum(axis=0)
         # avoid division by zero
         igm = np.divide(f1, fk, out=np.zeros_like(f1), where=(fk != 0))
-        # scale weights to [0, 1]
-        self.igm_ = ((1 + n_class) * n_class * igm - 2) / (
-            (1 + n_class) * n_class - 2
-        )
+        if n_class > 1:
+            # scale weights to [0, 1]
+            self.igm_ = ((1 + n_class) * n_class * igm - 2) / (
+                (1 + n_class) * n_class - 2
+            )
+        else:
+            self.igm_ = igm
         self.coef_ = self.alpha + self.igm_
         return self
 
