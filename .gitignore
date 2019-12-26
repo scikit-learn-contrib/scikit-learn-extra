@@ -57,7 +57,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
-.swp
+*.swp
 
 # Translations
 *.mo

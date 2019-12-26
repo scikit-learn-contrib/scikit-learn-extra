@@ -21,11 +21,12 @@ res = []
 
 for scaler_label, scaler in tqdm([
         ("identity", FunctionTransformer(lambda x: x)),
-        ("TF-IDF", TfidfTransformer()),
-        #("TF-IDF(smooth_idf=True, sublinear_tf=False)", TfidfTransformer()),
-        #("TF-IDF(smooth_idf=False, sublinear_tf=False)", TfidfTransformer(smooth_idf=False)),
-        #("TF-IDF(smooth_idf=True, sublinear_tf=True)", TfidfTransformer(sublinear_tf=True)),
-        ("TF-IGM", TfigmTransformer(alpha=7))]):
+        ("TF-IDF(sublinar_tf=False)", TfidfTransformer()),
+        ("TF-IDF(sublinear_tf=True)", TfidfTransformer(sublinear_tf=True)),
+        ("TF-IGM(tf_scale=None)", TfigmTransformer(alpha=7)),
+        ("TF-IGM(tf_scale='sqrt')", TfigmTransformer(alpha=7, tf_scale="sqrt")),
+        ("TF-IGM(tf_scale='log1p')", TfigmTransformer(alpha=7, tf_scale="log1p")),
+    ]):
     pipe = make_pipeline(
         CountVectorizer(min_df=5, stop_words="english"),
         scaler,
@@ -33,7 +34,7 @@ for scaler_label, scaler in tqdm([
     )
     X_tr = pipe.fit_transform(X, y)
     est = LogisticRegression(random_state=2, solver="liblinear")
-    #est = LinearSVC()
+    est = LinearSVC()
     scoring={
         'F1-macro': lambda est, X, y: f1_score(y, est.predict(X), average="macro"),
         'balanced_accuracy': "balanced_accuracy"

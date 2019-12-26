@@ -12,4 +12,4 @@ def test_tfigm_transform():
     est = TfigmTransformer()
     X_tr = est.fit_transform(X, y)
     assert X_tr.shape == X.shape
-    assert_allclose(est.coef_, [4.5, 2.75, 1.777778], rtol=1e-4)
+    assert_allclose(est.coef_, [3.333333, 4.5, 2.166667], rtol=1e-5)

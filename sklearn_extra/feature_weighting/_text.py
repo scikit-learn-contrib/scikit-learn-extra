@@ -21,12 +21,14 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
     245-260.
     """
 
-    def __init__(self, alpha=7.0):
+    def __init__(self, alpha=7.0, tf_scale=None):
         self.alpha = alpha
+        self.tf_scale = tf_scale
 
     def _fit(self, X, y):
         self._le = LabelEncoder().fit(y)
-        class_freq = np.zeros((len(self._le.classes_), X.shape[1]))
+        n_class = len(self._le.classes_)
+        class_freq = np.zeros((n_class, X.shape[1]))
 
         X_nz = X != 0
         if sp.issparse(X_nz):
@@ -38,11 +40,10 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
             class_freq[idx, :] = X_nz[y_mask].sum(axis=0) / n_samples
 
         self._class_freq = class_freq
-        self._class_rank = np.argsort(-self._class_freq, axis=0)
-        f1 = self._class_freq[
-            self._class_rank[0, :], np.arange(self._class_freq.shape[1])
-        ]
-        fk = (self._class_freq * (self._class_rank + 1)).sum(axis=0)
+        class_freq_sort = np.sort(self._class_freq, axis=0)
+        f1 = class_freq_sort[-1, :]
+
+        fk = (class_freq_sort * np.arange(n_class, 0, -1)[:, None]).sum(axis=0)
         self.coef_ = 1 + self.alpha * (f1 / fk)
         return self
 
@@ -52,6 +53,15 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def _transform(self, X):
+        if self.tf_scale is None:
+            pass
+        elif self.tf_scale == 'sqrt':
+            X = np.sqrt(X)
+        elif self.tf_scale == 'log1p':
+            X = np.log1p(X)
+        else:
+            raise ValueError
+
         if sp.issparse(X):
             X_tr = X @ sp.diags(self.coef_)
         else:
