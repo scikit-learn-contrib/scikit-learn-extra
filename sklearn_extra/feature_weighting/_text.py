@@ -102,8 +102,8 @@ class TfigmTransformer(BaseEstimator, TransformerMixin):
         class_freq = np.zeros((n_class, X.shape[1]))
 
         X_nz = X != 0
-        if sp.issparse(X_nz):
-            X_nz = X_nz.asformat("csr", copy=False)
+        if sp.issparse(X_nz) and X_nz.getformat() != 'csr':
+            X_nz = X_nz.asformat("csr")
 
         for idx, class_label in enumerate(self._le.classes_):
             y_mask = y == class_label
