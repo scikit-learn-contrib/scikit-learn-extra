@@ -4,6 +4,17 @@ scikit-learn-extra API
 
 .. currentmodule:: sklearn_extra
 
+
+Feature weighting
+=================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_weighting.TfigmTransformer
+
+
 Kernel approximation
 ====================
 

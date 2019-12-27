@@ -1,6 +1,7 @@
 # License: BSD 3 clause
 #
 # Authors: Roman Yurchak <rth.yurchak@gmail.com>
+import os
 
 import pandas as pd
 
