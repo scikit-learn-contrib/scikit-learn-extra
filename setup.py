@@ -16,7 +16,7 @@ ver_file = os.path.join("sklearn_extra", "_version.py")
 with open(ver_file) as f:
     exec(f.read())
 
-DISTNAME = "sklearn-extra"
+DISTNAME = "scikit-learn-extra"
 DESCRIPTION = "A set of tools for scikit-learn."
 with codecs.open("README.rst", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
@@ -41,6 +41,8 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: Implementation :: CPython",
 ]
 EXTRAS_REQUIRE = {
     "tests": ["pytest", "pytest-cov"],
