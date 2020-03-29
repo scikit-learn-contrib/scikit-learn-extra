@@ -48,7 +48,8 @@ jobs:
       set -xe
       python -m pip install pytest pytest-azurepipelines
       # run doctests in the documentation
-      python -m pytest doc/*rst doc/modules/*rst
+      # TODO: remove "|| .." once at least one doctest is added
+      python -m pytest doc/*rst doc/modules/*rst || echo "Ignoring exit status"
       python -m pytest --durations 10 sklearn_extra
     displayName: 'Test'
 
