@@ -10,7 +10,7 @@ requires = [
     "numpy==1.17.3; python_version>='3.8' and platform_system!='AIX'",
     # Minimum supported numpy 1.16 for AIX
     # see https://github.com/scipy/scipy/pull/10431
-    "numpy==1.16.0; python_version=='3.5' and platform_system!='AIX'",
+    "numpy==1.16.0; python_version=='3.5' and platform_system=='AIX'",
     "numpy==1.16.0; python_version=='3.6' and platform_system=='AIX'",
     "numpy==1.16.0; python_version=='3.7' and platform_system=='AIX'",
     "numpy==1.17.3; python_version>='3.8' and platform_system=='AIX'",
