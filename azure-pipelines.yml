@@ -32,7 +32,7 @@ jobs:
       python --version
       python -m pip install --upgrade pip
       if [[ "$SKLEARN_VERSION" == "nightly" ]]; then
-          # also installs latest numpy, scipy and joblib
+          # This also installs latest numpy, scipy and joblib.
           pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
       else
           python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
@@ -58,10 +58,17 @@ jobs:
     matrix:
       Python36:
         python.version: '3.6'
+        NUMPY_VERSION: "1.13.3"
+        SCIPY_VERSION: "0.19.1"
+        SKLEARN_VERSION: "0.21.2"
       Python37:
         python.version: '3.7'
+        NUMPY_VERSION: "1.16.5"
+        SCIPY_VERSION: "1.1.0"
+        SKLEARN_VERSION: "0.22.2post1"
       Python38:
         python.version: '3.8'
+        SKLEARN_VERSION: "*"
   variables:
     OMP_NUM_THREADS: '2'
 
@@ -75,7 +82,12 @@ jobs:
       set -xe
       python --version
       python -m pip install --upgrade pip
-      python -m pip install -r requirements.txt
+      if [[ "$SKLEARN_VERSION" == "*" ]]; then
+          # Install latest versions of dependencies.
+          python -m pip install scikit-learn
+      else
+          python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
+      fi
     displayName: 'Install dependencies'
   
   - script: |
@@ -98,12 +110,15 @@ jobs:
       Python36:
         python_ver: '36'
         python.version: '3.6'
-      Python37:
-        python_ver: '37'
-        python.version: '3.7'
+        NUMPY_VERSION: "1.13.3"
+        SCIPY_VERSION: "0.19.1"
+        SKLEARN_VERSION: "0.21.2"
       Python38:
         python_ver: '38'
         python.version: '3.8'
+        NUMPY_VERSION: "1.18.2"
+        SCIPY_VERSION: "1.4.1"
+        SKLEARN_VERSION: "0.22.2post1"
   variables:
     OMP_NUM_THREADS: '2'
 
@@ -115,7 +130,7 @@ jobs:
   - script: |
       python --version
       python -m pip install --upgrade pip
-      python -m pip install -r requirements.txt
+      python -m pip install numpy==%NUMPY_VERSION% scipy==%SCIPY_VERSION% scikit-learn==%SKLEARN_VERSION%
     displayName: 'Install dependencies'
   
   - script: |
