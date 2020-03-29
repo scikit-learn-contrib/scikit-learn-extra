@@ -1,36 +1,148 @@
-# Python package
-# Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+jobs:
 
-trigger:
-- master
+- job: 'linux'
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+        NUMPY_VERSION: "1.13.3"
+        SCIPY_VERSION: "0.19.1"
+        SKLEARN_VERSION: "0.21.2"
+      Python37:
+        python.version: '3.7'
+        NUMPY_VERSION: "1.16.5"
+        SCIPY_VERSION: "1.1.0"
+        SKLEARN_VERSION: "0.22.2post1"
+      Python38:
+        python.version: '3.8'
+        SKLEARN_VERSION: "nightly"
+  variables:
+    OMP_NUM_THREADS: '2'
+  
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+  
+  - script: |
+      set -xe
+      python --version
+      python -m pip install --upgrade pip
+      if [[ "$SKLEARN_VERSION" == "nightly" ]]; then
+          # This also installs latest numpy, scipy and joblib.
+          pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+      else
+          python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
+      fi
+    displayName: 'Install dependencies'
+  
+  - script: |
+      set -xe
+      pip install -e .
+    displayName: 'Install scikit-learn-extra'
+  
+  - script: |
+      set -xe
+      python -m pip install pytest pytest-azurepipelines
+      # run doctests in the documentation
+      # TODO: remove "|| .." once at least one doctest is added
+      python -m pytest doc/*rst doc/modules/*rst || echo "Ignoring exit status"
+      python -m pytest --durations 10 sklearn_extra
+    displayName: 'Test'
 
-pool:
-  vmImage: 'ubuntu-latest'
-strategy:
-  matrix:
-    Python27:
-      python.version: '2.7'
-    Python35:
-      python.version: '3.5'
-    Python36:
-      python.version: '3.6'
-    Python37:
-      python.version: '3.7'
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
+- job: 'macOS1014'
+  pool:
+    vmImage: 'macOS-10.14'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+        NUMPY_VERSION: "1.13.3"
+        SCIPY_VERSION: "0.19.1"
+        SKLEARN_VERSION: "0.21.2"
+      Python37:
+        python.version: '3.7'
+        NUMPY_VERSION: "1.16.5"
+        SCIPY_VERSION: "1.1.0"
+        SKLEARN_VERSION: "0.22.2post1"
+      Python38:
+        python.version: '3.8'
+        SKLEARN_VERSION: "*"
+  variables:
+    OMP_NUM_THREADS: '2'
 
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Install dependencies'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+  
+  - script: |
+      set -xe
+      python --version
+      python -m pip install --upgrade pip
+      if [[ "$SKLEARN_VERSION" == "*" ]]; then
+          # Install latest versions of dependencies.
+          python -m pip install scikit-learn
+      else
+          python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
+      fi
+    displayName: 'Install dependencies'
+  
+  - script: |
+      set -xe
+      pip install -e .
+    displayName: 'Install scikit-learn-extra'
+  
+  - script: |
+      set -xe
+      python -m pip install pytest pytest-azurepipelines pytest
+      python -m pytest --durations 10 sklearn_extra
+    displayName: 'Test'
 
-- script: |
-    pip install pytest pytest-azurepipelines
-    pytest
-  displayName: 'pytest'
+
+- job: 'win2016'
+  pool:
+    vmImage: 'vs2017-win2016'
+  strategy:
+    matrix:
+      Python36:
+        python_ver: '36'
+        python.version: '3.6'
+        NUMPY_VERSION: "1.13.3"
+        SCIPY_VERSION: "1.0.1"
+        SKLEARN_VERSION: "0.21.2"
+      Python38:
+        python_ver: '38'
+        python.version: '3.8'
+        NUMPY_VERSION: "1.18.2"
+        SCIPY_VERSION: "1.4.1"
+        SKLEARN_VERSION: "0.22.2post1"
+  variables:
+    OMP_NUM_THREADS: '2'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  
+  - script: |
+      python --version
+      python -m pip install --upgrade pip
+      python -m pip install numpy==%NUMPY_VERSION% scipy==%SCIPY_VERSION% scikit-learn==%SKLEARN_VERSION%
+    displayName: 'Install dependencies'
+  
+  - script: |
+      pip wheel . -w dist\
+      pip install --pre --no-index --find-links dist\ scikit-learn-extra
+    displayName: 'Install scikit-learn-extra'
+  
+  - script: |
+      cd ..
+      python -m pip install pytest pytest-azurepipelines
+      python -m pytest --durations 10 --pyargs sklearn_extra
+    displayName: 'Test'
