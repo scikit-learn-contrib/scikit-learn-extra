@@ -15,7 +15,6 @@ jobs:
         python.version: '3.8'
   variables:
     OMP_NUM_THREADS: '2'
-    NUMBA_NUM_THREADS: '2'
   
   steps:
   - task: UsePythonVersion@0
@@ -38,7 +37,7 @@ jobs:
   - script: |
       set -xe
       python -m pip install pytest pytest-azurepipelines
-      python -m pytest -v --durations 10 scikit-learn-extra
+      python -m pytest -v --durations 10 sklearn_extra
     displayName: 'Test'
 
 
@@ -57,7 +56,6 @@ jobs:
         python.version: '3.8'
   variables:
     OMP_NUM_THREADS: '2'
-    NUMBA_NUM_THREADS: '2'
 
   steps:
   - task: UsePythonVersion@0
@@ -103,7 +101,6 @@ jobs:
         python.version: '3.8'
   variables:
     OMP_NUM_THREADS: '2'
-    NUMBA_NUM_THREADS: '2'
 
   steps:
   - task: UsePythonVersion@0
@@ -112,15 +109,17 @@ jobs:
   
   - script: |
       python --version
-      python -m pip install --upgrade pip
+      python -m pip install --upgrade pip wheel
       python -m pip install -r requirements.txt
     displayName: 'Install dependencies'
   
   - script: |
-      pip install -e .
+      python setup.py bdist_wheel
+      pip install dist\*whl
     displayName: 'Install scikit-learn-extra'
   
   - script: |
+      cd ..
       python -m pip install pytest pytest-azurepipelines
-      python -m pytest -v --durations 10 sklearn_extra
+      python -m pytest -v --durations 10 --pyargs sklearn_extra
     displayName: 'Test'
