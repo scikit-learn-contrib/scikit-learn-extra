@@ -111,7 +111,7 @@ jobs:
         python_ver: '36'
         python.version: '3.6'
         NUMPY_VERSION: "1.13.3"
-        SCIPY_VERSION: "0.19.1"
+        SCIPY_VERSION: "1.0.1"
         SKLEARN_VERSION: "0.21.2"
       Python38:
         python_ver: '38'
