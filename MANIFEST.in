@@ -5,3 +5,4 @@ recursive-include sklearn_extra *.pyx *.pxd *.pxi *.py
 recursive-exclude sklearn_extra *.c *.h
 include README.rst
 include pyproject.toml
+include LICENSE
