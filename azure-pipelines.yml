@@ -7,13 +7,13 @@ jobs:
     matrix:
       Python36:
         python.version: '3.6'
-        NUMPY_VERSION: "1.13.1"
+        NUMPY_VERSION: "1.13.3"
         SCIPY_VERSION: "0.19.1"
         SKLEARN_VERSION: "0.21.2"
       Python37:
         python.version: '3.7'
         NUMPY_VERSION: "1.16.5"
-        SCIPY_VERSION: "1.0.1"
+        SCIPY_VERSION: "1.1.0"
         SKLEARN_VERSION: "0.22.2post1"
       Python38:
         python.version: '3.8'
@@ -119,7 +119,7 @@ jobs:
     displayName: 'Install dependencies'
   
   - script: |
-      pip wheel . -d dist\
+      pip wheel . -w dist\
       pip install --pre --no-index --find-links dist\ scikit-learn-extra
     displayName: 'Install scikit-learn-extra'
   
