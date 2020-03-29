@@ -1,1 +1,7 @@
 include requirements.txt
+recursive-include doc *
+recursive-include examples *
+recursive-include sklearn_extra *.pyx *.pxd *.pxi *.py
+recursive-exclude sklearn_extra *.c *.h
+include README.rst
+include pyproject.toml
