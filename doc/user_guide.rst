@@ -49,12 +49,11 @@ clusters. This makes it more suitable for smaller datasets in comparison to
 
 **Algorithm description:**
 There are several algorithms to compute K-Medoids, though :class:`KMedoids`
-currently only supports Partitioning Around Medoids (PAM). The PAM algorithm
-uses a greedy search, which may fail to find the global optimum. It consists of
-two alternating steps commonly called the
-Assignment and Update steps (BUILD and SWAP in Kaufmann and Rousseeuw, 1987).
+currently only supports K-Medoids solver analogous to K-Means. Other frequently
+used approach is partitioning around medoids (PAM) which is currently not
+implemented.
 
-PAM works as follows:
+This version works as follows:
 
 * Initialize: Select ``n_clusters`` from the dataset as the medoids using
   a heuristic, random, or k-medoids++ approach (configurable using the ``init`` parameter).
@@ -65,7 +64,7 @@ PAM works as follows:
 
 .. topic:: References:
 
- * "Clustering by Means of Medoids'"
-   Kaufman, L. and Rousseeuw, P.J.,
-   Statistical Data Analysis Based on the L1Norm and Related Methods, edited
-   by Y. Dodge, North-Holland, 405416. 1987
+* Maranzana, F.E., 1963. On the location of supply points to minimize
+  transportation costs. IBM Systems Journal, 2(2), pp.129-135.
+* Park, H.S. and Jun, C.H., 2009. A simple and fast algorithm for K-medoids
+  clustering. Expert systems with applications, 36(2), pp.3336-3341.
