@@ -49,8 +49,9 @@ clusters. This makes it more suitable for smaller datasets in comparison to
 
 **Algorithm description:**
 There are several algorithms to compute K-Medoids, though :class:`KMedoids`
-currently only supports a non-standard version of K-Medoids substantially
-different from the well-known PAM algorithm.
+currently only supports K-Medoids solver analogous to K-Means. Other frequently
+used approach is partitioning around medoids (PAM) which is currently not
+implemented.
 
 This version works as follows:
 
@@ -62,3 +63,8 @@ This version works as follows:
   maximum number of iterations ``max_iter`` is reached.
 
 .. topic:: References:
+
+* Maranzana, F.E., 1963. On the location of supply points to minimize
+  transportation costs. IBM Systems Journal, 2(2), pp.129-135.
+* Park, H.S. and Jun, C.H., 2009. A simple and fast algorithm for K-medoids
+  clustering. Expert systems with applications, 36(2), pp.3336-3341.
