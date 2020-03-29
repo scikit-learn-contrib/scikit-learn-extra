@@ -47,7 +47,9 @@ jobs:
   - script: |
       set -xe
       python -m pip install pytest pytest-azurepipelines
-      python -m pytest -v --durations 10 sklearn_extra
+      # run doctests in the documentation
+      python -m pytest doc/*rst doc/modules/*rst
+      python -m pytest --durations 10 sklearn_extra
     displayName: 'Test'
 
 
@@ -98,7 +100,7 @@ jobs:
   - script: |
       set -xe
       python -m pip install pytest pytest-azurepipelines pytest
-      python -m pytest -v --durations 10 sklearn_extra
+      python -m pytest --durations 10 sklearn_extra
     displayName: 'Test'
 
 
@@ -141,5 +143,5 @@ jobs:
   - script: |
       cd ..
       python -m pip install pytest pytest-azurepipelines
-      python -m pytest -v --durations 10 --pyargs sklearn_extra
+      python -m pytest --durations 10 --pyargs sklearn_extra
     displayName: 'Test'
