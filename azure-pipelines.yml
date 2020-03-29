@@ -115,7 +115,7 @@ jobs:
   
   - script: |
       python setup.py bdist_wheel
-      pip install dist\*whl
+      pip install --pre --no-index --find-links dist\ scikit-learn-extra
     displayName: 'Install scikit-learn-extra'
   
   - script: |
