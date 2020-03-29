@@ -114,12 +114,12 @@ jobs:
   
   - script: |
       python --version
-      python -m pip install --upgrade pip wheel
+      python -m pip install --upgrade pip
       python -m pip install -r requirements.txt
     displayName: 'Install dependencies'
   
   - script: |
-      python setup.py bdist_wheel
+      pip wheel . -d dist\
       pip install --pre --no-index --find-links dist\ scikit-learn-extra
     displayName: 'Install scikit-learn-extra'
   
