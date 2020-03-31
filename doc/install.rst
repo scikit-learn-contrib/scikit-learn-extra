@@ -6,7 +6,7 @@ Dependencies
 
 scikit-learn-extra requires,
  
-- Python (>=3.5)
+- Python (>=3.6)
 - scikit-learn (>=0.21), and its dependencies
 
 

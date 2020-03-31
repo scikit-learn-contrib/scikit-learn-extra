@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """K-medoids clustering"""
 
 # Authors: Timo Erkkilä <timo.erkkila@gmail.com>
@@ -341,9 +340,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 :n_clusters
             ]
         else:
-            raise ValueError(
-                "init value '{init}' not recognized".format(init=self.init)
-            )
+            raise ValueError(f"init value '{self.init}' not recognized")
 
         return medoids
 
