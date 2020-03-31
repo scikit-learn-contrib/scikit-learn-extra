@@ -2,8 +2,8 @@
 
 |PyPi|_ |Azure|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_
 
-.. |PyPi| image:: https://badge.fury.io/py/scikit-learn-contrib.svg
-.. _PyPi: https://badge.fury.io/py/scikit-learn-contrib
+.. |PyPi| image:: https://badge.fury.io/py/scikit-learn-extra.svg
+.. _PyPi: https://badge.fury.io/py/scikit-learn-extra
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn-extra/scikit-learn-extra/_apis/build/status/scikit-learn-contrib.scikit-learn-extra?branchName=master
 .. _Azure: https://dev.azure.com/scikit-learn-extra/scikit-learn-extra/_build/latest?definitionId=1&branchName=master
