@@ -340,9 +340,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 :n_clusters
             ]
         else:
-            raise ValueError(
-                f"init value '{self.init}' not recognized"
-            )
+            raise ValueError(f"init value '{self.init}' not recognized")
 
         return medoids
 
