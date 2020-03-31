@@ -1,9 +1,12 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_
+|PyPi|_ |Azure|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_
 
-.. |Travis| image:: https://travis-ci.org/scikit-learn-contrib/scikit-learn-extra.svg?branch=master
-.. _Travis: https://travis-ci.org/scikit-learn-contrib/project-template
+.. |PyPi| image:: https://badge.fury.io/py/scikit-learn-extra.svg
+.. _PyPi: https://badge.fury.io/py/scikit-learn-extra
+
+.. |Azure| image:: https://dev.azure.com/scikit-learn-extra/scikit-learn-extra/_apis/build/status/scikit-learn-contrib.scikit-learn-extra?branchName=master
+.. _Azure: https://dev.azure.com/scikit-learn-extra/scikit-learn-extra/_build/latest?definitionId=1&branchName=master
 
 .. |Codecov| image:: https://codecov.io/gh/scikit-learn-contrib/project-template/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/scikit-learn-contrib/scikit-learn-extra
@@ -31,13 +34,28 @@ scikit-learn-extra requires,
  
 - Python (>=3.5)
 - scikit-learn (>=0.21), and its dependencies
-- Cython (>0.28)
 
 
 User installation
 ^^^^^^^^^^^^^^^^^
 
-Latest development version can be installed with,
+Latest release can be installed with conda,
+
+.. code::
+
+   conda install -c conda-forge scikit-learn-extra
+
+or from PyPi with,
+
+.. code::
+   
+   pip install scikit-learn-extra
+
+Note that installing from PyPi requires a working C compiler (cf `installation
+instructions
+<https://scikit-learn.org/dev/developers/advanced_installation.html#platform-specific-instructions>`_).
+   
+The developement version can be installed with,
 
 .. code::
 
