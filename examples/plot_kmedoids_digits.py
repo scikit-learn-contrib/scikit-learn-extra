@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =============================================================
 A demo of K-Medoids clustering on the handwritten digits data

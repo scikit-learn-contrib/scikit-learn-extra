@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # project-template documentation build configuration file, created by
 # sphinx-quickstart on Mon Jan 18 14:44:12 2016.
@@ -78,8 +77,8 @@ plot_gallery = True
 master_doc = "index"
 
 # General information about the project.
-project = u"scikit-learn-extra"
-copyright = u"2019, scikit-learn-extra developpers"
+project = "scikit-learn-extra"
+copyright = "2019, scikit-learn-extra developpers"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -237,8 +236,8 @@ latex_documents = [
     (
         "index",
         "project-template.tex",
-        u"project-template Documentation",
-        u"Vighnesh Birodkar",
+        "project-template Documentation",
+        "Vighnesh Birodkar",
         "manual",
     )
 ]
@@ -272,8 +271,8 @@ man_pages = [
     (
         "index",
         "project-template",
-        u"project-template Documentation",
-        [u"Vighnesh Birodkar"],
+        "project-template Documentation",
+        ["Vighnesh Birodkar"],
         1,
     )
 ]
@@ -291,8 +290,8 @@ texinfo_documents = [
     (
         "index",
         "project-template",
-        u"project-template Documentation",
-        u"Vighnesh Birodkar",
+        "project-template Documentation",
+        "Vighnesh Birodkar",
         "project-template",
         "One line description of project.",
         "Miscellaneous",
@@ -316,7 +315,7 @@ texinfo_documents = [
 # intersphinx configuration
 intersphinx_mapping = {
     "python": (
-        "https://docs.python.org/{.major}".format(sys.version_info),
+        f"https://docs.python.org/{sys.version_info.major}",
         None,
     ),
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
