@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """K-medoids clustering"""
 
 # Authors: Timo Erkkilä <timo.erkkila@gmail.com>
@@ -90,9 +89,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     References
     ----------
-    Kaufman, L. and Rousseeuw, P.J., Statistical Data Analysis Based on
-    the L1–Norm and Related Methods, edited by Y. Dodge, North-Holland,
-    405–416. 1987
+    Maranzana, F.E., 1963. On the location of supply points to minimize
+      transportation costs. IBM Systems Journal, 2(2), pp.129-135.
+    Park, H.S.and Jun, C.H., 2009. A simple and fast algorithm for K-medoids
+      clustering.  Expert systems with applications, 36(2), pp.3336-3341.
 
     See also
     --------
@@ -340,9 +340,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 :n_clusters
             ]
         else:
-            raise ValueError(
-                "init value '{init}' not recognized".format(init=self.init)
-            )
+            raise ValueError(f"init value '{self.init}' not recognized")
 
         return medoids
 
