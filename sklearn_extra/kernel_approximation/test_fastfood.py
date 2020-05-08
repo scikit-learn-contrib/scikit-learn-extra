@@ -46,46 +46,8 @@ def test_fastfood():
     X_trans = pars.transform(X)
     Y_trans = ff_transform.transform(Y)
 
-    # print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     print("approximation:", kernel_approx[:5, :5])
     print("true kernel:", kernel[:5, :5])
     assert_array_almost_equal(kernel, kernel_approx, decimal=1)
-
-
-# def test_fastfood_mem_or_accuracy():
-#     """compares the performance of Fastfood and RKS"""
-#     #generate data
-#     X = rng.random_sample(size=(10000, 4000))
-#     X /= X.sum(axis=1)[:, np.newaxis]
-#
-#     # calculate feature maps
-#     gamma = 10.
-#     sigma = np.sqrt(1 / (2 * gamma))
-#     number_of_features_to_generate = 1000
-#
-#
-#
-#     fastfood_start = datetime.datetime.utcnow()
-#     # Fastfood: approximate kernel mapping
-#     rbf_transform = Fastfood(
-#          sigma=sigma, n_components=number_of_features_to_generate,
-#          tradeoff_less_mem_or_higher_accuracy='accuracy', random_state=42)
-#     _ = rbf_transform.fit_transform(X)
-#     fastfood_end = datetime.datetime.utcnow()
-#     fastfood_spent_time =fastfood_end- fastfood_start
-#     print "Timimg fastfood accuracy: \t\t", fastfood_spent_time
-#
-#
-#     fastfood_mem_start = datetime.datetime.utcnow()
-#     # Fastfood: approximate kernel mapping
-#     rbf_transform = Fastfood(
-#            sigma=sigma, n_components=number_of_features_to_generate,
-#            tradeoff_less_mem_or_higher_accuracy='mem', random_state=42)
-#     _ = rbf_transform.fit_transform(X)
-#     fastfood_mem_end = datetime.datetime.utcnow()
-#     fastfood_mem_spent_time = fastfood_mem_end- fastfood_mem_start
-#     print "Timimg fastfood memory: \t\t", fastfood_mem_spent_time
-#
-#     assert_greater(fastfood_spent_time, fastfood_mem_spent_time)

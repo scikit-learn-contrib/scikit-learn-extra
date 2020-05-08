@@ -80,7 +80,6 @@ data_test, targets_test = (
     data[n_samples // 2 :],
     digits.target[n_samples // 2 :],
 )
-# data_test = scaler.transform(data_test)
 
 # fix model parameters:
 GAMMA = 0.2
