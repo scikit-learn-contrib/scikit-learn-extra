@@ -62,6 +62,12 @@ args = {
                 "sklearn_extra.utils._cyfht",
                 ["sklearn_extra/utils/_cyfht.pyx"],
                 include_dirs=[np.get_include()],
+            ),
+            Extension(
+                "sklearn_extra.cluster._cnn_inner",
+                ["sklearn_extra/cluster/_cnn_inner.pyx"],
+                include_dirs=[np.get_include()],
+                language="c++",
             )
         ]
     ),
