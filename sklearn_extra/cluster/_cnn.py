@@ -12,15 +12,25 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.utils.validation import _check_sample_weight, _deprecate_positional_args
+from sklearn.utils.validation import _check_sample_weight
+from sklearn.utils.validation import _deprecate_positional_args
 from sklearn.neighbors import NearestNeighbors
 
 from ._cnn_inner import cnn_inner
 
 
-def cnn(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-        algorithm='auto', leaf_size=30, p=2, sample_weight=None,
-        n_jobs=None):
+def cnn(
+    X,
+    eps=0.5,
+    min_samples=5,
+    metric="minkowski",
+    metric_params=None,
+    algorithm="auto",
+    leaf_size=30,
+    p=2,
+    sample_weight=None,
+    n_jobs=None,
+):
     """Perform CNN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <cnn>`.
@@ -144,10 +154,15 @@ def cnn(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     """
 
     est = CNN(
-        eps=eps, min_samples=min_samples, metric=metric,
-        metric_params=metric_params, algorithm=algorithm,
-        leaf_size=leaf_size, p=p, n_jobs=n_jobs
-        )
+        eps=eps,
+        min_samples=min_samples,
+        metric=metric,
+        metric_params=metric_params,
+        algorithm=algorithm,
+        leaf_size=leaf_size,
+        p=p,
+        n_jobs=n_jobs,
+    )
     est.fit(X, sample_weight=sample_weight)
     return est.labels_
 
@@ -273,10 +288,20 @@ class CNN(ClusterMixin, BaseEstimator):
     O. Lemke, B.G. Keller "Common nearest neighbor clustering - a
     benchmark" Algorithms, 2018, 11, 19.
     """
+
     @_deprecate_positional_args
-    def __init__(self, eps=0.5, *, min_samples=5, metric='euclidean',
-                 metric_params=None, algorithm='auto', leaf_size=30, p=None,
-                 n_jobs=None):
+    def __init__(
+        self,
+        eps=0.5,
+        *,
+        min_samples=5,
+        metric="euclidean",
+        metric_params=None,
+        algorithm="auto",
+        leaf_size=30,
+        p=None,
+        n_jobs=None
+    ):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
@@ -310,7 +335,7 @@ class CNN(ClusterMixin, BaseEstimator):
         self
 
         """
-        X = self._validate_data(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse="csr")
 
         if not self.eps > 0.0:
             raise ValueError("eps must be positive.")
@@ -322,29 +347,39 @@ class CNN(ClusterMixin, BaseEstimator):
         # original point in, which needs to be considered later
         # (i.e. point i is in the
         # neighborhood of point i). While True, its useless information
-        if self.metric == 'precomputed' and sparse.issparse(X):
+        if self.metric == "precomputed" and sparse.issparse(X):
             # set the diagonal to explicit values, as a point is its own
             # neighbor
             with warnings.catch_warnings():
-                warnings.simplefilter('ignore', sparse.SparseEfficiencyWarning)
+                warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())
 
         neighbors_model = NearestNeighbors(
-            radius=self.eps, algorithm=self.algorithm,
-            leaf_size=self.leaf_size, metric=self.metric,
-            metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs)
+            radius=self.eps,
+            algorithm=self.algorithm,
+            leaf_size=self.leaf_size,
+            metric=self.metric,
+            metric_params=self.metric_params,
+            p=self.p,
+            n_jobs=self.n_jobs,
+        )
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
         neighborhoods = neighbors_model.radius_neighbors(
             X, return_distance=False
-            )
+        )
 
         if sample_weight is None:
-            n_neighbors = np.array([len(neighbors)
-                                    for neighbors in neighborhoods])
+            n_neighbors = np.array(
+                [len(neighbors) for neighbors in neighborhoods]
+            )
         else:
-            n_neighbors = np.array([np.sum(sample_weight[neighbors])
-                                    for neighbors in neighborhoods])
+            n_neighbors = np.array(
+                [
+                    np.sum(sample_weight[neighbors])
+                    for neighbors in neighborhoods
+                ]
+            )
 
         # Initially, all samples are noise.
         labels = np.full(X.shape[0], -1, dtype=np.intp)
@@ -356,9 +391,8 @@ class CNN(ClusterMixin, BaseEstimator):
         core_candidates = np.asarray(n_neighbors >= corrected_min_samples)
 
         cnn_inner(
-            neighborhoods, labels, core_candidates,
-            corrected_min_samples
-            )
+            neighborhoods, labels, core_candidates, corrected_min_samples
+        )
 
         self.labels_ = labels
 

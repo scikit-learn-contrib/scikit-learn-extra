@@ -68,7 +68,7 @@ args = {
                 ["sklearn_extra/cluster/_cnn_inner.pyx"],
                 include_dirs=[np.get_include()],
                 language="c++",
-            )
+            ),
         ]
     ),
     "cmdclass": dict(build_ext=build_ext),
