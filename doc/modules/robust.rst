@@ -202,6 +202,7 @@ the example with California housing real dataset, for further discussion.
     .. [1] Guillaume Lecué, Matthieu Lerasle and Timothée Mathieu.
            `"Robust classification via MOM minimization" <https://doi.org/10.1007/s10994-019-05863-6>`_, Machine Learning Journal (2020).
 
+
     .. [2] Christian Brownlees, Emilien Joly and Gábor Lugosi.
            `"Empirical risk minimization for heavy-tailed losses" <https://projecteuclid.org/euclid.aos/1444222083>`_, Ann. Statist.
            Volume 43, Number 6 (2015), 2507-2536.
