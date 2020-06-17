@@ -125,11 +125,11 @@ def cnn(
     CommonNNClassifier
         An estimator interface for this clustering algorithm.
 
-    DBSCAN
+    sklearn.cluster.DBSCAN
         An estimator interface for a similar clustering algorithm
         providing a different notion of the point density.
 
-    OPTICS
+    sklearn.cluster.OPTICS
         A similar estimator interface clustering at multiple values of eps. Our
         implementation is optimized for memory usage.
 
@@ -253,12 +253,12 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
 
     See also
     --------
-    DBSCAN
+    sklearn.cluster.DBSCAN
         A similar clustering providing a different notion of the
         point density. The implementation is (like this present CNN
         implementation) optimized for speed.
 
-    OPTICS
+    sklearn.cluster.OPTICS
         A similar clustering
         at multiple values of eps. The implementation is optimized for
         memory usage.
