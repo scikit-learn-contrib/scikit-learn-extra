@@ -1,8 +1,7 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal
 from sklearn.metrics.pairwise import rbf_kernel
 
 from sklearn_extra.kernel_approximation import Fastfood
@@ -28,7 +27,7 @@ Y /= Y.sum(axis=1)[:, np.newaxis]
 def test_fastfood_enforce_dimensionality_constraint(message, input_, expected):
     d, n = input_
     output = Fastfood._enforce_dimensionality_constraints(d, n)
-    assert_equal(expected, output, message)
+    assert expected == output, message
 
 
 def test_fastfood():

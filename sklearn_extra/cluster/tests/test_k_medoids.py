@@ -3,13 +3,12 @@ import warnings
 import numpy as np
 from unittest import mock
 from scipy.sparse import csc_matrix
+import pytest
 
 from sklearn.datasets import load_iris
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.utils.testing import assert_array_equal, assert_equal
-from sklearn.utils.testing import assert_raise_message, assert_warns_message
-from sklearn.utils.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn_extra.cluster import KMedoids
 from sklearn.cluster import KMeans
@@ -21,51 +20,37 @@ X = np.random.RandomState(seed).rand(100, 5)
 def test_kmedoids_input_validation_and_fit_check():
     rng = np.random.RandomState(seed)
     # Invalid parameters
-    assert_raise_message(
-        ValueError,
-        "n_clusters should be a nonnegative " "integer. 0 was given",
-        KMedoids(n_clusters=0).fit,
-        X,
-    )
+    msg = "n_clusters should be a nonnegative integer. 0 was given"
+    with pytest.raises(ValueError, match=msg):
+        KMedoids(n_clusters=0).fit(X)
 
-    assert_raise_message(
-        ValueError,
-        "n_clusters should be a nonnegative " "integer. None was given",
-        KMedoids(n_clusters=None).fit,
-        X,
-    )
+    msg = "n_clusters should be a nonnegative integer. None was given"
+    with pytest.raises(ValueError, match=msg):
+        KMedoids(n_clusters=None).fit(X)
 
-    assert_raise_message(
-        ValueError,
-        "max_iter should be a nonnegative " "integer. 0 was given",
-        KMedoids(n_clusters=1, max_iter=0).fit,
-        X,
-    )
+    msg = "max_iter should be a nonnegative integer. 0 was given"
+    with pytest.raises(ValueError, match=msg):
+        KMedoids(n_clusters=1, max_iter=0).fit(X)
 
-    assert_raise_message(
-        ValueError,
-        "max_iter should be a nonnegative " "integer. None was given",
-        KMedoids(n_clusters=1, max_iter=None).fit,
-        X,
-    )
+    msg = "max_iter should be a nonnegative integer. None was given"
+    with pytest.raises(ValueError, match=msg):
+        KMedoids(n_clusters=1, max_iter=None).fit(X)
 
-    assert_raise_message(
-        ValueError,
-        "init needs to be one of the following: "
-        "['random', 'heuristic', 'k-medoids++']",
-        KMedoids(init=None).fit,
-        X,
+    msg = (
+        r"init needs to be one of the following: "
+        r".*random.*heuristic.*k-medoids\+\+"
     )
+    with pytest.raises(ValueError, match=msg):
+        KMedoids(init=None).fit(X)
 
     # Trying to fit 3 samples to 8 clusters
-    Xsmall = rng.rand(5, 2)
-    assert_raise_message(
-        ValueError,
-        "The number of medoids (8) must be less "
-        "than the number of samples 5.",
-        KMedoids(n_clusters=8).fit,
-        Xsmall,
+    msg = (
+        "The number of medoids \(8\) must be less "
+        "than the number of samples 5."
     )
+    Xsmall = rng.rand(5, 2)
+    with pytest.raises(ValueError, match=msg):
+        KMedoids(n_clusters=8).fit(Xsmall)
 
 
 def test_random_deterministic():
@@ -113,7 +98,8 @@ def test_kmedoids_empty_clusters():
     rng = np.random.RandomState(seed)
     X = [[1], [1], [1]]
     kmedoids = KMedoids(n_clusters=2, random_state=rng)
-    assert_warns_message(UserWarning, "Cluster 1 is empty!", kmedoids.fit, X)
+    with pytest.warns(UserWarning, match="Cluster 1 is empty!"):
+        kmedoids.fit(X)
 
 
 @mock.patch.object(KMedoids, "_kpp_init", return_value=object())
@@ -212,12 +198,10 @@ def test_max_iter():
     model = KMedoids(
         n_clusters=10, init="random", random_state=rng, max_iter=1
     )
-    assert_warns_message(
-        UserWarning,
-        "Maximum number of iteration reached before",
-        model.fit,
-        X_iris,
-    )
+    msg = "Maximum number of iteration reached before"
+
+    with pytest.warns(UserWarning, match=msg):
+        model.fit(X_iris)
 
 
 def test_kmedoids_iris():
@@ -261,7 +245,7 @@ def test_kmedoids_fit_predict_transform():
     model = KMedoids(random_state=rng)
 
     labels1 = model.fit_predict(X)
-    assert_equal(len(labels1), 100)
+    assert len(labels1) == 100
     assert_array_equal(labels1, model.labels_)
 
     labels2 = model.predict(X)
@@ -282,7 +266,7 @@ def test_callable_distance_metric():
 
     model = KMedoids(random_state=rng, metric=my_metric)
     labels1 = model.fit_predict(X)
-    assert_equal(len(labels1), 100)
+    assert len(labels1) == 100
     assert_array_equal(labels1, model.labels_)
 
 
@@ -308,5 +292,5 @@ def test_kmedoids_on_sparse_input():
     data = np.array([1, 1])
     X = csc_matrix((data, (row, col)), shape=(2, 5))
     labels = model.fit_predict(X)
-    assert_equal(len(labels), 2)
+    assert len(labels) == 2
     assert_array_equal(labels, model.labels_)
