@@ -5,7 +5,9 @@ from sklearn_extra.kernel_approximation import Fastfood
 from sklearn_extra.kernel_methods import EigenProClassifier, EigenProRegressor
 from sklearn_extra.cluster import KMedoids
 
-ALL_ESTIMATORS = [Fastfood, KMedoids, EigenProClassifier, EigenProRegressor]
+ALL_ESTIMATORS = [
+    Fastfood, KMedoids, EigenProClassifier, EigenProRegressor, CommonNNClassifier
+    ]
 
 if hasattr(estimator_checks, "parametrize_with_checks"):
     # Common tests are only run on scikit-learn 0.22+
