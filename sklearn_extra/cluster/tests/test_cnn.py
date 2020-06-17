@@ -1,10 +1,11 @@
-"""Tests for CNN clustering
+"""Tests for common-nearest neighbour clustering
 """
 
 import pickle
 
 import numpy as np
 from numpy.testing import assert_array_equal
+
 # TODO: Use
 # from sklearn.utils._testing import assert_array_equal
 #     not in scikit-learn version 0.21.3
@@ -15,7 +16,7 @@ from scipy import sparse
 import pytest
 
 from sklearn.neighbors import NearestNeighbors
-from sklearn_extra.cluster import CNN
+from sklearn_extra.cluster import CommonNNClassifier
 from sklearn_extra.cluster import cnn
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
@@ -38,21 +39,23 @@ X = generate_clustered_data(n_clusters=n_clusters)
 
 
 def test_cnn_similarity():
-    # Tests the CNN algorithm with a similarity array.
+    # Tests the algorithm with a similarity array.
     # Parameters chosen specifically for this task.
     eps = 0.15
     min_samples = 5
     # Compute similarities
     D = distance.squareform(distance.pdist(X))
     D /= np.max(D)
-    # Compute CNN
+    # Compute
     labels = cnn(D, metric="precomputed", eps=eps, min_samples=min_samples)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
 
     assert n_clusters_1 == n_clusters
 
-    cobj = CNN(metric="precomputed", eps=eps, min_samples=min_samples)
+    cobj = CommonNNClassifier(
+        metric="precomputed", eps=eps, min_samples=min_samples
+    )
     labels = cobj.fit(D).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
@@ -60,13 +63,13 @@ def test_cnn_similarity():
 
 
 def test_cnn_feature():
-    # Tests the CNN algorithm with a feature vector array.
+    # Tests the algorithm with a feature vector array.
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
     min_samples = 5
     metric = "euclidean"
-    # Compute CNN
+    # Compute
     # parameters chosen for task
     labels = cnn(X, metric=metric, eps=eps, min_samples=min_samples)
 
@@ -74,7 +77,7 @@ def test_cnn_feature():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    cobj = CNN(metric=metric, eps=eps, min_samples=min_samples)
+    cobj = CommonNNClassifier(metric=metric, eps=eps, min_samples=min_samples)
     labels = cobj.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
@@ -104,7 +107,7 @@ def test_cnn_sparse_precomputed(include_self):
 @pytest.mark.skip(reason=INPUT_VALIDATION_REASON)
 def test_cnn_sparse_precomputed_different_eps():
     # test that precomputed neighbors graph is filtered if computed with
-    # a radius larger than CNN's eps.
+    # a radius larger than eps.
     lower_eps = 0.2
     nn = NearestNeighbors(radius=lower_eps).fit(X)
     D_sparse = nn.radius_neighbors_graph(X, mode="distance")
@@ -116,6 +119,7 @@ def test_cnn_sparse_precomputed_different_eps():
     cnn_higher = cnn(D_sparse, eps=lower_eps, metric="precomputed")
 
     assert_array_equal(cnn_lower, cnn_higher)
+
 
 @pytest.mark.skip(reason=INPUT_VALIDATION_REASON)
 @pytest.mark.parametrize("use_sparse", [True, False])
@@ -134,14 +138,14 @@ def test_cnn_input_not_modified(use_sparse, metric):
 
 
 def test_cnn_callable():
-    # Tests the CNN algorithm with a callable metric.
+    # Tests the algorithm with a callable metric.
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
     min_samples = 5
     # metric is the function reference, not the string key.
     metric = distance.euclidean
-    # Compute CNN
+    # Compute
     # parameters chosen for task
     labels = cnn(
         X,
@@ -155,7 +159,7 @@ def test_cnn_callable():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    cobj = CNN(
+    cobj = CommonNNClassifier(
         metric=metric, eps=eps, min_samples=min_samples, algorithm="ball_tree"
     )
     labels = cobj.fit(X).labels_
@@ -165,13 +169,13 @@ def test_cnn_callable():
 
 
 def test_cnn_metric_params():
-    # Tests that CNN works with the metrics_params argument.
+    # Tests that clustering works with the metrics_params argument.
     eps = 0.8
     min_samples = 5
     p = 1
 
     # Compute DBSCAN with metric_params arg
-    cobj = CNN(
+    cobj = CommonNNClassifier(
         metric="minkowski",
         metric_params={"p": p},
         eps=eps,
@@ -181,7 +185,7 @@ def test_cnn_metric_params():
     labels_1 = cobj.labels_
 
     # Test that sample labels are the same as passing Minkowski 'p' directly
-    cobj = CNN(
+    cobj = CommonNNClassifier(
         metric="minkowski",
         eps=eps,
         min_samples=min_samples,
@@ -193,7 +197,7 @@ def test_cnn_metric_params():
     assert_array_equal(labels_1, labels_2)
 
     # Minkowski with p=1 should be equivalent to Manhattan distance
-    cobj = CNN(
+    cobj = CommonNNClassifier(
         metric="manhattan",
         eps=eps,
         min_samples=min_samples,
@@ -205,7 +209,7 @@ def test_cnn_metric_params():
 
 
 def test_cnn_balltree():
-    # Tests the CNN algorithm with balltree for neighbor calculation.
+    # Tests the algorithm with balltree for neighbor calculation.
     eps = 0.8
     min_samples = 5
 
@@ -216,25 +220,31 @@ def test_cnn_balltree():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    cobj = CNN(p=2.0, eps=eps, min_samples=min_samples, algorithm="ball_tree")
+    cobj = CommonNNClassifier(
+        p=2.0, eps=eps, min_samples=min_samples, algorithm="ball_tree"
+    )
     labels = cobj.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
-    cobj = CNN(p=2.0, eps=eps, min_samples=min_samples, algorithm="kd_tree")
+    cobj = CommonNNClassifier(
+        p=2.0, eps=eps, min_samples=min_samples, algorithm="kd_tree"
+    )
     labels = cobj.fit(X).labels_
 
     n_clusters_3 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_3 == n_clusters
 
-    cobj = CNN(p=1.0, eps=eps, min_samples=min_samples, algorithm="ball_tree")
+    cobj = CommonNNClassifier(
+        p=1.0, eps=eps, min_samples=min_samples, algorithm="ball_tree"
+    )
     labels = cobj.fit(X).labels_
 
     n_clusters_4 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_4 == n_clusters
 
-    cobj = CNN(
+    cobj = CommonNNClassifier(
         leaf_size=20, eps=eps, min_samples=min_samples, algorithm="ball_tree"
     )
     labels = cobj.fit(X).labels_
@@ -244,9 +254,9 @@ def test_cnn_balltree():
 
 
 def test_input_validation():
-    # CNN.fit should accept a list of lists.
+    # CommonNNClassifier.fit should accept a list of lists.
     X = [[1.0, 2.0], [3.0, 4.0]]
-    CNN().fit(X)  # must not raise exception
+    CommonNNClassifier().fit(X)  # must not raise exception
 
 
 @pytest.mark.parametrize(
@@ -266,7 +276,7 @@ def test_cnn_badargs(args):
 
 
 def test_pickle():
-    obj = CNN()
+    obj = CommonNNClassifier()
     s = pickle.dumps(obj)
     assert type(pickle.loads(s)) == obj.__class__
 
@@ -345,11 +355,11 @@ def test_weighted_cnn():
     assert_array_equal(label1, label3)
 
     # sample_weight should work with estimator
-    est = CNN().fit(X, sample_weight=sample_weight)
+    est = CommonNNClassifier().fit(X, sample_weight=sample_weight)
     label4 = est.labels_
     assert_array_equal(label1, label4)
 
-    est = CNN()
+    est = CommonNNClassifier()
     label5 = est.fit_predict(X, sample_weight=sample_weight)
 
     assert_array_equal(label1, label5)
@@ -413,11 +423,11 @@ def test_cnn_precomputed_metric_with_degenerate_input_arrays():
     # see https://github.com/scikit-learn/scikit-learn/issues/4641 for
     # more details
     X = np.eye(10)
-    labels = CNN(eps=0.5, metric="precomputed").fit(X).labels_
+    labels = CommonNNClassifier(eps=0.5, metric="precomputed").fit(X).labels_
     assert len(set(labels)) == 1
 
     X = np.zeros((10, 10))
-    labels = CNN(eps=0.5, metric="precomputed").fit(X).labels_
+    labels = CommonNNClassifier(eps=0.5, metric="precomputed").fit(X).labels_
     assert len(set(labels)) == 1
 
 
@@ -437,6 +447,8 @@ def test_cnn_precomputed_metric_with_initial_rows_zero():
     )
     matrix = sparse.csr_matrix(ar)
     labels = (
-        CNN(eps=0.2, metric="precomputed", min_samples=0).fit(matrix).labels_
+        CommonNNClassifier(eps=0.2, metric="precomputed", min_samples=0)
+        .fit(matrix)
+        .labels_
     )
     assert_array_equal(labels, [-1, -1, 0, 0, 0, 1, 1])

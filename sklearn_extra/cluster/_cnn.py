@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Density-Based Common-Nearest-Neighbours (CNN) Clustering
+"""Density-Based Common-Nearest-Neighbors Clustering
 """
 
 # Author: Jan-Oliver Joswig <jan.joswig@fu-berlin.de>
@@ -13,6 +13,7 @@ from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils.validation import check_array
+
 # TODO Use sklearn.base.BaseEstimator._validate_data instead
 #     not in scikit-learn version 0.21.3
 
@@ -41,7 +42,9 @@ def cnn(
     sample_weight=None,
     n_jobs=None,
 ):
-    """Perform CNN clustering from vector array or distance matrix.
+    """Perform common-nearest-neighbor clustering
+
+    Cluster from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <cnn>`.
 
@@ -119,7 +122,7 @@ def cnn(
 
     See also
     --------
-    CNN
+    CommonNNClassifier
         An estimator interface for this clustering algorithm.
 
     DBSCAN
@@ -163,7 +166,7 @@ def cnn(
     benchmark" Algorithms, 2018, 11, 19.
     """
 
-    est = CNN(
+    est = CommonNNClassifier(
         eps=eps,
         min_samples=min_samples,
         metric=metric,
@@ -177,10 +180,8 @@ def cnn(
     return est.labels_
 
 
-class CNN(ClusterMixin, BaseEstimator):
-    """Perform CNN clustering from vector array or distance matrix.
-
-    CNN - Density-Based Common-Nearest-Neighbours Clustering.
+class CommonNNClassifier(ClusterMixin, BaseEstimator):
+    """Density-Based common-nearest-neighbors clustering.
 
     Read more in the :ref:`User Guide <cnn>`.
 
@@ -324,7 +325,9 @@ class CNN(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None, sample_weight=None):
-        """Perform CNN clustering from features, or distance matrix.
+        """Perform common-nearest-neighbor clustering
+
+        Cluster from features, or distance matrix.
 
         Parameters
         ----------
@@ -357,9 +360,7 @@ class CNN(ClusterMixin, BaseEstimator):
             raise ValueError("eps must be positive.")
 
         if sample_weight is not None:
-            raise NotImplementedError(
-                "Sample weights are not yet supported."
-                )
+            raise NotImplementedError("Sample weights are not yet supported.")
         #     sample_weight = _check_sample_weight(sample_weight, X)
 
         # Calculate neighborhood for all samples. This leaves the
@@ -418,7 +419,9 @@ class CNN(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
-        """Perform CNN clustering from features or distance matrix,
+        """Perform common-nearest-neighbor clustering
+
+        Cluster from features or distance matrix,
         and return cluster labels.
 
         Parameters

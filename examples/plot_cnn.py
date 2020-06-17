@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-===================================
-Demo of CNN clustering algorithm
-===================================
+====================================================
+Demo of common-nearest-neighbor clustering algorithm
+====================================================
 
 Finds clusters of data points following a density criterion.  Two points
 will be part of the same cluster if they share a minimum number of
@@ -12,7 +12,7 @@ common neighbors.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn_extra.cluster import CNN
+from sklearn_extra.cluster import CommonNNClassifier
 from sklearn import metrics
 from sklearn.datasets import make_blobs
 from sklearn.preprocessing import StandardScaler
@@ -30,9 +30,9 @@ X, labels_true = make_blobs(
 X = StandardScaler().fit_transform(X)
 
 # #############################################################################
-# Compute CNN
-cnn = CNN(eps=0.3, min_samples=8).fit(X)
-labels = cnn.labels_
+# Compute common-nearest-neighbor clustering
+cobj = CommonNNClassifier(eps=0.3, min_samples=8).fit(X)
+labels = cobj.labels_
 
 # Number of clusters in labels, ignoring noise if present.
 n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
