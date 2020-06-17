@@ -242,14 +242,15 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn.cluster import CNN
+    >>> from sklearn_extra.cluster import CommonNNClassifier
     >>> import numpy as np
     >>> X = np.array([[1, 2], [2, 2], [2, 3], [8, 7], [8, 8], [25, 80]])
-    >>> clustering = CNN(eps=3, min_samples=0).fit(X)
+    >>> clustering = CommonNNClassifier(eps=3, min_samples=0).fit(X)
     >>> clustering.labels_
     array([ 0,  0,  0,  1,  1, -1])
     >>> clustering
-    CNN(eps=3, min_samples=0)
+    CommonNNClassifier(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
+                       metric_params=None, min_samples=0, n_jobs=None, p=None)
 
     See also
     --------
