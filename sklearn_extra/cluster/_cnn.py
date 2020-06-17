@@ -340,8 +340,8 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
             be converted into a sparse ``csr_matrix``.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Weight of each sample.  Note, that this option does not
-            effect the clustering at the moment.
+            Weight of each sample.  Note, that this option is not
+            fully supported at the moment.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -361,7 +361,10 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
             raise ValueError("eps must be positive.")
 
         if sample_weight is not None:
-            raise NotImplementedError("Sample weights are not yet supported.")
+            warnings.warn(
+                "Sample weights are not fully supported, yet.",
+                UserWarning
+                )
         #     sample_weight = _check_sample_weight(sample_weight, X)
 
         # Calculate neighborhood for all samples. This leaves the
@@ -434,8 +437,8 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
             be converted into a sparse ``csr_matrix``.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Weight of each sample.  Note, that this option does not
-            effect the clustering at the moment.
+            Weight of each sample.  Note, that this option is not
+            fully supported at the moment.
 
         y : Ignored
             Not used, present here for API consistency by convention.
