@@ -334,7 +334,7 @@ class BaseEigenPro(BaseEstimator):
 
         self.coef_ = np.zeros((n, Y.shape[1]), dtype=np.float32)
         step = np.float32(eta / self.bs_)
-        for epoch in range(0, self.n_epoch):
+        for _ in range(0, self.n_epoch):
             epoch_inds = random_state.choice(
                 n, n // self.bs_ * self.bs_, replace=False
             ).astype("int32")
