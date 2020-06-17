@@ -1,5 +1,6 @@
 # License: BSD 3 clause
 
+from math import sqrt
 import numpy as np
 from scipy.stats import chi
 
@@ -56,7 +57,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        sigma=np.sqrt(1 / 2),
+        sigma=sqrt(1 / 2),
         n_components=100,
         tradeoff_mem_accuracy="accuracy",
         random_state=None,
