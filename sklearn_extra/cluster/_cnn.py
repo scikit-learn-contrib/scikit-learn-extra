@@ -12,7 +12,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.utils.validation import check_array
+from sklearn.utils import check_array, check_consistent_length
 
 # TODO Use sklearn.base.BaseEstimator._validate_data instead
 #     not in scikit-learn version 0.21.3
@@ -355,17 +355,20 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
         X = check_array(X, accept_sparse="csr")
         # TODO Use
         # X = self._validate_data(X, accept_sparse="csr")
-        #    not in scikit-learn version 0.21.3
+        #     not in scikit-learn version 0.21.3
 
         if not self.eps > 0.0:
             raise ValueError("eps must be positive.")
 
         if sample_weight is not None:
             warnings.warn(
-                "Sample weights are not fully supported, yet.",
-                UserWarning
-                )
+                "Sample weights are not fully supported, yet.", UserWarning
+            )
+            sample_weight = np.asarray(sample_weight)
+            check_consistent_length(X, sample_weight)
+        # TODO Use
         #     sample_weight = _check_sample_weight(sample_weight, X)
+        #     not in scikit-learn version 0.21.3
 
         # Calculate neighborhood for all samples. This leaves the
         # original point in, which needs to be considered later
