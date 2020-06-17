@@ -188,9 +188,10 @@ Complexity and limitation:
 
 * weighting=”huber”: the complexity is larger than that of base_estimator but
   it is still of the same order of magnitude.
-* weighting=”mom”: the larger k is the faster the algorithm will perform,
-  moreovoer, it is advised only with sufficiently large dataset
-  (thumb rule sample_size > 500 the specifics depend on the dataset).
+* weighting=”mom”: the larger k is the faster the algorithm will perform if 
+  sample_size is large. This weighting scheme is advised only with 
+  sufficiently large dataset (thumb rule sample_size > 500 the specifics 
+  depend on the dataset).
 
 **Warning:** On a real dataset, one should be aware that there can be outliers
 in the training set but also in the test set when the loss is not bounded. See
@@ -199,8 +200,7 @@ the example with California housing real dataset, for further discussion.
 .. topic:: References:
 
     .. [1] Guillaume Lecué, Matthieu Lerasle and Timothée Mathieu.
-           `"Robust classification via MOM minimization" <https://arxiv.org/abs/1808.03106>`_, arXiv preprint (2018).
-           arXiv:1808.03106
+           `"Robust classification via MOM minimization" https://doi.org/10.1007/s10994-019-05863-6`_, Machine Learning Journal (2020).
 
     .. [2] Christian Brownlees, Emilien Joly and Gábor Lugosi.
            `"Empirical risk minimization for heavy-tailed losses" <https://projecteuclid.org/euclid.aos/1444222083>`_, Ann. Statist.
