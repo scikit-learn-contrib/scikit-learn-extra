@@ -12,8 +12,18 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.utils.validation import _check_sample_weight
-from sklearn.utils.validation import _deprecate_positional_args
+from sklearn.utils.validation import check_array
+# TODO Use sklearn.base.BaseEstimator._validate_data instead
+#     not in scikit-learn version 0.21.3
+
+# TODO Use
+# from sklearn.utils.validation import _check_sample_weight
+#     not in scikit-learn version 0.21.3
+
+# TODO Use
+# from sklearn.utils.validation import _deprecate_positional_args
+#     not in scikit-learn version 0.21.3
+
 from sklearn.neighbors import NearestNeighbors
 
 from ._cnn_inner import cnn_inner
@@ -289,7 +299,9 @@ class CNN(ClusterMixin, BaseEstimator):
     benchmark" Algorithms, 2018, 11, 19.
     """
 
-    @_deprecate_positional_args
+    # TODO Use
+    # @_deprecate_positional_args
+    #     not in scikit-learn version 0.21.3
     def __init__(
         self,
         eps=0.5,
@@ -335,13 +347,20 @@ class CNN(ClusterMixin, BaseEstimator):
         self
 
         """
-        X = self._validate_data(X, accept_sparse="csr")
+
+        X = check_array(X, accept_sparse="csr")
+        # TODO Use
+        # X = self._validate_data(X, accept_sparse="csr")
+        #    not in scikit-learn version 0.21.3
 
         if not self.eps > 0.0:
             raise ValueError("eps must be positive.")
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+            raise NotImplementedError(
+                "Sample weights are not yet supported."
+                )
+        #     sample_weight = _check_sample_weight(sample_weight, X)
 
         # Calculate neighborhood for all samples. This leaves the
         # original point in, which needs to be considered later
