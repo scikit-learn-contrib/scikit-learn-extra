@@ -395,7 +395,7 @@ class BaseEigenPro(BaseEstimator):
 
     def _get_tags(self):
         tags = super()._get_tags()
-        tags['multioutput'] = True
+        tags["multioutput"] = True
         return tags
 
 
