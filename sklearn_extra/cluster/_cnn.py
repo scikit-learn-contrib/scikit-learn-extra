@@ -13,14 +13,12 @@ from scipy import sparse
 
 import sklearn
 
-# Determin sklearn version
-SCIKIT_RELEASE_23 = False
-if int(sklearn.__version__.split(".")[1]) >= 23:
-    SCIKIT_RELEASE_23 = True
+# at the top of the file
+from distutils.version import LooseVersion
 
 from sklearn.base import BaseEstimator, ClusterMixin
 
-if not SCIKIT_RELEASE_23:
+if LooseVersion(sklearn.__version__) < LooseVersion("0.23.0"):
     from sklearn.utils import check_array, check_consistent_length
 
     # In scikit-learn version 0.23.x use
