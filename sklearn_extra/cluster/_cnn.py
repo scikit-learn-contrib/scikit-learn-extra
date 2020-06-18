@@ -11,19 +11,25 @@ import warnings
 import numpy as np
 from scipy import sparse
 
+import sklearn
+
+# Determin sklearn version
+SCIKIT_RELEASE_23 = False
+if int(sklearn.__version__.split(".")[1]) >= 23:
+    SCIKIT_RELEASE_23 = True
+
 from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.utils import check_array, check_consistent_length
 
-# TODO Use sklearn.base.BaseEstimator._validate_data instead
-#     not in scikit-learn version 0.21.3
+if not SCIKIT_RELEASE_23:
+    from sklearn.utils import check_array, check_consistent_length
 
-# TODO Use
-# from sklearn.utils.validation import _check_sample_weight
-#     not in scikit-learn version 0.21.3
+    # In scikit-learn version 0.23.x use
+    # sklearn.base.BaseEstimator._validate_data
+else:
+    from sklearn.utils.validation import _check_sample_weight
 
-# TODO Use
-# from sklearn.utils.validation import _deprecate_positional_args
-#     not in scikit-learn version 0.21.3
+    # TODO
+    # from sklearn.utils.validation import _deprecate_positional_args
 
 from sklearn.neighbors import NearestNeighbors
 
@@ -349,10 +355,10 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
 
         """
 
-        X = check_array(X, accept_sparse="csr")
-        # TODO Use
-        # X = self._validate_data(X, accept_sparse="csr")
-        #     not in scikit-learn version 0.21.3
+        if not SCIKIT_RELEASE_23:
+            X = check_array(X, accept_sparse="csr")
+        else:
+            X = self._validate_data(X, accept_sparse="csr")
 
         if not self.eps > 0.0:
             raise ValueError("eps must be positive.")
@@ -361,11 +367,11 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
             warnings.warn(
                 "Sample weights are not fully supported, yet.", UserWarning
             )
-            sample_weight = np.asarray(sample_weight)
-            check_consistent_length(X, sample_weight)
-        # TODO Use
-        #     sample_weight = _check_sample_weight(sample_weight, X)
-        #     not in scikit-learn version 0.21.3
+            if not SCIKIT_RELEASE_23:
+                sample_weight = np.asarray(sample_weight)
+                check_consistent_length(X, sample_weight)
+            else:
+                sample_weight = _check_sample_weight(sample_weight, X)
 
         # Calculate neighborhood for all samples. This leaves the
         # original point in, which needs to be considered later
