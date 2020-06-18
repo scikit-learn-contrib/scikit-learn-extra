@@ -394,10 +394,12 @@ class BaseEigenPro(BaseEstimator):
         return Y
 
     def _get_tags(self):
-        return {"multioutput": True}
+        tags = super()._get_tags()
+        tags["multioutput"] = True
+        return tags
 
 
-class EigenProRegressor(BaseEigenPro, RegressorMixin):
+class EigenProRegressor(RegressorMixin, BaseEigenPro):
     """Regression using EigenPro iteration.
 
     Train least squared kernel regression model with mini-batch EigenPro
@@ -470,9 +472,7 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
     >>> y_train = rng.randn(n_samples, n_targets)
     >>> rgs = EigenProRegressor(n_epoch=3, gamma=.5, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    EigenProRegressor(batch_size='auto', coef0=1, degree=3, gamma=0.5, kernel='rbf',
-                      kernel_params=None, n_components=1000, n_epoch=3,
-                      random_state=None, subsample_size=50)
+    EigenProRegressor(gamma=0.5, n_epoch=3, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
@@ -510,7 +510,7 @@ class EigenProRegressor(BaseEigenPro, RegressorMixin):
         return self._raw_predict(X)
 
 
-class EigenProClassifier(BaseEigenPro, ClassifierMixin):
+class EigenProClassifier(ClassifierMixin, BaseEigenPro):
     """Classification using EigenPro iteration.
 
     Train least squared kernel classification model with mini-batch EigenPro
@@ -584,9 +584,7 @@ class EigenProClassifier(BaseEigenPro, ClassifierMixin):
     >>> y_train = rng.randint(n_targets, size=n_samples)
     >>> rgs = EigenProClassifier(n_epoch=3, gamma=.01, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    EigenProClassifier(batch_size='auto', coef0=1, degree=3, gamma=0.01,
-                       kernel='rbf', kernel_params=None, n_components=1000,
-                       n_epoch=3, random_state=None, subsample_size=50)
+    EigenProClassifier(gamma=0.01, n_epoch=3, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """

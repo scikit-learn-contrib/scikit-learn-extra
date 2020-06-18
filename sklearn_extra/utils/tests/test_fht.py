@@ -1,8 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 from scipy.linalg import hadamard
-
-from sklearn.utils.testing import assert_raises
+import pytest
 
 from sklearn_extra.utils._cyfht import fht as cyfht
 from sklearn_extra.utils._cyfht import fht2 as cyfht2
@@ -36,5 +35,9 @@ def test_numerical_fuzzing_fht2():
 
 
 def test_exception_when_input_not_power_two():
-    assert_raises(ValueError, cyfht, np.zeros(9, dtype=np.float64))
-    assert_raises(ValueError, cyfht2, np.zeros((2, 9), dtype=np.float64))
+    msg = "Length of input for fht must be a power of two"
+    with pytest.raises(ValueError, match=msg):
+        cyfht(np.zeros(9, dtype=np.float64))
+    msg = "Length of rows for fht2 must be a power of two"
+    with pytest.raises(ValueError, match=msg):
+        cyfht2(np.zeros((2, 9), dtype=np.float64))
