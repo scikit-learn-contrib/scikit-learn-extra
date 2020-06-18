@@ -16,10 +16,10 @@ from sklearn.utils import (
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import SGDRegressor
-from distutils.version import LooseVersion
+from pkg_resources import parse_version
 import sklearn
 
-if LooseVersion(sklearn.__version__) >= LooseVersion("0.24.0"):
+if parse_version(sklearn.__version__) > parse_version("0.23.9"):
     dloss_attr = "py_dloss"
 else:
     dloss_attr = "dloss"
