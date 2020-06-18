@@ -16,7 +16,12 @@ from sklearn.utils import (
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import SGDRegressor
-
+from distutils.version import LooseVersion
+import sklearn
+if LooseVersion(sklearn.__version__) >= LooseVersion("0.24.0"):
+  dloss_attr = 'py_dloss'
+else:
+  dloss_attr = 'dloss'
 # Loss functions import. Taken from scikit-learn linear SGD estimators.
 
 try:
@@ -337,16 +342,9 @@ class RobustWeightedEstimator(BaseEstimator):
             if eff_loss is None:
                 raise ValueError("The loss %s is not supported. " % self.loss)
 
-            loss_class, args = eff_loss[0], eff_loss[1:]
-			  # at the top of the file
-			  from distutils.version import LooseVersion
+            loss_class, args = eff_loss[0], eff_loss[1:]			  
 			
-			  if LooseVersion(sklearn.__version__) >= LooseVersion("0.24.0"):
-			      dloss_attr = 'py_dloss'
-			  else:
-			      dloss_attr = 'dloss'
-			
-            return np.vectorize(geattr(loss_class(*args), dloss_attr))
+            return np.vectorize(getattr(loss_class(*args), dloss_attr))
         else:
             return loss
 
