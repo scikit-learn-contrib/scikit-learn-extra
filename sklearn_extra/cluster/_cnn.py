@@ -248,9 +248,6 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
     >>> clustering = CommonNNClassifier(eps=3, min_samples=0).fit(X)
     >>> clustering.labels_
     array([ 0,  0,  0,  1,  1, -1])
-    >>> clustering
-    CommonNNClassifier(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
-                       metric_params=None, min_samples=0, n_jobs=None, p=None)
 
     See also
     --------
