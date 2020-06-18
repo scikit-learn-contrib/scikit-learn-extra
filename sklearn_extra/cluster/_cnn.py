@@ -6,16 +6,13 @@
 #
 # License: BSD 3 clause
 
+from distutils.version import LooseVersion
 import warnings
 
 import numpy as np
 from scipy import sparse
 
 import sklearn
-
-# at the top of the file
-from distutils.version import LooseVersion
-
 from sklearn.base import BaseEstimator, ClusterMixin
 
 if LooseVersion(sklearn.__version__) < LooseVersion("0.23.0"):
@@ -353,7 +350,7 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
 
         """
 
-        if not SCIKIT_RELEASE_23:
+        if LooseVersion(sklearn.__version__) < LooseVersion("0.23.0"):
             X = check_array(X, accept_sparse="csr")
         else:
             X = self._validate_data(X, accept_sparse="csr")
@@ -365,7 +362,7 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
             warnings.warn(
                 "Sample weights are not fully supported, yet.", UserWarning
             )
-            if not SCIKIT_RELEASE_23:
+            if LooseVersion(sklearn.__version__) < LooseVersion("0.23.0"):
                 sample_weight = np.asarray(sample_weight)
                 check_consistent_length(X, sample_weight)
             else:
