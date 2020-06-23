@@ -68,3 +68,41 @@ This version works as follows:
   transportation costs. IBM Systems Journal, 2(2), pp.129-135.
 * Park, H.S. and Jun, C.H., 2009. A simple and fast algorithm for K-medoids
   clustering. Expert systems with applications, 36(2), pp.3336-3341.
+
+.. _commonnn:
+
+Common-nearest-neighbors clustering
+===================================
+
+:class:`CommonNNClassifier` provides an interface to density-based
+common-nearest-neighbors clustering. Density-based clustering identifies
+clusters as dense regions of high point density, separated by sparse
+regions of lower density. Common-nearest-neighbors clustering
+approximates local density as the number of shared (common) neighbors
+between two points with respect to a neighbor search radius. A density
+threshold (density criterion) is used as cluster parameter to
+distinguish high from low density. As such
+the method is related to other density-based cluster algorithms like
+DBSCAN or Jarvis-Patrick. DBSCAN approximates local density as the
+number of points in the neighborhood of a single point. The
+Jarvis-Patrick algorithm uses the number of common neighbors shared by
+two points among the $k$ nearest neighbors. As these three approaches
+each provide a different notion of how density is estimated from
+point samples, they can be used complementary.
+
+.. topic:: Examples:
+
+* :ref:`examples/cluster/plot_commonnn.py
+    <sphx_glr_auto_examples_cluster_plot_commonnn.py>`
+
+.. topic:: References:
+
+* B. Keller, X. Daura, W. F. van Gunsteren "Comparing Geometric and
+  Kinetic Cluster Algorithms for Molecular Simulation Data" J. Chem.
+  Phys., 2010, 132, 074110.
+
+* O. Lemke, B.G. Keller "Density-based Cluster Algorithms for the
+  Identification of Core Sets" J. Chem. Phys., 2016, 145, 164104.
+
+* O. Lemke, B.G. Keller "Common nearest neighbor clustering - a
+  benchmark" Algorithms, 2018, 11, 19.

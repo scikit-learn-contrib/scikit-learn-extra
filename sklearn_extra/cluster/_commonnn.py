@@ -60,15 +60,15 @@ def commonnn(
         The maximum distance between two samples for one to be
         considered as in the neighborhood of the other. This is not
         a maximum bound on the distances of points within a cluster.
-        The clustering will use `min_samples`/`eps` as the density
-        criterion. The lower `eps`, the higher the required sample
-        density.
+        The clustering will use `min_samples` within `eps` as
+        the density criterion.  The lower `eps`,
+        the higher the required sample density.
 
     min_samples : int, default=5
         The number of samples that need to be shared as neighbors for
         two points being part of the same cluster.  The clustering will
-        use `min_samples`/`eps` as the density
-        criterion. The larger `min_samples`, the higher the required
+        use `min_samples` within `eps` as the density
+        criterion.  The larger `min_samples`, the higher the required
         sample density.
 
     metric : string, or callable
@@ -88,13 +88,12 @@ def commonnn(
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'},
         default='auto'
-        The algorithm to be used by the NearestNeighbors module
+        The algorithm to be used by :class:`NearestNeighbors`
         to compute pointwise distances and find nearest neighbors.
-        See NearestNeighbors module documentation for details.
 
     leaf_size : int, default=30
-        Leaf size passed to BallTree or cKDTree. This can affect the
-        speed
+        Leaf size passed to tree :class:`NearestNeighbors` depending on
+        `algorithm`.  This can affect the speed
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
@@ -109,8 +108,8 @@ def commonnn(
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors. See
+        `None` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. `-1` means using all processors. See
         :term:`Glossary <n_jobs>` for more details.
         If precomputed distance are used, parallel execution is not
         available and thus `n_jobs` will have no effect.
@@ -144,7 +143,7 @@ def commonnn(
 class CommonNNClassifier(ClusterMixin, BaseEstimator):
     """Density-Based common-nearest-neighbors clustering.
 
-    Read more in the :ref:`User Guide <cnn>`.
+    Read more in the :ref:`User Guide <commonnn>`.
 
     Parameters
     ----------
@@ -152,18 +151,19 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
         The maximum distance between two samples for one to be
         considered as in the neighborhood of the other. This is not
         a maximum bound on the distances of points within a cluster.
-        The clustering will use `min_samples`/`eps` as the density
-        criterion. The lower `eps`, the higher the required sample
-        density.
+        The clustering will use `min_samples` within `eps` as
+        the density criterion.  The lower `eps`,
+        the higher the required sample density.
 
     min_samples : int, default=5
         The number of samples that need to be shared as neighbors for
         two points being part of the same cluster.  The clustering will
-        use `min_samples`/`eps` as the density
-        criterion. The larger `min_samples`, the higher the required
+        use `min_samples` within `eps` as the density
+        criterion.  The larger `min_samples`, the higher the required
         sample density.
 
-    metric : string, or callable, default='euclidean' The metric to use
+    metric : string, or callable, default='euclidean'
+        The metric to use
         when calculating distance between instances in a feature array.
         If metric is a string or callable, it must be one of the options
         allowed by :func:`sklearn.metrics.pairwise_distances` for its
@@ -172,34 +172,40 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
         <sparse graph>`, in which case only "nonzero" elements may be
         considered neighbors.
 
-    metric_params : dict, default=None Additional keyword arguments for
+    metric_params : dict, default=None
+        Additional keyword arguments for
         the metric function.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'},
-        default='auto' The algorithm to be used by the NearestNeighbors
-        module to compute pointwise distances and find nearest
-        neighbors. See NearestNeighbors module documentation for
-        details.
+        default='auto'
+        The algorithm to be used by :class:`NearestNeighbors`
+        to compute pointwise distances and find nearest
+        neighbors.
 
-    leaf_size : int, default=30 Leaf size passed to BallTree or cKDTree.
+    leaf_size : int, default=30
+        Leaf size passed to tree :class:`NearestNeighbors` depending on
+        `algorithm`.
         This can affect the speed of the construction and query, as well
         as the memory required to store the tree. The optimal value
         depends on the nature of the problem.
 
-    p : float, default=None The power of the Minkowski metric to be used
+    p : float, default=None
+        The power of the Minkowski metric to be used
         to calculate distance between points.
 
-    n_jobs : int, default=None The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors. See :term:`Glossary
+    n_jobs : int, default=None
+        The number of parallel jobs to run.
+        `None` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. `-1` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
     Attributes
     ----------
 
-    labels_ : ndarray of shape (n_samples) Cluster labels for each point
-        in the dataset given to fit(). Noisy samples are given the label
-        -1.
+    labels_ : ndarray of shape (n_samples)
+        Cluster labels for each point
+        in the dataset given to fit().
+        Noisy samples are given the label -1.
 
     Examples
     --------
@@ -210,41 +216,45 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([ 0,  0,  0,  1,  1, -1])
 
+    For an illustrating example, see
+    :ref:`examples/cluster/plot_commonnn.py
+    <sphx_glr_auto_examples_cluster_plot_commonnn.py>`.
+
     See also
     --------
+    commonnn
+        A function interface for this cluster algorithm.
+
     sklearn.cluster.DBSCAN
         A similar clustering providing a different notion of the
-        point density. The implementation is (like this present CNN
-        implementation) optimized for speed.
+        point density.  The implementation is (like this present
+        `CommonNNClassifier` implementation) optimized for speed.
 
     sklearn.cluster.OPTICS
         A similar clustering
-        at multiple values of eps. The implementation is optimized for
+        at multiple values of `eps`.
+        The implementation is optimized for
         memory usage.
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_cnn.py
-    <sphx_glr_auto_examples_cluster_plot_cnn.py>`.
 
     This implementation bulk-computes all neighborhood queries, which
-    increases the memory complexity to O(n.d) where d is the average
+    increases the memory complexity to O(n * d) where d is the average
     number of neighbors, similar to the present implementation of
-    :class:`cluster.DBSCAN`. It may attract a higher memory complexity
+    :class:`sklearn.cluster.DBSCAN`.  It may attract a higher memory
+    complexity
     when querying these nearest neighborhoods, depending on the
-    ``algorithm``.
+    `algorithm`.
 
     One way to avoid the query complexity is to pre-compute sparse
     neighborhoods in chunks using
     :func:`NearestNeighbors.radius_neighbors_graph
     <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>` with
-    ``mode='distance'``, then using ``metric='precomputed'`` here.
+    `mode='distance'`, then using `metric='precomputed'` here.
 
-    Another way to reduce memory and computation time is to remove
-    (near-)duplicate points and use ``sample_weight`` instead.
-
-    :class:`cluster.OPTICS` provides a similar clustering with lower
-    memory usage.
+    :class:`sklearn.cluster.OPTICS` provides a similar clustering with
+    lower memory usage.
 
     References
     ----------
@@ -293,9 +303,9 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape
             (n_samples, n_features), or (n_samples, n_samples)
             Training instances to cluster, or distances between
-            instances if ``metric='precomputed'``.
+            instances if `metric='precomputed'`.
             If a sparse matrix is provided, it will
-            be converted into a sparse ``csr_matrix``.
+            be converted into a sparse `csr_matrix`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Weight of each sample.  Note, that this option is not
@@ -394,8 +404,8 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
             (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``metric='precomputed'``. If a sparse matrix is provided, it will
-            be converted into a sparse ``csr_matrix``.
+            `metric='precomputed'`. If a sparse matrix is provided, it will
+            be converted into a sparse `csr_matrix`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Weight of each sample.  Note, that this option is not
