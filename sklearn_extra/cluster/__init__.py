@@ -1,4 +1,4 @@
 from ._k_medoids import KMedoids
-from ._cnn import cnn, CommonNNClassifier
+from ._commonnn import commonnn, CommonNNClassifier
 
-__all__ = ["KMedoids", "CommonNNClassifier", "cnn"]
+__all__ = ["KMedoids", "CommonNNClassifier", "commonnn"]

@@ -17,16 +17,16 @@ import pytest
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn_extra.cluster import CommonNNClassifier
-from sklearn_extra.cluster import cnn
+from sklearn_extra.cluster import commonnn
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
 
 
 # TODO Tests where adapted from sklearn.cluster.tests.test_dbscan
 #     of scikit-learn version 0.24.dev0.
-#     To make sklearn_extra.cluster._cnn compatible with
+#     To make sklearn_extra.cluster._commonnn compatible with
 #     scikit-learn version 0.21.1 changes have been made
-#     (see sklearn_extra.cluster._cnn), e.g. regarding the input
+#     (see sklearn_extra.cluster._commonnn), e.g. regarding the input
 #     validation.  Tests failing after the changes when calculating
 #     neighbourhoods are skipped for now
 #     with reason INPUT_VALIDATION_REASON
@@ -38,7 +38,7 @@ n_clusters = 3
 X = generate_clustered_data(n_clusters=n_clusters)
 
 
-def test_cnn_similarity():
+def test_commonnn_similarity():
     # Tests the algorithm with a similarity array.
     # Parameters chosen specifically for this task.
     eps = 0.15
@@ -47,7 +47,9 @@ def test_cnn_similarity():
     D = distance.squareform(distance.pdist(X))
     D /= np.max(D)
     # Compute
-    labels = cnn(D, metric="precomputed", eps=eps, min_samples=min_samples)
+    labels = commonnn(
+        D, metric="precomputed", eps=eps, min_samples=min_samples
+    )
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
 
@@ -71,7 +73,7 @@ def test_cnn_feature():
     metric = "euclidean"
     # Compute
     # parameters chosen for task
-    labels = cnn(X, metric=metric, eps=eps, min_samples=min_samples)
+    labels = commonnn(X, metric=metric, eps=eps, min_samples=min_samples)
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
@@ -85,8 +87,8 @@ def test_cnn_feature():
 
 
 def test_cnn_sparse():
-    labels_sparse = cnn(sparse.lil_matrix(X), eps=0.8, min_samples=5)
-    labels_dense = cnn(X, eps=0.8, min_samples=5)
+    labels_sparse = commonnn(sparse.lil_matrix(X), eps=0.8, min_samples=5)
+    labels_dense = commonnn(X, eps=0.8, min_samples=5)
     assert_array_equal(labels_dense, labels_sparse)
 
 
@@ -99,8 +101,10 @@ def test_cnn_sparse_precomputed(include_self):
     D_sparse = nn.radius_neighbors_graph(X=X_, mode="distance")
     # Ensure it is sparse not merely on diagonals:
     assert D_sparse.nnz < D.shape[0] * (D.shape[0] - 1)
-    labels_sparse = cnn(D_sparse, eps=0.8, min_samples=5, metric="precomputed")
-    labels_dense = cnn(D, eps=0.8, min_samples=5, metric="precomputed")
+    labels_sparse = commonnn(
+        D_sparse, eps=0.8, min_samples=5, metric="precomputed"
+    )
+    labels_dense = commonnn(D, eps=0.8, min_samples=5, metric="precomputed")
     assert_array_equal(labels_dense, labels_sparse)
 
 
@@ -111,12 +115,12 @@ def test_cnn_sparse_precomputed_different_eps():
     lower_eps = 0.2
     nn = NearestNeighbors(radius=lower_eps).fit(X)
     D_sparse = nn.radius_neighbors_graph(X, mode="distance")
-    cnn_lower = cnn(D_sparse, eps=lower_eps, metric="precomputed")
+    cnn_lower = commonnn(D_sparse, eps=lower_eps, metric="precomputed")
 
     higher_eps = lower_eps + 0.7
     nn = NearestNeighbors(radius=higher_eps).fit(X)
     D_sparse = nn.radius_neighbors_graph(X, mode="distance")
-    cnn_higher = cnn(D_sparse, eps=lower_eps, metric="precomputed")
+    cnn_higher = commonnn(D_sparse, eps=lower_eps, metric="precomputed")
 
     assert_array_equal(cnn_lower, cnn_higher)
 
@@ -129,7 +133,7 @@ def test_cnn_input_not_modified(use_sparse, metric):
     X = np.random.RandomState(0).rand(10, 10)
     X = sparse.csr_matrix(X) if use_sparse else X
     X_copy = X.copy()
-    cnn(X, metric=metric)
+    commonnn(X, metric=metric)
 
     if use_sparse:
         assert_array_equal(X.toarray(), X_copy.toarray())
@@ -147,7 +151,7 @@ def test_cnn_callable():
     metric = distance.euclidean
     # Compute
     # parameters chosen for task
-    labels = cnn(
+    labels = commonnn(
         X,
         metric=metric,
         eps=eps,
@@ -214,7 +218,9 @@ def test_cnn_balltree():
     min_samples = 5
 
     D = pairwise_distances(X)
-    labels = cnn(D, metric="precomputed", eps=eps, min_samples=min_samples)
+    labels = commonnn(
+        D, metric="precomputed", eps=eps, min_samples=min_samples
+    )
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
@@ -272,7 +278,7 @@ def test_input_validation():
 def test_cnn_badargs(args):
     # Test bad argument values: these should all raise ValueErrors
     with pytest.raises(ValueError):
-        cnn(X, **args)
+        commonnn(X, **args)
 
 
 def test_pickle():
@@ -283,12 +289,12 @@ def test_pickle():
 
 def test_boundaries():
     # ensure min_samples is inclusive of core point
-    core = np.where(cnn([[0], [1]], eps=2, min_samples=0) >= 0)[0]
+    core = np.where(commonnn([[0], [1]], eps=2, min_samples=0) >= 0)[0]
     assert 0 in core
     # ensure eps is inclusive of circumference
-    core = np.where(cnn([[0], [1], [1]], eps=1, min_samples=0) >= 0)[0]
+    core = np.where(commonnn([[0], [1], [1]], eps=1, min_samples=0) >= 0)[0]
     assert 0 in core
-    core = np.where(cnn([[0], [1], [1]], eps=0.99, min_samples=0) >= 0)[0]
+    core = np.where(commonnn([[0], [1], [1]], eps=0.99, min_samples=0) >= 0)[0]
     assert 0 not in core
 
 
@@ -296,53 +302,57 @@ def test_boundaries():
 def test_weighted_cnn():
     # ensure sample_weight is validated
     with pytest.raises(ValueError):
-        cnn([[0], [1]], sample_weight=[2])
+        commonnn([[0], [1]], sample_weight=[2])
     with pytest.raises(ValueError):
-        cnn([[0], [1]], sample_weight=[2, 3, 4])
+        commonnn([[0], [1]], sample_weight=[2, 3, 4])
 
     # ensure sample_weight has an effect
     assert_array_equal(
-        [], cnn([[0], [1]], sample_weight=None, min_samples=6)[0]
+        [], commonnn([[0], [1]], sample_weight=None, min_samples=6)[0]
     )
     assert_array_equal(
-        [], cnn([[0], [1]], sample_weight=[5, 5], min_samples=6)[0]
+        [], commonnn([[0], [1]], sample_weight=[5, 5], min_samples=6)[0]
     )
     assert_array_equal(
-        [0], cnn([[0], [1]], sample_weight=[6, 5], min_samples=6)[0]
+        [0], commonnn([[0], [1]], sample_weight=[6, 5], min_samples=6)[0]
     )
     assert_array_equal(
-        [0, 1], cnn([[0], [1]], sample_weight=[6, 6], min_samples=6)[0]
+        [0, 1], commonnn([[0], [1]], sample_weight=[6, 6], min_samples=6)[0]
     )
 
     # points within eps of each other:
     assert_array_equal(
         [0, 1],
-        cnn([[0], [1]], eps=1.5, sample_weight=[5, 1], min_samples=6)[0],
+        commonnn([[0], [1]], eps=1.5, sample_weight=[5, 1], min_samples=6)[0],
     )
     # and effect of non-positive and non-integer sample_weight:
     assert_array_equal(
-        [], cnn([[0], [1]], sample_weight=[5, 0], eps=1.5, min_samples=6)[0]
+        [],
+        commonnn([[0], [1]], sample_weight=[5, 0], eps=1.5, min_samples=6)[0],
     )
     assert_array_equal(
         [0, 1],
-        cnn([[0], [1]], sample_weight=[5.9, 0.1], eps=1.5, min_samples=6)[0],
+        commonnn([[0], [1]], sample_weight=[5.9, 0.1], eps=1.5, min_samples=6)[
+            0
+        ],
     )
     assert_array_equal(
         [0, 1],
-        cnn([[0], [1]], sample_weight=[6, 0], eps=1.5, min_samples=6)[0],
+        commonnn([[0], [1]], sample_weight=[6, 0], eps=1.5, min_samples=6)[0],
     )
     assert_array_equal(
-        [], cnn([[0], [1]], sample_weight=[6, -1], eps=1.5, min_samples=6)[0]
+        [],
+        commonnn([[0], [1]], sample_weight=[6, -1], eps=1.5, min_samples=6)[0],
     )
 
     # for non-negative sample_weight, cores should be identical to repetition
     rng = np.random.RandomState(42)
     sample_weight = rng.randint(0, 5, X.shape[0])
-    label1 = cnn(X, sample_weight=sample_weight)
+    label1 = commonnn(X, sample_weight=sample_weight)
     assert len(label1) == len(X)
 
     X_repeated = np.repeat(X, sample_weight, axis=0)
-    label_repeated = cnn(X_repeated)
+    label_repeated = commonnn(X_repeated)
     core_repeated_mask = np.zeros(X_repeated.shape[0], dtype=bool)
     core_repeated_mask[np.where(label_repeated >= 0)[0]] = True
     core_mask = np.zeros(X.shape[0], dtype=bool)
@@ -351,7 +361,9 @@ def test_weighted_cnn():
 
     # sample_weight should work with precomputed distance matrix
     D = pairwise_distances(X)
-    core3, label3 = cnn(D, sample_weight=sample_weight, metric="precomputed")
+    core3, label3 = commonnn(
+        D, sample_weight=sample_weight, metric="precomputed"
+    )
     assert_array_equal(label1, label3)
 
     # sample_weight should work with estimator
@@ -374,13 +386,13 @@ def test_cnn_core_samples_toy_1(algorithm):
     # are neighbours. Valid clusters need to have more than one
     # members, so all other points are isolated and considered
     # noise.
-    labels = cnn(X, algorithm=algorithm, eps=1, min_samples=0)
+    labels = commonnn(X, algorithm=algorithm, eps=1, min_samples=0)
     assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
 
     # With eps=1 and min_samples=1 the 3 samples from the
     # denser area are no core samples anymore (2 and 4 share 3 as
     # common neighbour but are not neighbours of each other)
-    labels = cnn(X, algorithm=algorithm, eps=1, min_samples=1)
+    labels = commonnn(X, algorithm=algorithm, eps=1, min_samples=1)
     assert_array_equal(labels, [-1, -1, -1, -1, -1, -1, -1])
 
 
@@ -401,19 +413,19 @@ def test_cnn_core_samples_toy_2(algorithm):
         [5.5, -1.5],
     ]  # 11
 
-    labels = cnn(X, algorithm=algorithm, eps=1.5, min_samples=0)
+    labels = commonnn(X, algorithm=algorithm, eps=1.5, min_samples=0)
     assert_array_equal(labels, [0, 0, 0, 0, 0, 0, -1, 1, 1, 2, 2, 2])
 
-    labels = cnn(X, algorithm=algorithm, eps=1.5, min_samples=1)
+    labels = commonnn(X, algorithm=algorithm, eps=1.5, min_samples=1)
     assert_array_equal(labels, [0, 0, 0, 0, 0, -1, -1, -1, -1, 1, 1, 1])
 
-    labels = cnn(X, algorithm=algorithm, eps=1.5, min_samples=2)
+    labels = commonnn(X, algorithm=algorithm, eps=1.5, min_samples=2)
     assert_array_equal(labels, [0, -1, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1])
 
-    labels = cnn(X, algorithm=algorithm, eps=1.5, min_samples=3)
+    labels = commonnn(X, algorithm=algorithm, eps=1.5, min_samples=3)
     assert_array_equal(labels, [0, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1])
 
-    labels = cnn(X, algorithm=algorithm, eps=1.5, min_samples=4)
+    labels = commonnn(X, algorithm=algorithm, eps=1.5, min_samples=4)
     assert_array_equal(
         labels, [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
     )

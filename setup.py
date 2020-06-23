@@ -64,8 +64,8 @@ args = {
                 include_dirs=[np.get_include()],
             ),
             Extension(
-                "sklearn_extra.cluster._cnn_inner",
-                ["sklearn_extra/cluster/_cnn_inner.pyx"],
+                "sklearn_extra.cluster._commonnn_inner",
+                ["sklearn_extra/cluster/_commonnn_inner.pyx"],
                 include_dirs=[np.get_include()],
                 language="c++",
             ),

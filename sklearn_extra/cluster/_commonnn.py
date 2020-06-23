@@ -28,10 +28,10 @@ else:
 
 from sklearn.neighbors import NearestNeighbors
 
-from ._cnn_inner import cnn_inner
+from ._commonnn_inner import commonnn_inner
 
 
-def cnn(
+def commonnn(
     X,
     eps=0.5,
     min_samples=5,
@@ -43,7 +43,7 @@ def cnn(
     sample_weight=None,
     n_jobs=None,
 ):
-    """Perform common-nearest-neighbor clustering
+    """Common-nearest-neighbor clustering
 
     Cluster from vector array or distance matrix.
 
@@ -54,7 +54,7 @@ def cnn(
     X : {array-like, sparse (CSR) matrix} of shape
         (n_samples, n_features) or (n_samples, n_samples)
         A feature array, or array of distances between samples if
-        ``metric='precomputed'``.
+        `metric='precomputed'`.
 
     eps : float, default=0.5
         The maximum distance between two samples for one to be
@@ -125,46 +125,6 @@ def cnn(
     --------
     CommonNNClassifier
         An estimator interface for this clustering algorithm.
-
-    sklearn.cluster.DBSCAN
-        An estimator interface for a similar clustering algorithm
-        providing a different notion of the point density.
-
-    sklearn.cluster.OPTICS
-        A similar estimator interface clustering at multiple values of eps. Our
-        implementation is optimized for memory usage.
-
-    Notes
-    -----
-    For an example, see :ref:`examples/cluster/plot_cnn.py`.
-
-    This implementation bulk-computes all neighborhood queries,
-    which increases
-    the memory complexity to O(n.d) where d is the average number of
-    neighbors. It may attract a higher memory complexity when querying
-    these nearest neighborhoods, depending
-    on the ``algorithm``.
-
-    One way to avoid the query complexity is to pre-compute sparse
-    neighborhoods in chunks using
-    :func:`NearestNeighbors.radius_neighbors_graph
-    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>` with
-    ``mode='distance'``, then using ``metric='precomputed'`` here.
-
-    :func:`cluster.optics <sklearn.cluster.optics>` provides a similar
-    clustering with lower memory usage.
-
-    References
-    ----------
-    B. Keller, X. Daura, W. F. van Gunsteren "Comparing Geometric and
-    Kinetic Cluster Algorithms for Molecular Simulation Data" J. Chem.
-    Phys., 2010, 132, 074110.
-
-    O. Lemke, B.G. Keller "Density-based Cluster Algorithms for the
-    Identification of Core Sets" J. Chem. Phys., 2016, 145, 164104.
-
-    O. Lemke, B.G. Keller "Common nearest neighbor clustering - a
-    benchmark" Algorithms, 2018, 11, 19.
     """
 
     est = CommonNNClassifier(
@@ -415,7 +375,7 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
         # Array tracking points qualified for similarity check
         core_candidates = np.asarray(n_neighbors >= corrected_min_samples)
 
-        cnn_inner(
+        commonnn_inner(
             neighborhoods, labels, core_candidates, corrected_min_samples
         )
 

@@ -55,7 +55,7 @@ cdef inline bint check_similarity(
     return 0
 
 
-def cnn_inner(
+def commonnn_inner(
         object[::1] neighborhoods,
         ARRAYINDEX_DTYPE_t[::1] labels,
         np.uint8_t[::1] core_candidates,
