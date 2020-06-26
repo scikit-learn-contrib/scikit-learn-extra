@@ -26,6 +26,9 @@ jobs:
         run: |
           choco install vcpython27 -f -y
       - name: Build wheels
+        env:
+          CIBW_SKIP: "pp*-win* *p27* *p34*"
+          CIBW_BEFORE_BUILD: "pip install numpy cython"
         run: |
           python -m cibuildwheel --output-dir wheelhouse
       - uses: actions/upload-artifact@v2
