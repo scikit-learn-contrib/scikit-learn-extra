@@ -22,7 +22,8 @@ jobs:
           python -m pip install cibuildwheel==1.5.1
       - name: Build wheels
         env:
-          CIBW_SKIP: "pp*-win* *p27* *p35*"
+          # we only build for Python 3.6+. On Linux manylinux2010 is used.
+          CIBW_SKIP: "pp*-win* *p27* *p35*" "*manylinux1*"
         run: |
           python -m cibuildwheel --output-dir wheelhouse
       - uses: actions/upload-artifact@v2
@@ -54,7 +55,7 @@ jobs:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
-    # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/download-artifact@v2
         with:
