@@ -25,7 +25,7 @@ jobs:
           # we only build for Python 3.6+. On Linux manylinux2010 is used.
           CIBW_SKIP: "pp*-win* *p27* *p35*"
           CIBW_TEST_REQUIRES: "pytest pandas scikit-learn"
-          CIBW_TEST_COMMAND: "pytest {package}/sklearn_extra"
+          CIBW_TEST_COMMAND: "pytest --pyargs sklearn_extra"
         run: |
           python -m cibuildwheel --output-dir wheelhouse
       - uses: actions/upload-artifact@v2
