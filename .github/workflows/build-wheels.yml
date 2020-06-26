@@ -23,8 +23,8 @@ jobs:
       - name: Build wheels
         env:
           # We only build for Python 3.6+. On Linux manylinux2010 is used.
-          # Skipping pypy wheels since scipy & scikit-learn haven't built them yet.
-          CIBW_SKIP: "pp*-win* *p27* *p35* *pypy*" 
+          # Skipping pypy wheels for now since scipy & scikit-learn haven't build them yet.
+          CIBW_SKIP: "pp* *p27* *p35*"
           CIBW_TEST_REQUIRES: "pytest pandas scikit-learn"
           CIBW_TEST_COMMAND: "pytest --pyargs sklearn_extra"
         run: |
