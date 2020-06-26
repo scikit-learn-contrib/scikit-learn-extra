@@ -11,6 +11,7 @@ User guide
      :numbered:
 
      modules/eigenpro.rst
+     modules/robust.rst
 
 .. _k_medoids:
 
@@ -63,7 +64,6 @@ This version works as follows:
   maximum number of iterations ``max_iter`` is reached.
 
 .. topic:: References:
-
 * Maranzana, F.E., 1963. On the location of supply points to minimize
   transportation costs. IBM Systems Journal, 2(2), pp.129-135.
 * Park, H.S. and Jun, C.H., 2009. A simple and fast algorithm for K-medoids
