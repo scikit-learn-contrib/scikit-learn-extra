@@ -80,20 +80,92 @@ clusters as dense regions of high point density, separated by sparse
 regions of lower density. Common-nearest-neighbors clustering
 approximates local density as the number of shared (common) neighbors
 between two points with respect to a neighbor search radius. A density
-threshold (density criterion) is used as cluster parameter to
-distinguish high from low density. As such
-the method is related to other density-based cluster algorithms like
-DBSCAN or Jarvis-Patrick. DBSCAN approximates local density as the
-number of points in the neighborhood of a single point. The
-Jarvis-Patrick algorithm uses the number of common neighbors shared by
-two points among the $k$ nearest neighbors. As these three approaches
-each provide a different notion of how density is estimated from
-point samples, they can be used complementary.
+threshold (density criterion) is used – defined by the cluster
+parameters `min_samples` (number of common neighbors) and `eps` (search
+radius) – to distinguish high from low density. A high value of
+`min_samples` and a low value of `eps` corresponds to high density.
+
+As such the method is related to other density-based cluster algorithms
+like :class:`DBSCAN <sklearn.cluster.DBSCAN>` or Jarvis-Patrick. DBSCAN
+approximates local density as the number of points in the neighborhood
+of a single point. The Jarvis-Patrick algorithm uses the number of
+common neighbors shared by two points among the *k* nearest neighbors.
+As these approaches each provide a different notion of how density is
+estimated from point samples, they can be used complementarily. Their
+relative suitability for a classification problem depends on the nature
+of the clustered data. Common-nearest-neighbors clustering (as
+density-based clustering in general) has the following advantages over
+other clustering techniques:
+
+  * The cluster result is deterministic. The same set of cluster
+    parameters always leads to the same classification for a data set.
+    A different ordering of the data set leads to a different ordering
+    of the cluster assignment, but does not change the assignment
+    qualitatively.
+  * Little prior knowledge about the data is required, e.g. the number
+    of resulting clusters does not need to be known beforehand (although
+    cluster parameters need to be tuned to obtain a desired result).
+  * Identified clusters are not restricted in their shape or size.
+  * Points can be considered noise (outliers) if they do not fullfil
+    the density criterion.
+
+The common-nearest-neighbors algorithm tests the density criterion for
+pairs of neighbors (do they have at least `min_samples` points in the
+intersection of their neighborhoods at a radius `eps`). Two points that
+fullfil this criterion are directly part of the same dense data region,
+i.e. they are *density reachable*. A *density connected* network of
+density reachable points (a connected component if density reachability
+is viewed as a graph structure) constitutes a separated dense region and
+therefore a cluster. Note, that for example in contrast to
+:class:`DBSCAN <sklearn.cluster.DBSCAN>` there is no differentiation in
+*core* (dense points) and *edge* points (points that are not dense
+themselves but neighbors of dense points). The assignment of points on
+the cluster rims to a cluster is possible, but can be ambiguous. The
+cluster result is returned as a 1D container of labels, i.e. a sequence
+of integers (zero-based) of length *n* for a data set of *n* points,
+denoting the assignment of points to a specific cluster. Noise is
+labeled with `-1`. Valid clusters have at least two members. The
+clusters are not sorted by cluster member count. In same cases the
+algorithm tends to identify small clusters that can be filtered out
+manually.
 
 .. topic:: Examples:
 
 * :ref:`examples/cluster/plot_commonnn.py
     <sphx_glr_auto_examples_cluster_plot_commonnn.py>`
+
+.. topic:: Implementation:
+
+The present implementation of the common-nearest-neighbors algorithm in
+:class:`CommonNNClassifier` shares some commonalities with the current
+scikit-learn implementation of :class:`DBSCAN <sklearn.cluster.DBSCAN>`.
+It computes neighborhoods from points in bulk with
+:class:`NearestNeighbors <sklearn.neighbors.NearestNeighbors>` before
+the actual clustering. Consequently, to store the neighborhoods
+ it requires memory on the order of
+:math:`O(n * n_n)` for *n* points in the data set where :math:`n_n`
+is the
+average number of neighbors (which is proportional to `eps`), that is at
+worst :math:`O(n^2)`. Depending on the input structure (dense or sparse
+points or similarity matrix) the additional memory demand varies.
+The clustering itself follows a
+breadth-first-search scheme, checking the density criterion at every
+node expansion. The linear time complexity is roughly proportional to
+the number of data points *n*, the total number of neighbors :math:`N`
+and the value of `min_samples`. For density-based clustering
+schemes with lower memory demand, also consider:
+
+  * :class:`OPTICS <sklearn.cluster.OPTICS>`
+  * `cnnclustering <https://pypi.org/project/cnnclustering/>`_ A
+    different implementation of common-nearest-neighbors clustering
+
+.. topic:: Notes:
+
+* :class:`DBSCAN <sklearn.cluster.DBSCAN>` provides an option to
+  specify data point weights with `sample_weights`. This feature is
+  experimentally at the moment for :class:`CommonNNClassifier` as
+  weights are not well defined for checking the common-nearest-neighbor
+  density criterion. It should not be used in production, yet.
 
 .. topic:: References:
 

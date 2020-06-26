@@ -240,7 +240,8 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
     -----
 
     This implementation bulk-computes all neighborhood queries, which
-    increases the memory complexity to O(n * d) where d is the average
+    increases the memory complexity to :math:`O(n * n_n)` where
+    :math:`n_n` is the average
     number of neighbors, similar to the present implementation of
     :class:`sklearn.cluster.DBSCAN`.  It may attract a higher memory
     complexity
