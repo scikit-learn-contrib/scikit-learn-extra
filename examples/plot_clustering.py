@@ -4,7 +4,7 @@
 A demo of several clustering algorithms on a corrupted dataset
 ===================================================================
 In this example we exhibit the results of various 
-sklearn and sklearn-extra clustering algorithms on
+scikit-learn and scikit-learn-extra clustering algorithms on
 a dataset with outliers.
 KMedoids is the most stable and efficient 
 algorithm for this application (change the seed to
