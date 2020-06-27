@@ -32,6 +32,31 @@ from sklearn_extra.cluster import KMedoids
 
 rng = np.random.RandomState(42)
 
+colors = np.array(
+    list(
+        islice(
+            cycle(
+                [
+                    "#377eb8",
+                    "#ff7f00",
+                    "#4daf4a",
+                    "#f781bf",
+                    "#a65628",
+                    "#984ea3",
+                    "#999999",
+                    "#e41a1c",
+                    "#dede00",
+                ]
+            ),
+            3,
+        )
+    )
+)
+# add black color for outliers (if any) as computed
+# by OPTICS and DBSCAN
+colors = np.append(colors, ["#000000"])
+
+
 centers = [[1, 1], [-1, -1], [1, -1]]
 
 kmeans = KMeans(n_clusters=3, random_state=rng)
@@ -121,29 +146,6 @@ for N in [300, 3000]:
         plt.subplot(2, int(len(clustering_algorithms) / 2), plot_num)
         plt.title(name, size=18)
 
-        colors = np.array(
-            list(
-                islice(
-                    cycle(
-                        [
-                            "#377eb8",
-                            "#ff7f00",
-                            "#4daf4a",
-                            "#f781bf",
-                            "#a65628",
-                            "#984ea3",
-                            "#999999",
-                            "#e41a1c",
-                            "#dede00",
-                        ]
-                    ),
-                    int(max(y_pred) + 1),
-                )
-            )
-        )
-        # add black color for outliers (if any) as computed
-        # by OPTICS and DBSCAN
-        colors = np.append(colors, ["#000000"])
         plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xticks(())
@@ -157,8 +159,7 @@ for N in [300, 3000]:
             horizontalalignment="right",
         )
         plt.suptitle(
-            f"Dataset with {N} samples, {N // 100} outliers.",
-            size=20,
+            f"Dataset with {N} samples, {N // 100} outliers.", size=20,
         )
         plot_num += 1
 
