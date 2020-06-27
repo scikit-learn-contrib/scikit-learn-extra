@@ -141,7 +141,7 @@ for N in [300, 3000]:
                 )
             )
         )
-        # add black color for outliers (if any) as computed 
+        # add black color for outliers (if any) as computed
         # by OPTICS and DBSCAN
         colors = np.append(colors, ["#000000"])
         plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
