@@ -157,11 +157,7 @@ for N in [300, 3000]:
             horizontalalignment="right",
         )
         plt.suptitle(
-            "Dataset with "
-            + str(N)
-            + " samples, "
-            + str(int(N / 100))
-            + " outliers.",
+            f"Dataset with {N} samples, {N // 100} outliers.",
             size=20,
         )
         plot_num += 1
