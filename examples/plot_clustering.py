@@ -34,8 +34,8 @@ rng = np.random.RandomState(42)
 centers = [[1, 1], [-1, -1], [1, -1]]
 n_clusters = len(centers)
 
-kmeans = KMeans(n_clusters=3, random_state=rng)
-kmedoid = KMedoids(n_clusters=3, random_state=rng)
+kmeans = KMeans(n_clusters=n_clusters, random_state=rng)
+kmedoid = KMedoids(n_clusters=n_clusters, random_state=rng)
 
 
 def kmeans_loss(X, pred):
@@ -47,9 +47,9 @@ def kmeans_loss(X, pred):
     )
 
 
-two_means = cluster.MiniBatchKMeans(n_clusters=3, random_state=rng)
+two_means = cluster.MiniBatchKMeans(n_clusters=n_clusters, random_state=rng)
 spectral = cluster.SpectralClustering(
-    n_clusters=3,
+    n_clusters=n_clusters,
     eigen_solver="arpack",
     affinity="nearest_neighbors",
     random_state=rng,
@@ -59,9 +59,9 @@ optics = cluster.OPTICS(min_samples=20, xi=0.1, min_cluster_size=0.2)
 affinity_propagation = cluster.AffinityPropagation(
     damping=0.75, preference=-220, random_state=rng
 )
-birch = cluster.Birch(n_clusters=3)
+birch = cluster.Birch(n_clusters=n_clusters)
 gmm = mixture.GaussianMixture(
-    n_components=3, covariance_type="full", random_state=rng
+    n_components=n_clusters, covariance_type="full", random_state=rng
 )
 
 
@@ -79,7 +79,9 @@ for n_samples in [300, 3000]:
 
     # Define two other clustering algorithms
     kmeans_rob = RobustWeightedEstimator(
-        MiniBatchKMeans(3, batch_size=len(X), init="random", random_state=rng),
+        MiniBatchKMeans(
+            n_clusters, batch_size=len(X), init="random", random_state=rng
+        ),
         # in theory, init=kmeans++ is very non-robust
         burn_in=0,
         eta0=0.01,
