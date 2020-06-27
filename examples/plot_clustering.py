@@ -9,10 +9,10 @@ a dataset with outliers.
 KMedoids is the most stable and efficient 
 algorithm for this application (change the seed to
 see different behavior for SpectralClustering and 
-the robust kmeans.
+the robust kmeans).
 The mean-shift algorithm, once correctly 
 parameterized, detects the outliers as a class of 
-its own.
+their own.
 """
 print(__doc__)
 
@@ -32,6 +32,7 @@ from sklearn_extra.cluster import KMedoids
 rng = np.random.RandomState(42)
 
 centers = [[1, 1], [-1, -1], [1, -1]]
+n_clusters = len(centers)
 
 kmeans = KMeans(n_clusters=3, random_state=rng)
 kmedoid = KMedoids(n_clusters=3, random_state=rng)
@@ -66,7 +67,6 @@ gmm = mixture.GaussianMixture(
 
 for n_samples in [300, 3000]:
     # Construct the dataset
-    n_clusters = len(centers)
     X, labels_true = make_blobs(
         n_samples=n_samples, centers=centers, cluster_std=0.4, random_state=rng
     )
