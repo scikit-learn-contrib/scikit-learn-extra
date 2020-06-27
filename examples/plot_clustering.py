@@ -32,31 +32,6 @@ from sklearn_extra.cluster import KMedoids
 
 rng = np.random.RandomState(42)
 
-colors = np.array(
-    list(
-        islice(
-            cycle(
-                [
-                    "#377eb8",
-                    "#ff7f00",
-                    "#4daf4a",
-                    "#f781bf",
-                    "#a65628",
-                    "#984ea3",
-                    "#999999",
-                    "#e41a1c",
-                    "#dede00",
-                ]
-            ),
-            3,
-        )
-    )
-)
-# add black color for outliers (if any) as computed
-# by OPTICS and DBSCAN
-colors = np.append(colors, ["#000000"])
-
-
 centers = [[1, 1], [-1, -1], [1, -1]]
 
 kmeans = KMeans(n_clusters=3, random_state=rng)
@@ -146,7 +121,7 @@ for N in [300, 3000]:
         plt.subplot(2, int(len(clustering_algorithms) / 2), plot_num)
         plt.title(name, size=18)
 
-        plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
+        plt.scatter(X[:, 0], X[:, 1], s=10, c=y_pred)
 
         plt.xticks(())
         plt.yticks(())
