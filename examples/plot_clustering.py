@@ -18,14 +18,13 @@ print(__doc__)
 
 import time
 
-import numpy as np
-import matplotlib.pyplot as plt
-
 from sklearn import cluster, mixture
 from sklearn.cluster import MiniBatchKMeans, KMeans
 from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
-from itertools import cycle, islice
+
+import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn_extra.robust import RobustWeightedEstimator
 from sklearn_extra.cluster import KMedoids
@@ -47,28 +46,33 @@ def kmeans_loss(X, pred):
     )
 
 
-two_means = cluster.MiniBatchKMeans(n_clusters=3)
+two_means = cluster.MiniBatchKMeans(n_clusters=3, random_state=rng)
 spectral = cluster.SpectralClustering(
-    n_clusters=3, eigen_solver="arpack", affinity="nearest_neighbors"
+    n_clusters=3,
+    eigen_solver="arpack",
+    affinity="nearest_neighbors",
+    random_state=rng,
 )
 dbscan = cluster.DBSCAN()
 optics = cluster.OPTICS(min_samples=20, xi=0.1, min_cluster_size=0.2)
 affinity_propagation = cluster.AffinityPropagation(
-    damping=0.75, preference=-220
+    damping=0.75, preference=-220, random_state=rng
 )
 birch = cluster.Birch(n_clusters=3)
-gmm = mixture.GaussianMixture(n_components=3, covariance_type="full")
+gmm = mixture.GaussianMixture(
+    n_components=3, covariance_type="full", random_state=rng
+)
 
 
-for N in [300, 3000]:
+for n_samples in [300, 3000]:
     # Construct the dataset
     n_clusters = len(centers)
     X, labels_true = make_blobs(
-        n_samples=N, centers=centers, cluster_std=0.4, random_state=rng
+        n_samples=n_samples, centers=centers, cluster_std=0.4, random_state=rng
     )
 
     # Change the first 1% entries to outliers
-    for f in range(int(N / 100)):
+    for f in range(int(n_samples / 100)):
         X[f] = [20, 3] + rng.normal(size=2) * 0.1
     # Shuffle the data so that we don't know where the outlier is.
     X = shuffle(X, random_state=rng)
@@ -78,11 +82,11 @@ for N in [300, 3000]:
         MiniBatchKMeans(3, batch_size=len(X), init="random", random_state=rng),
         # in theory, init=kmeans++ is very non-robust
         burn_in=0,
-        eta0=0.1,
+        eta0=0.01,
         weighting="mom",
         loss=kmeans_loss,
         max_iter=100,
-        k=int(N / 100),
+        k=int(n_samples / 50),
         random_state=rng,
     )
     bandwidth = cluster.estimate_bandwidth(X, 0.2)
@@ -134,7 +138,8 @@ for N in [300, 3000]:
             horizontalalignment="right",
         )
         plt.suptitle(
-            f"Dataset with {N} samples, {N // 100} outliers.", size=20,
+            f"Dataset with {n_samples} samples, {n_samples // 100} outliers.",
+            size=20,
         )
         plot_num += 1
 
