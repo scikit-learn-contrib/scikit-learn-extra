@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-====================================================
-Demo of common-nearest-neighbor clustering algorithm
-====================================================
+=========================================
+Common-nearest-neighbor clustering demo I
+=========================================
 
-Finds clusters of data points following a density criterion. Two points
-will be part of the same cluster if they share a minimum number of
-common neighbors. Read more in the :ref:`User Guide <commonnn>`.
+Common-nearest neighbor clustering of data points following a density
+criterion. Two points will be part of the same cluster if they share a
+minimum number of common neighbors. Read more in the :ref:`User Guide
+<commonnn>`.
 
 """
 import matplotlib.pyplot as plt
@@ -79,4 +80,3 @@ for k, col in zip(unique_labels, colors):
     )
 
 plt.title("Estimated number of clusters: %d" % n_clusters_)
-plt.show()
