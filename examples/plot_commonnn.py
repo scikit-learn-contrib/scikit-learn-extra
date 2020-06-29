@@ -12,7 +12,7 @@ common neighbors.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn_extra.cluster import CommonNNClassifier
+from sklearn_extra.cluster import CommonNNClustering
 from sklearn import metrics
 from sklearn.datasets import make_blobs
 from sklearn.preprocessing import StandardScaler
@@ -31,7 +31,7 @@ X = StandardScaler().fit_transform(X)
 
 # #############################################################################
 # Compute common-nearest-neighbor clustering
-cobj = CommonNNClassifier(eps=0.3, min_samples=8).fit(X)
+cobj = CommonNNClustering(eps=0.3, min_samples=8).fit(X)
 labels = cobj.labels_
 
 # Number of clusters in labels, ignoring noise if present.

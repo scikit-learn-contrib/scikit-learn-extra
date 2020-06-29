@@ -122,11 +122,11 @@ def commonnn(
 
     See also
     --------
-    CommonNNClassifier
+    CommonNNClustering
         An estimator interface for this clustering algorithm.
     """
 
-    est = CommonNNClassifier(
+    est = CommonNNClustering(
         eps=eps,
         min_samples=min_samples,
         metric=metric,
@@ -140,7 +140,7 @@ def commonnn(
     return est.labels_
 
 
-class CommonNNClassifier(ClusterMixin, BaseEstimator):
+class CommonNNClustering(ClusterMixin, BaseEstimator):
     """Density-Based common-nearest-neighbors clustering.
 
     Read more in the :ref:`User Guide <commonnn>`.
@@ -209,10 +209,10 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn_extra.cluster import CommonNNClassifier
+    >>> from sklearn_extra.cluster import CommonNNClustering
     >>> import numpy as np
     >>> X = np.array([[1, 2], [2, 2], [2, 3], [8, 7], [8, 8], [25, 80]])
-    >>> clustering = CommonNNClassifier(eps=3, min_samples=0).fit(X)
+    >>> clustering = CommonNNClustering(eps=3, min_samples=0).fit(X)
     >>> clustering.labels_
     array([ 0,  0,  0,  1,  1, -1])
 
@@ -228,7 +228,7 @@ class CommonNNClassifier(ClusterMixin, BaseEstimator):
     sklearn.cluster.DBSCAN
         A similar clustering providing a different notion of the
         point density.  The implementation is (like this present
-        `CommonNNClassifier` implementation) optimized for speed.
+        `CommonNNClustering` implementation) optimized for speed.
 
     sklearn.cluster.OPTICS
         A similar clustering

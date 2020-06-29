@@ -75,7 +75,7 @@ This version works as follows:
 Common-nearest-neighbors clustering
 ===================================
 
-:class:`CommonNNClassifier <sklearn_extra.cluster.CommonNNClassifier>`
+:class:`CommonNNClustering <sklearn_extra.cluster.CommonNNClustering>`
 provides an interface to density-based
 common-nearest-neighbors clustering. Density-based clustering identifies
 clusters as dense regions of high point density, separated by sparse
@@ -136,12 +136,12 @@ manually.
 
   * :ref:`examples/cluster/plot_commonnn.py <sphx_glr_auto_examples_plot_commonnn.py>`
     Basic usage of the
-    :class:`CommonNNClassifier <sklearn_extra.cluster.CommonNNClassifier>`
+    :class:`CommonNNClustering <sklearn_extra.cluster.CommonNNClustering>`
 
 .. topic:: Implementation:
 
   The present implementation of the common-nearest-neighbors algorithm in
-  :class:`CommonNNClassifier <sklearn_extra.cluster.CommonNNClassifier>`
+  :class:`CommonNNClustering <sklearn_extra.cluster.CommonNNClustering>`
   shares some
   commonalities with the current
   scikit-learn implementation of :class:`DBSCAN <sklearn.cluster.DBSCAN>`.
@@ -169,7 +169,7 @@ manually.
 
   * :class:`DBSCAN <sklearn.cluster.DBSCAN>` provides an option to
     specify data point weights with ``sample_weights``. This feature is
-    experimentally at the moment for :class:`CommonNNClassifier` as
+    experimentally at the moment for :class:`CommonNNClustering` as
     weights are not well defined for checking the common-nearest-neighbor
     density criterion. It should not be used in production, yet.
 
