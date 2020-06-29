@@ -1,0 +1,73 @@
+name: build_wheels
+
+on: [push, pull_request]
+
+jobs:
+  build_wheels:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.7'
+      - name: Install cibuildwheel
+        run: |
+          python -m pip install cibuildwheel==1.5.1
+      - name: Build wheels
+        env:
+          # We only build for Python 3.6+. On Linux manylinux2010 is used.
+          # Skipping pypy wheels for now since scipy & scikit-learn haven't build them yet.
+          CIBW_SKIP: "pp* *p27* *p35*"
+          CIBW_TEST_REQUIRES: "pytest pandas scikit-learn"
+          CIBW_TEST_COMMAND: "pytest --pyargs sklearn_extra"
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.7'
+
+      - name: Install dependencies
+        run: pip install setuptools cython numpy
+
+      - name: Build sdist
+        run: python setup.py sdist
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.tar.gz
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    # upload to PyPI on every tag starting with 'v'
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
+          # To test:
+          repository_url: https://test.pypi.org/legacy/
