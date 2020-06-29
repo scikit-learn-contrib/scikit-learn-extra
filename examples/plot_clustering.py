@@ -118,7 +118,7 @@ for n_samples in [300, 3000]:
         t0 = time.time()
         algorithm.fit(X)
         t1 = time.time()
-        
+
         if hasattr(algorithm, "labels_"):
             y_pred = algorithm.labels_.astype(np.int)
         else:
