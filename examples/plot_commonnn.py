@@ -4,9 +4,9 @@
 Demo of common-nearest-neighbor clustering algorithm
 ====================================================
 
-Finds clusters of data points following a density criterion.  Two points
+Finds clusters of data points following a density criterion. Two points
 will be part of the same cluster if they share a minimum number of
-common neighbors.
+common neighbors. Read more in the :ref:`User Guide <commonnn>`.
 
 """
 import matplotlib.pyplot as plt

@@ -10,8 +10,8 @@ User guide
 .. toctree::
   :numbered:
 
-     modules/eigenpro.rst
-     modules/robust.rst
+  modules/eigenpro.rst
+  modules/robust.rst
 
 .. _k_medoids:
 
@@ -91,7 +91,7 @@ As such the method is related to other density-based cluster algorithms
 like :class:`DBSCAN <sklearn.cluster.DBSCAN>` or Jarvis-Patrick. DBSCAN
 approximates local density as the number of points in the neighborhood
 of a single point. The Jarvis-Patrick algorithm uses the number of
-common neighbors shared by two points among the *k* nearest neighbors.
+common neighbors shared by two points among the :math:`k` nearest neighbors.
 As these approaches each provide a different notion of how density is
 estimated from point samples, they can be used complementarily. Their
 relative suitability for a classification problem depends on the nature
@@ -151,7 +151,7 @@ manually.
   it requires memory on the order of
   :math:`O(n ⋅ n_n)` for :math:`n` points in the data set where :math:`n_n`
   is the
-  average number of neighbors (which is proportional to `eps`), that is at
+  average number of neighbors (which is proportional to ``eps``), that is at
   worst :math:`O(n^2)`. Depending on the input structure (dense or sparse
   points or similarity matrix) the additional memory demand varies.
   The clustering itself follows a
@@ -161,7 +161,8 @@ manually.
   and the value of ``min_samples``. For density-based clustering
   schemes with lower memory demand, also consider:
 
-    * :class:`OPTICS <sklearn.cluster.OPTICS>` – 
+    * :class:`OPTICS <sklearn.cluster.OPTICS>` – Density-based clustering
+      related to DBSCAN using a ``eps`` value range.
     * `cnnclustering <https://pypi.org/project/cnnclustering/>`_ – A
       different implementation of common-nearest-neighbors clustering.
 

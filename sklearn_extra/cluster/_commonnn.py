@@ -47,7 +47,7 @@ def commonnn(
 
     Cluster from vector array or distance matrix.
 
-    Read more in the :ref:`User Guide <cnn>`.
+    Read more in the :ref:`User Guide <commonnn>`.
 
     Parameters
     ----------
@@ -216,10 +216,6 @@ class CommonNNClustering(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([ 0,  0,  0,  1,  1, -1])
 
-    For an illustrating example, see
-    :ref:`examples/cluster/plot_commonnn.py
-    <sphx_glr_auto_examples_cluster_plot_commonnn.py>`.
-
     See also
     --------
     commonnn
@@ -228,7 +224,7 @@ class CommonNNClustering(ClusterMixin, BaseEstimator):
     sklearn.cluster.DBSCAN
         A similar clustering providing a different notion of the
         point density.  The implementation is (like this present
-        `CommonNNClustering` implementation) optimized for speed.
+        :class:`CommonNNClustering` implementation) optimized for speed.
 
     sklearn.cluster.OPTICS
         A similar clustering
@@ -240,7 +236,7 @@ class CommonNNClustering(ClusterMixin, BaseEstimator):
     -----
 
     This implementation bulk-computes all neighborhood queries, which
-    increases the memory complexity to :math:`O(n * n_n)` where
+    increases the memory complexity to :math:`O(n ⋅ n_n)` where
     :math:`n_n` is the average
     number of neighbors, similar to the present implementation of
     :class:`sklearn.cluster.DBSCAN`.  It may attract a higher memory
