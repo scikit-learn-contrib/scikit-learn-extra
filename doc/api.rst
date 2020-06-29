@@ -31,4 +31,13 @@ Clustering
    :template: class.rst
 
    cluster.KMedoids
+   
+Robust
+====================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   robust.RobustWeightedEstimator
 

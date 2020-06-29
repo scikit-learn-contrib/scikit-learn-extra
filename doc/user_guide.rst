@@ -10,7 +10,8 @@ User guide
 .. toctree::
   :numbered:
 
-  modules/eigenpro.rst
+     modules/eigenpro.rst
+     modules/robust.rst
 
 .. _k_medoids:
 
