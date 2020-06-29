@@ -18,13 +18,13 @@ print(__doc__)
 
 import time
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 from sklearn import cluster, mixture
 from sklearn.cluster import MiniBatchKMeans, KMeans
 from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 from sklearn_extra.robust import RobustWeightedEstimator
 from sklearn_extra.cluster import KMedoids
@@ -117,8 +117,8 @@ for n_samples in [300, 3000]:
     for name, algorithm in clustering_algorithms:
         t0 = time.time()
         algorithm.fit(X)
-
         t1 = time.time()
+        
         if hasattr(algorithm, "labels_"):
             y_pred = algorithm.labels_.astype(np.int)
         else:
