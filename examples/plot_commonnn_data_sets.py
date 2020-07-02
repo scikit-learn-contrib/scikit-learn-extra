@@ -6,7 +6,9 @@ Common-nearest-neighbor clustering demo II
 Common-nearest neighbor clustering of data points following a density
 criterion. Two points will be part of the same cluster if they share a
 minimum number of common neighbors. Read more in the :ref:`User Guide
-<commonnn>`.
+<commonnn>`. Compare this example to the results for
+`other <https://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html>`_
+cluster algorithms.
 
 """
 

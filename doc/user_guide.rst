@@ -137,6 +137,8 @@ manually.
   * :ref:`examples/cluster/plot_commonnn.py <sphx_glr_auto_examples_plot_commonnn.py>`
     Basic usage of the
     :class:`CommonNNClustering <sklearn_extra.cluster.CommonNNClustering>`
+  * :ref:`examples/cluster/plot_commonnn_data_sets.py <sphx_glr_auto_examples_plot_commonnn_data_sets.py>`
+    Common-nearest-neighbors clustering of toy data sets
 
 .. topic:: Implementation:
 
