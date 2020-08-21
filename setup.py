@@ -62,7 +62,13 @@ args = {
                 "sklearn_extra.utils._cyfht",
                 ["sklearn_extra/utils/_cyfht.pyx"],
                 include_dirs=[np.get_include()],
-            )
+            ),
+            Extension(
+                "sklearn_extra.cluster._commonnn_inner",
+                ["sklearn_extra/cluster/_commonnn_inner.pyx"],
+                include_dirs=[np.get_include()],
+                language="c++",
+            ),
         ]
     ),
     "cmdclass": dict(build_ext=build_ext),
