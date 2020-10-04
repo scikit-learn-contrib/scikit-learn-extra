@@ -1,10 +1,15 @@
 import numpy as np
 import pytest
 
-from sklearn_extra.robust import RobustWeightedEstimator
+from sklearn_extra.robust import (
+    RobustWeightedClassifier,
+    RobustWeightedRegressor,
+    RobustWeightedKMeans,
+)
 from sklearn.datasets import make_blobs
 from sklearn.metrics import median_absolute_error
 from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.cluster import KMeans
 from sklearn.utils import shuffle
 
 
@@ -27,8 +32,7 @@ weightings = ["huber", "mom"]
 @pytest.mark.parametrize("loss", classif_losses)
 @pytest.mark.parametrize("weighting", weightings)
 def test_corrupted_classif(loss, weighting):
-    clf = RobustWeightedEstimator(
-        SGDClassifier(),
+    clf = RobustWeightedClassifier(
         loss=loss,
         max_iter=50,
         weighting=weighting,
@@ -51,8 +55,7 @@ X_c, y_c = make_blobs(
 @pytest.mark.parametrize("loss", classif_losses)
 @pytest.mark.parametrize("weighting", weightings)
 def test_not_robust_classif(loss, weighting):
-    clf = RobustWeightedEstimator(
-        SGDClassifier(),
+    clf = RobustWeightedClassifier(
         loss=loss,
         max_iter=100,
         weighting=weighting,
@@ -77,9 +80,7 @@ def test_not_robust_classif(loss, weighting):
 # Case "log" loss, test predict_proba
 @pytest.mark.parametrize("weighting", weightings)
 def test_predict_proba(weighting):
-    clf = RobustWeightedEstimator(
-        SGDClassifier(loss="log"),
-        loss="log",
+    clf = RobustWeightedClassifier(
         max_iter=100,
         weighting=weighting,
         k=0,
@@ -113,8 +114,7 @@ regression_losses = ["squared_loss"]
 @pytest.mark.parametrize("loss", regression_losses)
 @pytest.mark.parametrize("weighting", weightings)
 def test_corrupted_regression(loss, weighting):
-    reg = RobustWeightedEstimator(
-        SGDRegressor(),
+    reg = RobustWeightedRegressor(
         loss=loss,
         max_iter=50,
         weighting=weighting,
@@ -135,8 +135,7 @@ X_r = X_r.reshape(-1, 1)
 @pytest.mark.parametrize("loss", regression_losses)
 @pytest.mark.parametrize("weighting", weightings)
 def test_not_robust_regression(loss, weighting):
-    clf = RobustWeightedEstimator(
-        SGDRegressor(),
+    clf = RobustWeightedRegressor(
         loss=loss,
         max_iter=100,
         weighting=weighting,
@@ -154,3 +153,61 @@ def test_not_robust_regression(loss, weighting):
     assert np.linalg.norm(pred1 - pred2) / np.linalg.norm(
         pred2
     ) < np.linalg.norm(pred1 - y_r) / np.linalg.norm(y_r)
+
+
+# Clustering test with outliers
+
+
+rng = np.random.RandomState(42)
+X_cc, y_cc = make_blobs(
+    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+)
+for f in range(3):
+    X_cc[f] = [20, 5] + rng.normal(size=2) * 0.1
+    y_cc[f] = 0
+X_cc, y_cc = shuffle(X_cc, y_cc, random_state=rng)
+
+weightings = ["huber", "mom"]
+
+
+@pytest.mark.parametrize("weighting", weightings)
+def test_corrupted_cluster(weighting):
+    km = RobustWeightedKMeans(
+        n_clusters=2,
+        max_iter=50,
+        weighting=weighting,
+        k=5,
+        c=None,
+        random_state=rng,
+    )
+    km.fit(X_cc)
+    error = np.mean((km.predict(X_cc) - y_cc) ** 2)
+    assert error < 100
+
+
+# Clustering test without outliers
+rng = np.random.RandomState(42)
+X_c, y_c = make_blobs(
+    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+)
+
+# Check that the fit is close to KMeans when in extremal parameter cases
+@pytest.mark.parametrize("weighting", weightings)
+def test_not_robust_cluster(weighting):
+    clf = RobustWeightedKMeans(
+        n_clusters=2,
+        max_iter=100,
+        weighting=weighting,
+        k=0,
+        c=1e7,
+        random_state=rng,
+    )
+    clf_not_rob = KMeans(2, random_state=rng)
+    clf.fit(X_c)
+    clf_not_rob.fit(X_c)
+    pred1 = [clf.cluster_centers_[i] for i in clf.predict(X_c)]
+    pred2 = [clf_not_rob.cluster_centers_[i] for i in clf_not_rob.predict(X_c)]
+    difference = [
+        np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
+    ]
+    assert np.mean(difference) < 1

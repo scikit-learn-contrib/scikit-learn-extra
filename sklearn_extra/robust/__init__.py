@@ -1,5 +1,6 @@
 from sklearn_extra.robust.robust_weighted_estimator import (
-    RobustWeightedEstimator,
+    RobustWeightedClassifier, RobustWeightedKMeans, RobustWeightedRegressor
 )
 
-__all__ = ["RobustWeightedEstimator"]
+__all__ = ["RobustWeightedClassifier", "RobustWeightedKMeans",
+           "RobustWeightedRegressor"]

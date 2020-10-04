@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 ===================================================
-A demo of using KMeans with RobustWeightedEstimator
+A demo of using KMeans with RobustWeightedKMeans
 ===================================================
-In this example we make the MiniBatchKMeans compatible with
-RobustWeightedEstimator and we compare it to vanilla KMeans.
+In this example we compare RobustWeightedKMeans to vanilla KMeans.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.cluster import MiniBatchKMeans, KMeans
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
 
-from sklearn_extra.robust import RobustWeightedEstimator
+from sklearn_extra.robust import RobustWeightedKMeans
 
 rng = np.random.RandomState(42)
 
@@ -36,24 +35,9 @@ X = shuffle(X, random_state=rng)
 kmeans = KMeans(n_clusters=3)
 y = kmeans.fit_predict(X)
 
-# To use MiniBatchKMeans with RobustWeightedEstimator, we need to give the
-# loss to the algorithm under the form loss(X, pred) where pred is the result
-# of the predict function.
-def kmeans_loss(X, pred):
-    return np.array(
-        [
-            np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]])) ** 2
-            for i in range(len(X))
-        ]
-    )
-
-
-kmeans_rob = RobustWeightedEstimator(
-    MiniBatchKMeans(3, batch_size=len(X)),
-    burn_in=0,  # Important because it does not mean anything to have burn-in
-    # steps for kmeans. It must be 0.
+kmeans_rob = RobustWeightedKMeans(
+    n_clusters=3,
     weighting="huber",
-    loss=kmeans_loss,
     max_iter=200,
     c=0.1,  # Measure the robustness of our estimation.
     random_state=rng,

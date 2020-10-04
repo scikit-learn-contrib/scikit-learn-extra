@@ -3,7 +3,7 @@
 ======================================================================
 A demo of Robust Classification on real dataset "diabetes" from OpenML
 ======================================================================
-In this example we compare the RobustWeightedEstimator using SGDClassifier
+In this example we compare the RobustWeightedCLassifier 
 for classification on the real dataset "diabetes".
 WARNING: running this example can take some time (<1hour).
 We only compare the estimator with SGDClassifier as there is no robust
@@ -11,13 +11,12 @@ classification estimator in scikit-learn.
 """
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn_extra.robust import RobustWeightedEstimator
+from sklearn_extra.robust import RobustWeightedClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.datasets import fetch_openml
 from sklearn.metrics import roc_auc_score, make_scorer
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import RobustScaler
-
 
 X, y = fetch_openml(name="diabetes", return_X_y=True)
 
@@ -36,8 +35,7 @@ clf_not_rob = SGDClassifier(average=10, learning_rate="optimal", loss="hinge")
 # Using GridSearchCV, we tuned the parameters c and eta0, with the
 # choice of "huber" weighting because the sample_size is not very large.
 
-clf_rob = RobustWeightedEstimator(
-    SGDClassifier(average=10, learning_rate="optimal", loss="hinge"),
+clf_rob = RobustWeightedClassifier(
     weighting="huber",
     loss="hinge",
     c=1.35,
@@ -50,8 +48,19 @@ clf_rob = RobustWeightedEstimator(
 M = 10
 res = []
 for f in range(M):
+    rng = np.random.RandomState(f)
     print("\r Progress: %s / %s" % (f + 1, M), end="")
-    clf = SGDClassifier(average=10, learning_rate="optimal", loss="hinge")
+    clf = SGDClassifier(
+        average=10, learning_rate="optimal", loss="hinge", random_state=rng
+    )
+    clf_rob = RobustWeightedClassifier(
+        weighting="huber",
+        loss="hinge",
+        c=1.35,
+        eta0=1e-3,
+        max_iter=300,
+        random_state=rng,
+    )
 
     cv_not_rob = cross_val_score(
         clf_not_rob, X, y, cv=10, scoring=make_scorer(roc_auc_score)
@@ -64,7 +73,9 @@ for f in range(M):
     res += [[np.mean(cv_rob), np.mean(cv_not_rob)]]
 
 
-plt.boxplot(np.array(res), labels=["RobustWeightedEstimator", "SGDClassifier"])
+plt.boxplot(
+    np.array(res), labels=["RobustWeightedClassifier", "SGDClassifier"]
+)
 plt.ylabel("AUC")
 
 plt.show()
