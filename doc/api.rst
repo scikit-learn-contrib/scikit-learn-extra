@@ -31,7 +31,8 @@ Clustering
    :template: class.rst
 
    cluster.KMedoids
-   
+   cluster.CommonNNClustering
+
 Robust
 ====================
 
