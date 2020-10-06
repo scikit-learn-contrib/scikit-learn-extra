@@ -177,20 +177,6 @@ class _RobustWeightedEstimator(BaseEstimator):
     For now, only binary classification is implemented. See sklearn.multiclass
     if you want to use this algorithm in multiclass classification.
 
-    Examples
-    --------
-
-    >>> from sklearn_extra.robust import RobustWeightedEstimator
-    >>> from sklearn.linear_model import SGDClassifier
-    >>> from sklearn.datasets import make_blobs
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(42)
-    >>> X,y = make_blobs(n_samples=100, centers=np.array([[-1, -1], [1, 1]]),
-    ...                  random_state=rng)
-    >>> clf=RobustWeightedEstimator(base_estimator=SGDClassifier(),
-    ...                             loss='hinge', random_state=rng)
-    >>> _ = clf.fit(X, y)
-    >>> score = np.mean(clf.predict(X)==y)
 
     References
     ----------
@@ -919,8 +905,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    Attributes
-    ----------
+
 
     coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features.
@@ -1178,7 +1163,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
     Examples
     --------
 
-    >>> from sklearn_extra.robust import RobustWeightedEstimator
+    >>> from sklearn_extra.robust import RobustWeightedKMeans
     >>> from sklearn.datasets import make_blobs
     >>> import numpy as np
     >>> rng = np.random.RandomState(42)
