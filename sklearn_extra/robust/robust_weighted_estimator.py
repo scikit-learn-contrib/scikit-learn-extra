@@ -653,7 +653,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     ...                  random_state=rng)
     >>> clf=RobustWeightedClassifier()
     >>> _ = clf.fit(X, y)
-    >>> np.mean(clf.predict(X)==y)
+    >>> score = np.mean(clf.predict(X)==y)
 
     References
     ----------
@@ -953,7 +953,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
     >>> X, y = make_regression()
     >>> reg = RobustWeightedRegressor()
     >>> _ = reg.fit(X, y)
-    >>> np.mean(reg.predict(X)==y)
+    >>> score = np.mean(reg.predict(X)==y)
 
     References
     ----------
@@ -1186,7 +1186,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
     ...                  random_state=rng)
     >>> km = RobustWeightedKMeans()
     >>> _ = km.fit(X)
-    >>> np.mean((km.predict(X)-y)**2)
+    >>> score = np.mean((km.predict(X)-y)**2)
 
     References
     ----------
