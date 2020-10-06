@@ -7,12 +7,14 @@ import numpy as np
 import warnings
 from scipy.stats import iqr
 
-from sklearn.base import (BaseEstimator,
-                          clone,
-                          is_classifier,
-                          ClassifierMixin,
-                          RegressorMixin,
-                          ClusterMixin)
+from sklearn.base import (
+    BaseEstimator,
+    clone,
+    is_classifier,
+    ClassifierMixin,
+    RegressorMixin,
+    ClusterMixin,
+)
 from sklearn.utils import (
     check_random_state,
     check_array,
@@ -64,13 +66,16 @@ def _mom_psisx(med_block, n):
     res[med_block] = 1
     return lambda x: res
 
+
 def _kmeans_loss(X, pred):
     return np.array(
         [
-            np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]], axis=0)) ** 2
+            np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]], axis=0))
+            ** 2
             for i in range(X.shape[0])
         ]
     )
+
 
 class _RobustWeightedEstimator(BaseEstimator):
     """Meta algorithm for robust regression and (Binary) classification.
@@ -337,13 +342,13 @@ class _RobustWeightedEstimator(BaseEstimator):
             self.weights_ = weights
         self.base_estimator_ = base_estimator
         self.n_iter_ = self.max_iter * len(X)
-        if hasattr(base_estimator, 'coef_'):
+        if hasattr(base_estimator, "coef_"):
             self.coef_ = base_estimator.coef_
             self.intercept_ = base_estimator.intercept_
-        if hasattr(base_estimator, 'labels_'):
+        if hasattr(base_estimator, "labels_"):
             self.labels_ = self.base_estimator_.labels_
 
-        if hasattr(base_estimator, 'cluster_centers_'):
+        if hasattr(base_estimator, "cluster_centers_"):
             self.cluster_centers_ = self.base_estimator_.cluster_centers_
             self.inertia_ = self.base_estimator_.inertia_
         return self
@@ -503,8 +508,10 @@ class _RobustWeightedEstimator(BaseEstimator):
         """
         check_is_fitted(self, attributes=["base_estimator_"])
         if not is_classifier(self):
-            raise ValueError("self.decision_function is only available"
-                             " for classification.")
+            raise ValueError(
+                "self.decision_function is only available"
+                " for classification."
+            )
         return self.base_estimator_.decision_function(X)
 
 
@@ -658,6 +665,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         arXiv preprint (2019). arXiv:1910.07485.
 
     """
+
     def __init__(
         self,
         weighting="huber",
@@ -683,7 +691,6 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         self.multi_class = multi_class
         self.n_jobs = n_jobs
         self.random_state = random_state
-
 
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
@@ -717,21 +724,21 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
             k=self.k,
             eta0=self.eta0,
             max_iter=self.max_iter,
-            random_state=self.random_state
+            random_state=self.random_state,
         )
 
-
-        if self.multi_class == 'ovr':
-            self.base_estimator_ = OneVsRestClassifier(base_robust_estimator_,
-                                                       self.n_jobs)
-        elif self.multi_class == 'binary':
+        if self.multi_class == "ovr":
+            self.base_estimator_ = OneVsRestClassifier(
+                base_robust_estimator_, self.n_jobs
+            )
+        elif self.multi_class == "binary":
             self.base_estimator_ = base_robust_estimator_
         elif self.multi_class == "ovo":
-            self.base_estimator_ = OneVsOneClassifier(base_robust_estimator_,
-                                                      self.n_jobs)
+            self.base_estimator_ = OneVsOneClassifier(
+                base_robust_estimator_, self.n_jobs
+            )
         else:
             raise ValueError("No such multiclass method implemented.")
-
 
         self.base_estimator_.fit(X, y)
         if self.multi_class == "binary":
@@ -957,6 +964,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         arXiv preprint (2019). arXiv:1910.07485.
 
     """
+
     def __init__(
         self,
         weighting="huber",
@@ -1012,7 +1020,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
             k=self.k,
             eta0=self.eta0,
             max_iter=self.max_iter,
-            random_state=self.random_state
+            random_state=self.random_state,
         )
         self.base_estimator_.fit(X, y)
 
@@ -1190,16 +1198,18 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         arXiv preprint (2019). arXiv:1910.07485.
 
     """
+
     def __init__(
-            self,
-            n_clusters=8,
-            weighting="huber",
-            max_iter=100,
-            eta0=0.01,
-            c=None,
-            k=0,
-            kmeans_args=None,
-            random_state=None):
+        self,
+        n_clusters=8,
+        weighting="huber",
+        max_iter=100,
+        eta0=0.01,
+        c=None,
+        k=0,
+        kmeans_args=None,
+        random_state=None,
+    ):
         self.n_clusters = n_clusters
         self.weighting = weighting
         self.max_iter = max_iter
@@ -1229,16 +1239,23 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             kmeans_args = {}
         else:
             kmeans_args = self.kmeans_args
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order='C', accept_large_sparse=False)
+        X = check_array(
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            order="C",
+            accept_large_sparse=False,
+        )
 
         self.base_estimator_ = _RobustWeightedEstimator(
-            MiniBatchKMeans(self.n_clusters,
-                            batch_size=X.shape[0],
-                            random_state=self.random_state,
-                            **kmeans_args),
+            MiniBatchKMeans(
+                self.n_clusters,
+                batch_size=X.shape[0],
+                random_state=self.random_state,
+                **kmeans_args
+            ),
             burn_in=0,  # Important because it does not mean anything to
-            #have burn-in
+            # have burn-in
             # steps for kmeans. It must be 0.
             weighting=self.weighting,
             loss=_kmeans_loss,

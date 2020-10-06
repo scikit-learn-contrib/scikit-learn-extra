@@ -22,7 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import cluster, mixture
-from sklearn.cluster import MiniBatchKMeans, KMeans
+from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
 
@@ -68,7 +68,8 @@ for n_samples in [300, 3000]:
     X = shuffle(X, random_state=rng)
 
     # Define two other clustering algorithms
-    kmeans_rob = RobustWeightedKMeans(n_clusters,
+    kmeans_rob = RobustWeightedKMeans(
+        n_clusters,
         eta0=0.01,
         weighting="mom",
         max_iter=100,
