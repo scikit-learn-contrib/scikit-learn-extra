@@ -7,7 +7,12 @@ import numpy as np
 import warnings
 from scipy.stats import iqr
 
-from sklearn.base import BaseEstimator, clone, is_classifier
+from sklearn.base import (BaseEstimator,
+                          clone,
+                          is_classifier,
+                          ClassifierMixin,
+                          RegressorMixin,
+                          ClusterMixin)
 from sklearn.utils import (
     check_random_state,
     check_array,
@@ -59,6 +64,13 @@ def _mom_psisx(med_block, n):
     res[med_block] = 1
     return lambda x: res
 
+def _kmeans_loss(X, pred):
+    return np.array(
+        [
+            np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]], axis=0)) ** 2
+            for i in range(X.shape[0])
+        ]
+    )
 
 class _RobustWeightedEstimator(BaseEstimator):
     """Meta algorithm for robust regression and (Binary) classification.
@@ -510,7 +522,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         return self.base_estimator_.decision_function(X)
 
 
-class RobustWeightedClassifier(BaseEstimator):
+class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     """Algorithm for robust classification using reweighting algorithm.
 
     This model use iterative reweighting of samples to make a regression or
@@ -669,35 +681,23 @@ class RobustWeightedClassifier(BaseEstimator):
         c=None,
         k=0,
         loss="log",
-        sgd_args={},
+        sgd_args=None,
         multi_class="ovr",
         n_jobs=1,
         random_state=None,
     ):
-        base_robust_estimator_ = _RobustWeightedEstimator(
-            SGDClassifier(**sgd_args, loss=loss),
-            weighting=weighting,
-            loss=loss,
-            burn_in=burn_in,
-            c=c,
-            k=k,
-            eta0=eta0,
-            max_iter=max_iter,
-            random_state=random_state
-        )
-        self.multi_class = multi_class
+        self.weighting = weighting
         self.max_iter = max_iter
+        self.burn_in = burn_in
+        self.eta0 = eta0
+        self.c = c
+        self.k = k
         self.loss = loss
-        if self.multi_class == 'ovr':
-            self.base_estimator_ = OneVsRestClassifier(base_robust_estimator_,
-                                                       n_jobs)
-        elif self.multi_class == 'binary':
-            self.base_estimator_ = base_robust_estimator_
-        elif self.multi_class == "ovo":
-            self.base_estimator_ = OneVsOneClassifier(base_robust_estimator_,
-                                                      n_jobs)
-        else:
-            raise ValueError("No such multiclass method implemented.")
+        self.sgd_args = sgd_args
+        self.multi_class = multi_class
+        self.n_jobs = n_jobs
+        self.random_state = random_state
+
 
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
@@ -715,6 +715,37 @@ class RobustWeightedClassifier(BaseEstimator):
         -------
         self : returns an estimator trained with RobustWeightedClassifier.
         """
+
+        if self.sgd_args is None:
+            sgd_args = {}
+        else:
+            sgd_args = self.sgd_args
+
+        # Define the base estimator
+        base_robust_estimator_ = _RobustWeightedEstimator(
+            SGDClassifier(**sgd_args, loss=self.loss),
+            weighting=self.weighting,
+            loss=self.loss,
+            burn_in=self.burn_in,
+            c=self.c,
+            k=self.k,
+            eta0=self.eta0,
+            max_iter=self.max_iter,
+            random_state=self.random_state
+        )
+
+
+        if self.multi_class == 'ovr':
+            self.base_estimator_ = OneVsRestClassifier(base_robust_estimator_,
+                                                       self.n_jobs)
+        elif self.multi_class == 'binary':
+            self.base_estimator_ = base_robust_estimator_
+        elif self.multi_class == "ovo":
+            self.base_estimator_ = OneVsOneClassifier(base_robust_estimator_,
+                                                      self.n_jobs)
+        else:
+            raise ValueError("No such multiclass method implemented.")
+
 
         self.base_estimator_.fit(X, y)
         if self.multi_class == "binary":
@@ -810,7 +841,7 @@ class RobustWeightedClassifier(BaseEstimator):
         return self.base_estimator_.decision_function(X)
 
 
-class RobustWeightedRegressor(BaseEstimator):
+class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
     """Algorithm for robust regression using reweighting algorithm.
 
     This model use iterative reweighting of samples to make a regression or
@@ -950,21 +981,19 @@ class RobustWeightedRegressor(BaseEstimator):
         c=None,
         k=0,
         loss="squared_loss",
-        sgd_args={},
+        sgd_args=None,
         random_state=None,
     ):
-        self.base_estimator_ = _RobustWeightedEstimator(
-            SGDRegressor(**sgd_args, loss=loss),
-            weighting=weighting,
-            loss=loss,
-            burn_in=burn_in,
-            c=c,
-            k=k,
-            eta0=eta0,
-            max_iter=max_iter,
-            random_state=random_state
-        )
+
+        self.weighting = weighting
         self.max_iter = max_iter
+        self.burn_in = burn_in
+        self.eta0 = eta0
+        self.c = c
+        self.k = k
+        self.loss = loss
+        self.sgd_args = sgd_args
+        self.random_state = random_state
 
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
@@ -982,6 +1011,24 @@ class RobustWeightedRegressor(BaseEstimator):
         -------
         self : returns an estimator trained with RobustWeightedClassifier.
         """
+        if self.sgd_args is None:
+            sgd_args = {}
+        else:
+            sgd_args = self.sgd_args
+
+        # Define the base estimator
+
+        self.base_estimator_ = _RobustWeightedEstimator(
+            SGDRegressor(**sgd_args, loss=self.loss),
+            weighting=self.weighting,
+            loss=self.loss,
+            burn_in=self.burn_in,
+            c=self.c,
+            k=self.k,
+            eta0=self.eta0,
+            max_iter=self.max_iter,
+            random_state=self.random_state
+        )
         self.base_estimator_.fit(X, y)
 
         self.weights_ = self.base_estimator_.weights_
@@ -1030,7 +1077,7 @@ class RobustWeightedRegressor(BaseEstimator):
         return self.base_estimator_.score(X, y)
 
 
-class RobustWeightedKMeans(BaseEstimator):
+class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
     """Algorithm for robust kmeans clustering using reweighting algorithm.
 
     This model use iterative reweighting of samples to make a regression or
@@ -1088,7 +1135,8 @@ class RobustWeightedKMeans(BaseEstimator):
         (robust).
 
     kmeans_args : dict, default={}
-        arguments of the MiniBatchKMeans base estimator.
+        arguments of the MiniBatchKMeans base estimator. Must not contain
+        batch_size.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -1165,7 +1213,7 @@ class RobustWeightedKMeans(BaseEstimator):
             eta0=0.01,
             c=None,
             k=0,
-            kmeans_args={},
+            kmeans_args=None,
             random_state=None):
         self.n_clusters = n_clusters
         self.weighting = weighting
@@ -1192,20 +1240,23 @@ class RobustWeightedKMeans(BaseEstimator):
         self
             Fitted estimator.
         """
-        def kmeans_loss(X, pred):
-            return np.array(
-                [
-                    np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]])) ** 2
-                    for i in range(len(X))
-                ]
-            )
+        if self.kmeans_args is None:
+            kmeans_args = {}
+        else:
+            kmeans_args = self.kmeans_args
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
+                        order='C', accept_large_sparse=False)
+
         self.base_estimator_ = _RobustWeightedEstimator(
-            MiniBatchKMeans(self.n_clusters, batch_size=len(X), **self.kmeans_args),
+            MiniBatchKMeans(self.n_clusters,
+                            batch_size=X.shape[0],
+                            random_state=self.random_state,
+                            **kmeans_args),
             burn_in=0,  # Important because it does not mean anything to
             #have burn-in
             # steps for kmeans. It must be 0.
             weighting=self.weighting,
-            loss=kmeans_loss,
+            loss=_kmeans_loss,
             max_iter=self.max_iter,
             eta0=self.eta0,
             c=self.c,
@@ -1215,7 +1266,7 @@ class RobustWeightedKMeans(BaseEstimator):
         self.base_estimator_.fit(X)
         self.cluster_centers_ = self.base_estimator_.cluster_centers_
         self.n_iter_ = self.max_iter * len(X)
-        self.labels_ = self.base_estimator_.labels_
+        self.labels_ = self.predict(X)
         self.inertia_ = self.base_estimator_.inertia_
         self.weights_ = self.base_estimator_.weights_
         return self
