@@ -37,9 +37,9 @@ else:
 # Loss functions import. Taken from scikit-learn linear SGD estimators.
 
 try:
-    from sklearn.linear_model._sgd_fast import Log, SquaredLoss, Hinge
+    from sklearn.linear_model._sgd_fast import Log, SquaredLoss, Hinge, Huber
 except ImportError:
-    from sklearn.linear_model.sgd_fast import Log, SquaredLoss, Hinge
+    from sklearn.linear_model.sgd_fast import Log, SquaredLoss, Hinge, Huber
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
@@ -48,6 +48,7 @@ LOSS_FUNCTIONS = {
     "hinge": (Hinge, 1.0),
     "log": (Log,),
     "squared_loss": (SquaredLoss,),
+    "huber": (Huber, 1.35), # 1.35 is default value. TODO : set as parameter
 }
 
 
@@ -148,7 +149,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         base_estimator.
         Classification losses supported : 'log', 'hinge'.
         If 'log', then the base_estimator must support predict_proba.
-        Regression losses supported : 'squared_loss'.
+        Regression losses supported : 'squared_loss' or 'huber'.
         If None and if base_estimator is None, loss='squared_loss'
         If callable, the function is used as loss function ro construct
         the weights.
@@ -896,8 +897,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         (robust).
 
     loss : string, None or callable, default="squared_loss"
-        For now, only squared_loss is implemented. Do not change this
-        parameter.
+        For now, only "squared_loss" or "huber" are implemented.
 
     sgd_args : dict, default={}
         arguments of the SGDClassifier base estimator.
