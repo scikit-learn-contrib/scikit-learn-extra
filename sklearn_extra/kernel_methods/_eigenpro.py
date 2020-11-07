@@ -616,7 +616,7 @@ class EigenProClassifier(ClassifierMixin, BaseEigenPro):
         )
 
     def fit(self, X, Y):
-        """ Train eigenpro classification model
+        """Train eigenpro classification model
 
         Parameters
         ----------
@@ -629,7 +629,7 @@ class EigenProClassifier(ClassifierMixin, BaseEigenPro):
         Returns
         -------
         self : returns an instance of self.
-       """
+        """
         X, Y = check_X_y(
             X,
             Y,
