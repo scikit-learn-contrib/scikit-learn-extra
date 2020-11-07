@@ -3,7 +3,7 @@ version: 2
 jobs:
   python3:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7.6
     steps:
       - checkout
       - run:
@@ -36,7 +36,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7.6
     steps:
       - checkout
       - run:
