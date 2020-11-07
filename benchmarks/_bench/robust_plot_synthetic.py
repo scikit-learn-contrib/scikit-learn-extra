@@ -16,7 +16,7 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(42)
-
+x_label = "Number of features"
 dimensions = np.linspace(50, 5000, num=8).astype(int)
 sample_sizes = np.linspace(50, 5000, num=8).astype(int)
 accuracies = []
@@ -42,10 +42,10 @@ for d in dimensions:
 
 fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(dimensions, accuracies)
-axs[0, 0].set_xlabel("Number of features")
+axs[0, 0].set_xlabel(x_label)
 axs[0, 0].set_ylabel("accuracy")
 axs[0, 1].plot(dimensions, times)
-axs[0, 1].set_xlabel("Number of features")
+axs[0, 1].set_xlabel(x_label)
 axs[0, 1].set_ylabel("Time to fit and predict (s)")
 
 accuracies = []
@@ -66,10 +66,10 @@ for n in sample_sizes:
     times.append(time() - stime)
 
 axs[1, 0].plot(dimensions, accuracies)
-axs[1, 0].set_xlabel("Number of features")
+axs[1, 0].set_xlabel(x_label)
 axs[1, 0].set_ylabel("accuracy")
 axs[1, 1].plot(dimensions, times)
-axs[1, 1].set_xlabel("Number of features")
+axs[1, 1].set_xlabel(x_label)
 axs[1, 1].set_ylabel("Time to fit and predict (s)")
 
 
