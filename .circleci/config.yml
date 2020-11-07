@@ -12,11 +12,9 @@ jobs:
             chmod +x miniconda.sh && ./miniconda.sh -b -p ~/miniconda
             export PATH="~/miniconda/bin:$PATH"
             conda update --yes --quiet conda
-            conda create -n testenv --yes --quiet python=3
+            conda create -n testenv --yes --quiet python=3.7
             source activate testenv
-            conda install --yes pip numpy scipy scikit-learn matplotlib sphinx sphinx_rtd_theme numpydoc pillow cython nomkl
-            pip install sphinx-gallery
-            pip install .
+            pip install ".[docs]"
             cd doc
             make html
       - store_artifacts:
