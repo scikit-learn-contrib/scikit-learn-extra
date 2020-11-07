@@ -48,7 +48,7 @@ LOSS_FUNCTIONS = {
     "hinge": (Hinge, 1.0),
     "log": (Log,),
     "squared_loss": (SquaredLoss,),
-    "huber": (Huber, 1.35), # 1.35 is default value. TODO : set as parameter
+    "huber": (Huber, 1.35),  # 1.35 is default value. TODO : set as parameter
 }
 
 
