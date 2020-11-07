@@ -69,6 +69,16 @@ def _mom_psisx(med_block, n):
 
 
 def _kmeans_loss(X, pred):
+    """Compute the inertia for kmeans algorithm
+    Parameters
+    ----------
+    X : array-like shape (n_samples, n_features)
+        The input data.
+
+    pred : array-like, shape (n_samples,)
+        The target values (label of the cluster to which X belongs to).
+
+    """
     return np.array(
         [
             np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]], axis=0))
@@ -87,7 +97,7 @@ class _RobustWeightedEstimator(BaseEstimator):
     The principle of the algorithm is to use an empirical risk minimization
     principle where the risk is estimated using a robust estimator (for example
     Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
-    algorithm was mentionned before in [2].
+    algorithm was mentioned before in [2].
     This idea translates in an iterative algorithm where the sample_weight
     are changed at each iterations and are dependent of the sample. Informally
     the outliers should have small weight while the inliers should have big
@@ -103,10 +113,20 @@ class _RobustWeightedEstimator(BaseEstimator):
     Parameters
     ----------
 
-    base_estimator : object or None, default=None
+    base_estimator : object, mandatory
         The base estimator to fit. For now only SGDRegressor and SGDClassifier
         are supported.
         If None, then the base estimator is SGDRegressor with squared loss.
+
+    loss : string or callable, mandatory
+        Name of the loss used, must be the same loss as the one optimized in
+        base_estimator.
+        Classification losses supported : 'log', 'hinge'.
+        If 'log', then the base_estimator must support predict_proba.
+        Regression losses supported : 'squared_loss' or 'huber'.
+        If None and if base_estimator is None, loss='squared_loss'
+        If callable, the function is used as loss function ro construct
+        the weights.
 
     weighting : string, default="huber"
         Weighting scheme used to make the estimator robust.
@@ -128,7 +148,7 @@ class _RobustWeightedEstimator(BaseEstimator):
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
-        is 'huber'. Measure the robustness of the weightint procedure. A small
+        is 'huber'. Measure the robustness of the weighting procedure. A small
         value of c means a more robust estimator.
         Can have a big effect on efficiency.
         If None, c is estimated at each step using half the Inter-quartile
@@ -144,15 +164,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         (using the inter-quartile range), this tends to be conservative
         (robust).
 
-    loss : string, None or callable, default=None
-        Name of the loss used, must be the same loss as the one optimized in
-        base_estimator.
-        Classification losses supported : 'log', 'hinge'.
-        If 'log', then the base_estimator must support predict_proba.
-        Regression losses supported : 'squared_loss' or 'huber'.
-        If None and if base_estimator is None, loss='squared_loss'
-        If callable, the function is used as loss function ro construct
-        the weights.
+
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -205,14 +217,14 @@ class _RobustWeightedEstimator(BaseEstimator):
 
     def __init__(
         self,
-        base_estimator=None,
+        base_estimator,
+        loss,
         weighting="huber",
         max_iter=100,
         burn_in=10,
         eta0=0.1,
         c=None,
         k=0,
-        loss=None,
         random_state=None,
     ):
         self.base_estimator = base_estimator
@@ -252,21 +264,8 @@ class _RobustWeightedEstimator(BaseEstimator):
 
         # Initialization of all parameters in the base_estimator.
 
-        if self.base_estimator is None:
-            base_estimator = SGDRegressor()
-            if self.loss is None:
-                loss_param = "squared_loss"
-            else:
-                loss_param = self.loss
-        else:
-            base_estimator = clone(self.base_estimator)
-            loss_param = self.loss
-
-        if loss_param is None:
-            raise ValueError(
-                "If base_estimator is not None, loss cannot "
-                "be None. Please specify a loss."
-            )
+        base_estimator = clone(self.base_estimator)
+        loss_param = self.loss
 
         parameters = list(base_estimator.get_params().keys())
         if "warm_start" in parameters:
@@ -472,10 +471,7 @@ class _RobustWeightedEstimator(BaseEstimator):
 
     @property
     def _estimator_type(self):
-        if self.base_estimator is None:
-            return SGDRegressor()._estimator_type
-        else:
-            return self.base_estimator._estimator_type
+        return self.base_estimator._estimator_type
 
     def score(self, X, y=None):
         """Returns the score on the given data, using
@@ -525,7 +521,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     The principle of the algorithm is to use an empirical risk minimization
     principle where the risk is estimated using a robust estimator (for example
     Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
-    algorithm was mentionned before in [2].
+    algorithm was mentioned before in [2].
     This idea translates in an iterative algorithm where the sample_weight
     are changed at each iterations and are dependent of the sample. Informally
     the outliers should have small weight while the inliers should have big
@@ -561,7 +557,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
-        is 'huber'. Measure the robustness of the weightint procedure. A small
+        is 'huber'. Measure the robustness of the weighting procedure. A small
         value of c means a more robust estimator.
         Can have a big effect on efficiency.
         If None, c is estimated at each step using half the Inter-quartile
@@ -582,7 +578,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         base_estimator.
         Classification losses supported : 'log', 'hinge'.
         If 'log', then the base_estimator must support predict_proba.
-        Regression losses supported : 'squared_loss'.
+        Regression losses supported : 'squared_loss', .
 
     sgd_args : dict, default={}
         arguments of the SGDClassifier base estimator.
@@ -844,7 +840,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
     The principle of the algorithm is to use an empirical risk minimization
     principle where the risk is estimated using a robust estimator (for example
     Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
-    algorithm was mentionned before in [2].
+    algorithm was mentioned before in [2].
     This idea translates in an iterative algorithm where the sample_weight
     are changed at each iterations and are dependent of the sample. Informally
     the outliers should have small weight while the inliers should have big
@@ -880,7 +876,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
-        is 'huber'. Measure the robustness of the weightint procedure. A small
+        is 'huber'. Measure the robustness of the weighting procedure. A small
         value of c means a more robust estimator.
         Can have a big effect on efficiency.
         If None, c is estimated at each step using half the Inter-quartile
@@ -1079,7 +1075,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
     The principle of the algorithm is to use an empirical risk minimization
     principle where the risk is estimated using a robust estimator (for example
     Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
-    algorithm was mentionned before in [2].
+    algorithm was mentioned before in [2].
     This idea translates in an iterative algorithm where the sample_weight
     are changed at each iterations and are dependent of the sample. Informally
     the outliers should have small weight while the inliers should have big
@@ -1111,7 +1107,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
-        is 'huber'. Measure the robustness of the weightint procedure. A small
+        is 'huber'. Measure the robustness of the weighting procedure. A small
         value of c means a more robust estimator.
         Can have a big effect on efficiency.
         If None, c is estimated at each step using half the Inter-quartile
