@@ -3,7 +3,7 @@
 ======================================================================
 A demo of Robust Classification on real dataset "diabetes" from OpenML
 ======================================================================
-In this example we compare the RobustWeightedCLassifier 
+In this example we compare the RobustWeightedCLassifier
 for classification on the real dataset "diabetes".
 WARNING: running this example can take some time (<1hour).
 We only compare the estimator with SGDClassifier as there is no robust
@@ -17,6 +17,10 @@ from sklearn.datasets import fetch_openml
 from sklearn.metrics import roc_auc_score, make_scorer
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import RobustScaler
+
+import warnings
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 X, y = fetch_openml(name="diabetes", return_X_y=True)
 
