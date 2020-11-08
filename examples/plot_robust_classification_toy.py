@@ -3,12 +3,12 @@
 =============================================================
 A demo of Robust Classification on Simulated corrupted dataset
 =============================================================
-In this example we compare the RobustWeightedEstimator using SGDClassifier
+In this example we compare the RobustWeightedClassifier using SGDClassifier
 for classification with the vanilla SGDClassifier with various losses.
 """
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn_extra.robust import RobustWeightedEstimator
+from sklearn_extra.robust import RobustWeightedClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
@@ -40,10 +40,8 @@ estimators = [
         SGDClassifier(loss="modified_huber", random_state=rng),
     ),
     (
-        "RobustWeightedEstimator",
-        RobustWeightedEstimator(
-            base_estimator=SGDClassifier(),
-            loss="log",
+        "RobustWeightedClassifier",
+        RobustWeightedClassifier(
             max_iter=100,
             weighting="mom",
             k=6,

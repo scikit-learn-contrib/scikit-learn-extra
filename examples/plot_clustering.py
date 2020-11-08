@@ -3,15 +3,15 @@
 ===================================================================
 A demo of several clustering algorithms on a corrupted dataset
 ===================================================================
-In this example we exhibit the results of various 
+In this example we exhibit the results of various
 scikit-learn and scikit-learn-extra clustering algorithms on
 a dataset with outliers.
-KMedoids is the most stable and efficient 
+KMedoids is the most stable and efficient
 algorithm for this application (change the seed to
-see different behavior for SpectralClustering and 
+see different behavior for SpectralClustering and
 the robust kmeans).
-The mean-shift algorithm, once correctly 
-parameterized, detects the outliers as a class of 
+The mean-shift algorithm, once correctly
+parameterized, detects the outliers as a class of
 their own.
 """
 print(__doc__)
@@ -22,11 +22,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import cluster, mixture
-from sklearn.cluster import MiniBatchKMeans, KMeans
+from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
 
-from sklearn_extra.robust import RobustWeightedEstimator
+from sklearn_extra.robust import RobustWeightedKMeans
 from sklearn_extra.cluster import KMedoids
 
 rng = np.random.RandomState(42)
@@ -36,16 +36,6 @@ n_clusters = len(centers)
 
 kmeans = KMeans(n_clusters=n_clusters, random_state=rng)
 kmedoid = KMedoids(n_clusters=n_clusters, random_state=rng)
-
-
-def kmeans_loss(X, pred):
-    return np.array(
-        [
-            np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]])) ** 2
-            for i in range(len(X))
-        ]
-    )
-
 
 two_means = cluster.MiniBatchKMeans(n_clusters=n_clusters, random_state=rng)
 spectral = cluster.SpectralClustering(
@@ -78,15 +68,10 @@ for n_samples in [300, 3000]:
     X = shuffle(X, random_state=rng)
 
     # Define two other clustering algorithms
-    kmeans_rob = RobustWeightedEstimator(
-        MiniBatchKMeans(
-            n_clusters, batch_size=len(X), init="random", random_state=rng
-        ),
-        # in theory, init=kmeans++ is very non-robust
-        burn_in=0,
+    kmeans_rob = RobustWeightedKMeans(
+        n_clusters,
         eta0=0.01,
         weighting="mom",
-        loss=kmeans_loss,
         max_iter=100,
         k=int(n_samples / 50),
         random_state=rng,

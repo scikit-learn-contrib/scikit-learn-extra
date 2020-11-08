@@ -6,7 +6,7 @@
 import numpy as np
 
 
-def blockMOM(X, k, random_state):
+def block_mom(X, k, random_state):
     """Sample the indices of 2k+1 blocks for data x using a random permutation
 
     Parameters
@@ -31,17 +31,9 @@ def blockMOM(X, k, random_state):
     """
     x = X.flatten()
     K = 2 * k + 1
-    b = int(np.floor(len(x) / K))
-    nb = K - (len(x) - b * K)
-    nbpu = len(x) - b * K
     # Sample a permutation to shuffle the data.
     perm = random_state.permutation(len(x))
-    # Construct K blocks of approximately equal size
-    blocks = [[(b + 1) * g + f for f in range(b + 1)] for g in range(nbpu)]
-    blocks += [
-        [nbpu * (b + 1) + b * g + f for f in range(b)] for g in range(nb)
-    ]
-    return [perm[b] for b in blocks]
+    return np.array_split(perm, K)
 
 
 def median_of_means_blocked(X, blocks):
@@ -92,7 +84,7 @@ def median_of_means(X, k, random_state=np.random.RandomState(42)):
     """
     x = X.flatten()
 
-    blocks = blockMOM(x, k, random_state)
+    blocks = block_mom(x, k, random_state)
     return median_of_means_blocked(x, blocks)[0]
 
 

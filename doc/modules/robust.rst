@@ -1,8 +1,8 @@
 .. _robust:
 
-===================================================
-Robust algorithms for Regression and Classification
-===================================================
+===============================================================
+Robust algorithms for Regression, Classification and Clustering
+===============================================================
 
 .. currentmodule:: sklearn_extra.robust
 
@@ -59,7 +59,7 @@ that minimizes an estimation of the risk.
 
   \widehat{f} = \text{argmin}_{f\in F}\frac{1}{n}\sum_{i=1}^n\ell(f(X_i),y_i),
 
-where the :math:`ell` is a loss function (e.g. the squared distance in
+where the :math:`\ell` is a loss function (e.g. the squared distance in
 regression problems). Said in another way, we are trying to minimize an
 estimation of the expected risk and this estimation corresponds to an empirical
 mean. However, it is well known that the empirical mean is not robust to
@@ -90,10 +90,7 @@ The algorithm
 -------------
 
 The approach is implemented as a meta algorithm that takes as input a base
-estimator (e.g., SGDClassifier or SGDRegressor). To be compatible, the
-base estimator must support partial_fit and sample_weight
-partial_fit and sample_weight. Refer to the KMeans example for a template
-to adapt the method to other estimators.
+estimator (e.g., SGDClassifier, SGDRegressor or MiniBatchKMeans).
 
 At each step, the algorithm estimates sample weights that are meant to be small
 for outliers and large for inliers and then we do one optimization step using
@@ -155,7 +152,7 @@ Hence, we will not talk about classification algorithms in this comparison.
 
 As such we only compare ourselves to TheilSenRegressor and RANSACRegressor as
 they both deal with outliers in X and in Y and are closer to
-RobustWeightedEstimator.
+RobustWeightedRegressor.
 
 **Warning:** Huber weights used in our algorithm should not be confused with
 HuberRegressor or other regression with “robust losses”. Those types of
@@ -163,16 +160,12 @@ regressions are robust only to outliers in the label Y but not in X.
 
 Pro: RANSACRegressor and TheilSenRegressor both use a hard rejection of
 outlier. This can be interpreted as though there was an outlier detection
-step and then a regression step whereas RobustWeightedEstimator is directly
+step and then a regression step whereas RobustWeightedRegressor is directly
 robust to outliers. This often increase the performance on moderatly corrupted
 datasets.
 
 Con: In general, this algorithm is slower than both  TheilSenRegressor and
 RANSACRegressor.
-
-One other advantage of RobustWeightedEstimator is that it can be used for a
-broad range of algorithms. For example, one can do robust unsupervised
-learning with RobustWeightedEstimator, see the example using KMeans algorithm.
 
 Speed and limits of the algorithm
 ---------------------------------
@@ -188,9 +181,9 @@ Complexity and limitation:
 
 * weighting=”huber”: the complexity is larger than that of base_estimator but
   it is still of the same order of magnitude.
-* weighting=”mom”: the larger k is the faster the algorithm will perform if 
-  sample_size is large. This weighting scheme is advised only with 
-  sufficiently large dataset (thumb rule sample_size > 500 the specifics 
+* weighting=”mom”: the larger k is the faster the algorithm will perform if
+  sample_size is large. This weighting scheme is advised only with
+  sufficiently large dataset (thumb rule sample_size > 500 the specifics
   depend on the dataset).
 
 **Warning:** On a real dataset, one should be aware that there can be outliers
