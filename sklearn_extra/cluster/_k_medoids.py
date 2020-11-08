@@ -200,12 +200,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 # Update medoids with the new cluster indices
                 self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
             elif self.method == "pam":
-                couples = product(np.arange(self.n_clusters),
-                                       np.arange(len(D)-self.n_clusters))
+                couples = product(
+                    np.arange(self.n_clusters),
+                    np.arange(len(D) - self.n_clusters),
+                )
                 # transform generator to list
                 couples = [(i, j) for i, j in couples]
                 optimal_swap = self._compute_optimal_swap(
-                    D, medoid_idxs,  couples
+                    D, medoid_idxs, couples
                 )
                 if optimal_swap is not None:
                     i, j = optimal_swap
@@ -280,7 +282,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         delta_costs = []
 
         # Compute the distance to the first and second closest medoid.
-        Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0,1]]
+        Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
         # Compute the change in cost for each swap.
         for i, h in couples:
@@ -291,9 +293,15 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             id_js = np.delete(not_medoid_idxs, h)
             C = np.zeros(len(id_js))
 
-            case1 = (D[id_i, id_js] == Djs[id_js]) & (D[id_js, id_h] < Ejs[id_js])
-            case2 = (D[id_i, id_js] == Djs[id_js]) & (D[id_js, id_h] >= Ejs[id_js])
-            case3 = (D[id_i, id_js] > Djs[id_js]) & (D[id_js, id_h] == Djs[id_js])
+            case1 = (D[id_i, id_js] == Djs[id_js]) & (
+                D[id_js, id_h] < Ejs[id_js]
+            )
+            case2 = (D[id_i, id_js] == Djs[id_js]) & (
+                D[id_js, id_h] >= Ejs[id_js]
+            )
+            case3 = (D[id_i, id_js] > Djs[id_js]) & (
+                D[id_js, id_h] == Djs[id_js]
+            )
             C[case1] = (D[id_js, id_h] - Djs[id_js])[case1]
             C[case2] = (Ejs[id_js] - Djs[id_js])[case2]
             C[case3] = (D[id_h, id_js] - Djs[id_js])[case3]
