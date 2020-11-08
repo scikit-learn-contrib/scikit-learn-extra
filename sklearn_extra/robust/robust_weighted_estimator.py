@@ -937,7 +937,6 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
     sgd_args : dict, default={}
         arguments of the SGDClassifier base estimator.
-
     tol : float or None, (default = 1e-3)
         The stopping criterion. If it is not None, training will stop when
         (loss > best_loss - tol) for n_iter_no_change consecutive epochs.

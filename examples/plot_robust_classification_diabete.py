@@ -5,7 +5,6 @@ A demo of Robust Classification on real dataset "diabetes" from OpenML
 ======================================================================
 In this example we compare the RobustWeightedCLassifier
 for classification on the real dataset "diabetes".
-WARNING: running this example can take some time (<1hour).
 We only compare the estimator with SGDClassifier as there is no robust
 classification estimator in scikit-learn.
 """
