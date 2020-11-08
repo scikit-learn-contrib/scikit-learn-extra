@@ -240,7 +240,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Return self to enable method chaining
         return self
 
-    def _update_medoid_idxs_in_place(self, D, medoid_idxs):
+    def _update_medoid_idxs_in_place(self, D, labels, medoid_idxs):
         """In-place update of the medoid indices"""
 
         # Update the medoids for each cluster
