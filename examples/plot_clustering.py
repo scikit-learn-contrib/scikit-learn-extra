@@ -55,7 +55,7 @@ gmm = mixture.GaussianMixture(
 )
 
 
-for n_samples in [300, 3000]:
+for n_samples in [300, 600]:
     # Construct the dataset
     X, labels_true = make_blobs(
         n_samples=n_samples, centers=centers, cluster_std=0.4, random_state=rng
