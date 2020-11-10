@@ -295,7 +295,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
                 case1 = cluster_i_bool & second_best_medoid
                 case2 = cluster_i_bool & ~second_best_medoid
-                case3 = ~cluster_i_bool & second_best_medoid
+                case3 = ~cluster_i_bool & (D[id_js, id_h] < Djs[id_js])
 
                 C1 = np.sum((D[id_js, id_h] - Djs[id_js])[case1])
                 C2 = np.sum((Ejs[id_js] - Djs[id_js])[case2])
