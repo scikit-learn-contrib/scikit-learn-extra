@@ -10,6 +10,7 @@ import warnings
 
 import numpy as np
 from itertools import product
+import copy
 
 from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
 from sklearn.metrics.pairwise import (
@@ -36,7 +37,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     metric : string, or callable, optional, default: 'euclidean'
         What distance metric to use. See :func:metrics.pairwise_distances
 
-    method : {"fast", "pam"}, default: "fast"
+    method : {"alternating", "pam"}, default: "alternating"
         Which algorithm to use.
 
     init : {'random', 'heuristic', 'k-medoids++'}, optional, default: 'heuristic'
@@ -116,7 +117,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self,
         n_clusters=8,
         metric="euclidean",
-        method="fast",
+        method="alternating",
         init="heuristic",
         max_iter=300,
         random_state=None,
@@ -196,7 +197,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             old_medoid_idxs = np.copy(medoid_idxs)
             labels = np.argmin(D[medoid_idxs, :], axis=0)
 
-            if self.method == "fast":
+            if self.method == "alternating":
                 # Update medoids with the new cluster indices
                 self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
             elif self.method == "pam":
@@ -204,10 +205,16 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     np.arange(self.n_clusters),
                     np.arange(len(D) - self.n_clusters),
                 )
+                not_medoid_idxs = list(
+                    set(np.arange(len(D))) - set(medoid_idxs)
+                )
+
+                # Compute the distance to the first and second closest medoid.
+                Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+
                 # transform generator to list
-                couples = [(i, j) for i, j in couples]
                 optimal_swap = self._compute_optimal_swap(
-                    D, medoid_idxs, couples
+                    D, medoid_idxs, couples, not_medoid_idxs, Djs, Ejs
                 )
                 if optimal_swap is not None:
                     i, j = optimal_swap
@@ -275,42 +282,44 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             if min_cost < curr_cost:
                 medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
 
-    def _compute_optimal_swap(self, D, medoid_idxs, couples):
+    def _compute_optimal_swap(
+        self, D, medoid_idxs, couples, not_medoid_idxs, Djs, Ejs
+    ):
         """Compute cost change for all the possible swaps"""
-        not_medoid_idxs = list(set(np.arange(len(D))) - set(medoid_idxs))
 
-        delta_costs = []
+        # Copy the couple generator.
+        couples_idxs = copy.copy(couples)
 
-        # Compute the distance to the first and second closest medoid.
-        Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+        # Initialize best cost change and the associated swap couple.
+        best_cost_change = np.inf
+        best_couple = None
 
         # Compute the change in cost for each swap.
-        for i, h in couples:
+        for i, h in couples_idxs:
             id_i = medoid_idxs[i]
             id_h = not_medoid_idxs[h]
-
-            # Treat all the cases to track only the change in cost.
             id_js = np.delete(not_medoid_idxs, h)
-            C = np.zeros(len(id_js))
 
-            case1 = (D[id_i, id_js] == Djs[id_js]) & (
-                D[id_js, id_h] < Ejs[id_js]
-            )
-            case2 = (D[id_i, id_js] == Djs[id_js]) & (
-                D[id_js, id_h] >= Ejs[id_js]
-            )
-            case3 = (D[id_i, id_js] > Djs[id_js]) & (
-                D[id_js, id_h] == Djs[id_js]
-            )
-            C[case1] = (D[id_js, id_h] - Djs[id_js])[case1]
-            C[case2] = (Ejs[id_js] - Djs[id_js])[case2]
-            C[case3] = (D[id_h, id_js] - Djs[id_js])[case3]
-            T = np.sum(C)
+            cluster_i_bool = D[id_i, id_js] == Djs[id_js]
+            second_best_medoid = D[id_js, id_h] < Ejs[id_js]
 
-            delta_costs.append(T)
+            case1 = cluster_i_bool & second_best_medoid
+            case2 = cluster_i_bool & ~second_best_medoid
+            case3 = ~cluster_i_bool & second_best_medoid
+
+            C1 = np.sum((D[id_js, id_h] - Djs[id_js])[case1])
+            C2 = np.sum((Ejs[id_js] - Djs[id_js])[case2])
+            C3 = np.sum((D[id_h, id_js] - Djs[id_js])[case3])
+            # Compute the cost change of swap (i,h)
+            T = C1 + C2 + C3
+
+            if T < best_cost_change:
+                best_cost_change = T
+                best_couple = (i, h)
+
         # If one of the swap decrease the objective, return that swap.
-        if np.min(delta_costs) < 0:
-            i, h = couples[np.argmin(delta_costs)]
+        if best_cost_change < 0:
+            i, h = best_couple
             return medoid_idxs[i], not_medoid_idxs[h]
         else:
             return None
