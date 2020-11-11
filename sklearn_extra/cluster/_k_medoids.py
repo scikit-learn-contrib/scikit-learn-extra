@@ -188,9 +188,17 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         )
         labels = None
 
+        if self.method == 'pam':
+            # Compute the distance to the first and second closest points
+            # among medoids.
+            Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+            medoids_mask = np.zeros(len(D), dtype=bool)
+            medoids_mask[medoid_idxs] = 1
+
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
         # of iterations is not exceeded
+
         for self.n_iter_ in range(0, self.max_iter):
             old_medoid_idxs = np.copy(medoid_idxs)
             labels = np.argmin(D[medoid_idxs, :], axis=0)
@@ -203,16 +211,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     set(np.arange(len(D))) - set(medoid_idxs)
                 )
 
-                # Compute the distance to the first and second closest medoid.
-                Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-
                 # transform generator to list
                 optimal_swap = self._compute_optimal_swap(
-                    D, medoid_idxs, not_medoid_idxs, Djs, Ejs
+                    D, medoids_mask, Djs, Ejs
                 )
                 if optimal_swap is not None:
                     i, j = optimal_swap
-                    medoid_idxs[medoid_idxs == i] = j
+                    medoids_mask[i]=0
+                    medoids_mask[j]=1
+
+                    medoid_idxs = np.where(medoids_mask)[0]
+
+                    # update Djs and Ejs with new medoids
+                    Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+
             else:
                 raise ValueError("No such method implemented.")
 
@@ -276,41 +288,43 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             if min_cost < curr_cost:
                 medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
 
-    def _compute_optimal_swap(self, D, medoid_idxs, not_medoid_idxs, Djs, Ejs):
+    def _compute_optimal_swap(self, D, medoids_mask, Djs, Ejs):
         """Compute best cost change for all the possible swaps"""
 
         # Initialize best cost change and the associated swap couple.
         best_cost_change = np.inf
         best_couple = None
+        mask_idjs = ~medoids_mask
 
         # Compute the change in cost for each swap.
         for i in range(self.n_clusters):
             for h in range(len(D) - self.n_clusters):
-                id_i = medoid_idxs[i]
-                id_h = not_medoid_idxs[h]
-                id_js = np.delete(not_medoid_idxs, h)
+                id_i = np.where(medoids_mask)[0][i]
+                id_h = np.where(~medoids_mask)[0][h]
+                mask_idjs[h] = 0
 
-                cluster_i_bool = D[id_i, id_js] == Djs[id_js]
-                second_best_medoid = D[id_js, id_h] < Ejs[id_js]
+                cluster_i_bool = (D[id_i] == Djs) & mask_idjs
+                second_best_medoid = (D[ id_h] < Ejs) & mask_idjs
 
                 case1 = cluster_i_bool & second_best_medoid
                 case2 = cluster_i_bool & ~second_best_medoid
-                case3 = ~cluster_i_bool & (D[id_js, id_h] < Djs[id_js])
+                case3 = ~cluster_i_bool & (D[id_h] < Djs) & mask_idjs
 
-                C1 = np.sum((D[id_js, id_h] - Djs[id_js])[case1])
-                C2 = np.sum((Ejs[id_js] - Djs[id_js])[case2])
-                C3 = np.sum((D[id_h, id_js] - Djs[id_js])[case3])
+                C1 = np.sum(D[case1, id_h] - Djs[case1])
+                C2 = np.sum(Ejs[case2] - Djs[case2])
+                C3 = np.sum(D[id_h, case3] - Djs[case3])
+
                 # Compute the cost change of swap (i,h)
                 T = C1 + C2 + C3
 
                 if T < best_cost_change:
                     best_cost_change = T
-                    best_couple = (i, h)
+                    best_couple = (id_i, id_h)
+                mask_idjs[h]=1
 
         # If one of the swap decrease the objective, return that swap.
         if best_cost_change < 0:
-            i, h = best_couple
-            return medoid_idxs[i], not_medoid_idxs[h]
+            return best_couple
         else:
             return None
 
