@@ -9,6 +9,7 @@
 import warnings
 
 import numpy as np
+from itertools import product
 
 from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
 from sklearn.metrics.pairwise import (
@@ -192,8 +193,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Compute the distance to the first and second closest points
             # among medoids.
             Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-            medoids_mask = np.zeros(len(D), dtype=bool)
-            medoids_mask[medoid_idxs] = 1
+            mask_idjs = np.ones(len(D), dtype=bool)
+            mask_idjs[medoid_idxs] = 1
 
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
@@ -207,24 +208,33 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 # Update medoids with the new cluster indices
                 self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
             elif self.method == "pam":
-                not_medoid_idxs = list(
-                    set(np.arange(len(D))) - set(medoid_idxs)
-                )
+                not_medoid_idxs = list(set(np.arange(len(D))) - set(medoid_idxs))
 
                 # transform generator to list
                 optimal_swap = self._compute_optimal_swap(
-                    D, medoids_mask, Djs, Ejs
+                    D,  medoid_idxs, not_medoid_idxs, mask_idjs, Djs, Ejs
                 )
                 if optimal_swap is not None:
                     i, j = optimal_swap
-                    medoids_mask[i]=0
-                    medoids_mask[j]=1
 
-                    medoid_idxs = np.where(medoids_mask)[0]
+                    medoid_idxs[medoid_idxs == i] = j
+                    mask_idjs[i] = 1
+                    mask_idjs[j] = 0
 
                     # update Djs and Ejs with new medoids
                     Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
+            elif self.method == 'naive':
+                not_medoid_idxs = set(np.arange(len(D))) - set(medoid_idxs)
+                couples_idxs = product(medoid_idxs, list(not_medoid_idxs))
+                # transform generator to list
+                couples_idxs = [(i, j) for i, j in couples_idxs]
+                optimal_swap = self._compute_optimal_swap_naive(
+                    D, medoid_idxs, couples_idxs
+                )
+                if optimal_swap is not None:
+                    i, j = optimal_swap
+                    medoid_idxs[medoid_idxs == i] = j
             else:
                 raise ValueError("No such method implemented.")
 
@@ -288,23 +298,28 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             if min_cost < curr_cost:
                 medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
 
-    def _compute_optimal_swap(self, D, medoids_mask, Djs, Ejs):
+    def _compute_optimal_swap(self, D, medoid_idxs, not_medoid_idxs,
+                              mask_idjs, Djs, Ejs):
         """Compute best cost change for all the possible swaps"""
 
         # Initialize best cost change and the associated swap couple.
         best_cost_change = np.inf
         best_couple = None
-        mask_idjs = ~medoids_mask
 
         # Compute the change in cost for each swap.
-        for i in range(self.n_clusters):
-            for h in range(len(D) - self.n_clusters):
-                id_i = np.where(medoids_mask)[0][i]
-                id_h = np.where(~medoids_mask)[0][h]
-                mask_idjs[h] = 0
+        for h in range(len(D) - self.n_clusters):
+            # id of the potential new medoid.
+            id_h = not_medoid_idxs[h]
+            for i in range(self.n_clusters):
+                # id of the medoid we want to replace.
+                id_i = medoid_idxs[i]
+                mask_idjs[id_i] = 1
 
+                # Is a point in cluster i ?
                 cluster_i_bool = (D[id_i] == Djs) & mask_idjs
-                second_best_medoid = (D[ id_h] < Ejs) & mask_idjs
+                # If we replace i by h, is the h cluster or in a cluster
+                # in which it was not previously ?
+                second_best_medoid = (D[id_h] < Ejs) & mask_idjs
 
                 case1 = cluster_i_bool & second_best_medoid
                 case2 = cluster_i_bool & ~second_best_medoid
@@ -312,7 +327,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
                 C1 = np.sum(D[case1, id_h] - Djs[case1])
                 C2 = np.sum(Ejs[case2] - Djs[case2])
-                C3 = np.sum(D[id_h, case3] - Djs[case3])
+                C3 = np.sum(D[case3, id_h] - Djs[case3])
 
                 # Compute the cost change of swap (i,h)
                 T = C1 + C2 + C3
@@ -320,13 +335,35 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 if T < best_cost_change:
                     best_cost_change = T
                     best_couple = (id_i, id_h)
-                mask_idjs[h]=1
+                mask_idjs[id_i] = 0
 
         # If one of the swap decrease the objective, return that swap.
         if best_cost_change < 0:
             return best_couple
         else:
             return None
+
+    def _compute_optimal_swap_naive(self, D, medoid_idxs, couples_idxs):
+        """Compute cost for all the possible swaps dictated by couples_idxs"""
+
+        # Compute the cost for each swap
+        initial_cost = self._compute_cost(D, medoid_idxs)
+        costs = []
+        for i, j in couples_idxs:
+            med_idxs = medoid_idxs.copy()
+            med_idxs[med_idxs == i] = j
+            T = self._compute_cost(D, med_idxs)
+            costs.append(T)
+
+        if np.min(costs) < initial_cost:
+            optimal_swap = couples_idxs[np.argmin(costs)]
+        else:
+            optimal_swap = None
+        return optimal_swap
+
+    def _compute_cost(self, D, medoid_idxs):
+        """ Compute the cose for a given configuration of the medoids"""
+        return self._compute_inertia(D[:, medoid_idxs])
 
     def _compute_cost(self, D, medoid_idxs):
         """ Compute the cose for a given configuration of the medoids"""
