@@ -56,13 +56,14 @@ EXTRAS_REQUIRE = {
 }
 
 if os.uname().sysname == "Linux":
-    kmedoid_args = {"include_dirs" : [np.get_include()],
-                    "extra_compile_args":['-fopenmp'],
-                    "extra_link_args":['-fopenmp'],
-                    }
+    kmedoid_args = {
+        "include_dirs": [np.get_include()],
+        "extra_compile_args": ["-fopenmp"],
+        "extra_link_args": ["-fopenmp"],
+    }
 
 else:
-    kmedoid_args = {"include_dirs" : [np.get_include()]}
+    kmedoid_args = {"include_dirs": [np.get_include()]}
 args = {
     "ext_modules": cythonize(
         [
