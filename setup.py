@@ -55,7 +55,7 @@ EXTRAS_REQUIRE = {
     ],
 }
 
-if os.uname().sysname == "Linux":
+if os.name == "posix" and os.uname().sysname == "Linux":
     kmedoid_args = {
         "include_dirs": [np.get_include()],
         "extra_compile_args": ["-fopenmp"],
