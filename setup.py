@@ -64,6 +64,13 @@ args = {
                 include_dirs=[np.get_include()],
             ),
             Extension(
+                "sklearn_extra.cluster._k_medoids_swap",
+                ["sklearn_extra/cluster/_k_medoids_swap.pyx"],
+                include_dirs=[np.get_include()],
+                extra_compile_args=["-fopenmp"],
+                extra_link_args=["-fopenmp"],
+            ),
+            Extension(
                 "sklearn_extra.cluster._commonnn_inner",
                 ["sklearn_extra/cluster/_commonnn_inner.pyx"],
                 include_dirs=[np.get_include()],

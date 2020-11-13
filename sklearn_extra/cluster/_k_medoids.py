@@ -21,6 +21,8 @@ from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import ConvergenceWarning
 
+from ._k_medoids_swap import _compute_optimal_swap
+
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     """k-medoids clustering.
@@ -50,6 +52,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     max_iter : int, optional, default : 300
         Specify the maximum number of iterations when fitting.
+
+    n_threads : int, optional, default : 1
+        Number of threads to be used for "pam" method.
 
     random_state : int, RandomState instance or None, optional
         Specify random state for the random number generator. Used to
@@ -119,6 +124,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         method="alternating",
         init="heuristic",
         max_iter=300,
+        n_threads=1,
         random_state=None,
     ):
         self.n_clusters = n_clusters
@@ -189,12 +195,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         )
         labels = None
 
-        if self.method == 'pam':
+        if self.method == "pam":
             # Compute the distance to the first and second closest points
             # among medoids.
             Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-            mask_idjs = np.ones(len(D), dtype=bool)
-            mask_idjs[medoid_idxs] = 1
 
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
@@ -208,23 +212,26 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 # Update medoids with the new cluster indices
                 self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
             elif self.method == "pam":
-                not_medoid_idxs = list(set(np.arange(len(D))) - set(medoid_idxs))
+                not_medoid_idxs = np.delete(np.arange(len(D)), medoid_idxs)
 
                 # transform generator to list
-                optimal_swap = self._compute_optimal_swap(
-                    D,  medoid_idxs, not_medoid_idxs, mask_idjs, Djs, Ejs
+                optimal_swap = _compute_optimal_swap(
+                    D,
+                    medoid_idxs,
+                    not_medoid_idxs,
+                    Djs,
+                    Ejs,
+                    self.n_clusters,
+                    self.n_threads,
                 )
                 if optimal_swap is not None:
                     i, j = optimal_swap
-
                     medoid_idxs[medoid_idxs == i] = j
-                    mask_idjs[i] = 1
-                    mask_idjs[j] = 0
 
                     # update Djs and Ejs with new medoids
                     Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
-            elif self.method == 'naive':
+            elif self.method == "naive":
                 not_medoid_idxs = set(np.arange(len(D))) - set(medoid_idxs)
                 couples_idxs = product(medoid_idxs, list(not_medoid_idxs))
                 # transform generator to list
@@ -297,51 +304,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Adopt a new medoid if its distance is smaller then the current
             if min_cost < curr_cost:
                 medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
-
-    def _compute_optimal_swap(self, D, medoid_idxs, not_medoid_idxs,
-                              mask_idjs, Djs, Ejs):
-        """Compute best cost change for all the possible swaps"""
-
-        # Initialize best cost change and the associated swap couple.
-        best_cost_change = np.inf
-        best_couple = None
-
-        # Compute the change in cost for each swap.
-        for h in range(len(D) - self.n_clusters):
-            # id of the potential new medoid.
-            id_h = not_medoid_idxs[h]
-            for i in range(self.n_clusters):
-                # id of the medoid we want to replace.
-                id_i = medoid_idxs[i]
-                mask_idjs[id_i] = 1
-
-                # Is a point in cluster i ?
-                cluster_i_bool = (D[id_i] == Djs) & mask_idjs
-                # If we replace i by h, is the h cluster or in a cluster
-                # in which it was not previously ?
-                second_best_medoid = (D[id_h] < Ejs) & mask_idjs
-
-                case1 = cluster_i_bool & second_best_medoid
-                case2 = cluster_i_bool & ~second_best_medoid
-                case3 = ~cluster_i_bool & (D[id_h] < Djs) & mask_idjs
-
-                C1 = np.sum(D[case1, id_h] - Djs[case1])
-                C2 = np.sum(Ejs[case2] - Djs[case2])
-                C3 = np.sum(D[case3, id_h] - Djs[case3])
-
-                # Compute the cost change of swap (i,h)
-                T = C1 + C2 + C3
-
-                if T < best_cost_change:
-                    best_cost_change = T
-                    best_couple = (id_i, id_h)
-                mask_idjs[id_i] = 0
-
-        # If one of the swap decrease the objective, return that swap.
-        if best_cost_change < 0:
-            return best_couple
-        else:
-            return None
 
     def _compute_optimal_swap_naive(self, D, medoid_idxs, couples_idxs):
         """Compute cost for all the possible swaps dictated by couples_idxs"""
