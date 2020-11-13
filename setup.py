@@ -55,6 +55,14 @@ EXTRAS_REQUIRE = {
     ],
 }
 
+if os.uname().sysname == "Linux":
+    kmedoid_args = {"include_dirs" : [np.get_include()],
+                    "extra_compile_args":['-fopenmp'],
+                    "extra_link_args":['-fopenmp'],
+                    }
+
+else:
+    kmedoid_args = {"include_dirs" : [np.get_include()]}
 args = {
     "ext_modules": cythonize(
         [
@@ -66,9 +74,7 @@ args = {
             Extension(
                 "sklearn_extra.cluster._k_medoids_swap",
                 ["sklearn_extra/cluster/_k_medoids_swap.pyx"],
-                include_dirs=[np.get_include()],
-                extra_compile_args=["-fopenmp"],
-                extra_link_args=["-fopenmp"],
+                **kmedoid_args
             ),
             Extension(
                 "sklearn_extra.cluster._commonnn_inner",
