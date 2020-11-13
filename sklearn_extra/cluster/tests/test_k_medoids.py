@@ -294,3 +294,36 @@ def test_kmedoids_on_sparse_input():
     labels = model.fit_predict(X)
     assert len(labels) == 2
     assert_array_equal(labels, model.labels_)
+
+
+from sklearn.datasets import load_digits
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import scale
+from sklearn.metrics.pairwise import pairwise_distances
+
+digits = load_digits()
+data = scale(digits.data)
+n_digits = len(np.unique(digits.target))
+
+N = 300
+reduced_data = PCA(n_components=2).fit_transform(data)[:N]
+
+metrics = ["manhattan", "euclidean", "cosine"]
+
+
+@pytest.mark.parametrize("metric", metrics)
+def test_methods(metric):
+    rng = np.random.RandomState(seed)
+    model_pam = KMedoids(
+        metric=metric, n_clusters=n_digits, method="pam", random_state=rng
+    ).fit(reduced_data)
+    model_alt = KMedoids(
+        metric=metric,
+        n_clusters=n_digits,
+        method="alternating",
+        random_state=rng,
+    ).fit(reduced_data)
+    centers_pam = model_pam.cluster_centers_
+    centers_alt = model_alt.cluster_centers_
+    D = pairwise_distances(centers_pam, centers_alt)
+    assert all(np.min(D, axis=0) / np.std(reduced_data) < 2)

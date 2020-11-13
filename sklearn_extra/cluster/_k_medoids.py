@@ -9,7 +9,7 @@
 import warnings
 
 import numpy as np
-from itertools import product
+import multiprocessing
 
 from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
 from sklearn.metrics.pairwise import (
@@ -21,6 +21,7 @@ from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import ConvergenceWarning
 
+# cython implementation of swap step in PAM algorithm.
 from ._k_medoids_swap import _compute_optimal_swap
 
 
@@ -53,8 +54,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     max_iter : int, optional, default : 300
         Specify the maximum number of iterations when fitting.
 
-    n_threads : int, optional, default : 1
-        Number of threads to be used for "pam" method.
+    n_threads : int or None, optional, default : None
+        Number of threads to be used for "pam" method. If None, n_threads is set
+        to the number of CPU's.
 
     random_state : int, RandomState instance or None, optional
         Specify random state for the random number generator. Used to
@@ -124,7 +126,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         method="alternating",
         init="heuristic",
         max_iter=300,
-        n_threads=1,
+        n_threads=None,
         random_state=None,
     ):
         self.n_clusters = n_clusters
@@ -132,6 +134,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.method = method
         self.init = init
         self.max_iter = max_iter
+        self.n_threads = n_threads
         self.random_state = random_state
 
     def _check_nonnegative_int(self, value, desc):
@@ -200,6 +203,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # among medoids.
             Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
+            # set number of threads
+            if self.n_threads is None:
+                n_threads = multiprocessing.cpu_count()
+            else:
+                n_threads = self.n_threads
+
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
         # of iterations is not exceeded
@@ -213,8 +222,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
             elif self.method == "pam":
                 not_medoid_idxs = np.delete(np.arange(len(D)), medoid_idxs)
-
-                # transform generator to list
                 optimal_swap = _compute_optimal_swap(
                     D,
                     medoid_idxs,
@@ -222,7 +229,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     Djs,
                     Ejs,
                     self.n_clusters,
-                    self.n_threads,
+                    n_threads,
                 )
                 if optimal_swap is not None:
                     i, j = optimal_swap
@@ -230,18 +237,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
                     # update Djs and Ejs with new medoids
                     Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-
-            elif self.method == "naive":
-                not_medoid_idxs = set(np.arange(len(D))) - set(medoid_idxs)
-                couples_idxs = product(medoid_idxs, list(not_medoid_idxs))
-                # transform generator to list
-                couples_idxs = [(i, j) for i, j in couples_idxs]
-                optimal_swap = self._compute_optimal_swap_naive(
-                    D, medoid_idxs, couples_idxs
-                )
-                if optimal_swap is not None:
-                    i, j = optimal_swap
-                    medoid_idxs[medoid_idxs == i] = j
             else:
                 raise ValueError("No such method implemented.")
 
@@ -304,28 +299,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Adopt a new medoid if its distance is smaller then the current
             if min_cost < curr_cost:
                 medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
-
-    def _compute_optimal_swap_naive(self, D, medoid_idxs, couples_idxs):
-        """Compute cost for all the possible swaps dictated by couples_idxs"""
-
-        # Compute the cost for each swap
-        initial_cost = self._compute_cost(D, medoid_idxs)
-        costs = []
-        for i, j in couples_idxs:
-            med_idxs = medoid_idxs.copy()
-            med_idxs[med_idxs == i] = j
-            T = self._compute_cost(D, med_idxs)
-            costs.append(T)
-
-        if np.min(costs) < initial_cost:
-            optimal_swap = couples_idxs[np.argmin(costs)]
-        else:
-            optimal_swap = None
-        return optimal_swap
-
-    def _compute_cost(self, D, medoid_idxs):
-        """ Compute the cose for a given configuration of the medoids"""
-        return self._compute_inertia(D[:, medoid_idxs])
 
     def _compute_cost(self, D, medoid_idxs):
         """ Compute the cose for a given configuration of the medoids"""
