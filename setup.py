@@ -55,8 +55,8 @@ EXTRAS_REQUIRE = {
     ],
 }
 libraries = []
-if os.name == 'posix':
-    libraries.append('m')
+if os.name == "posix":
+    libraries.append("m")
 
 args = {
     "ext_modules": cythonize(
