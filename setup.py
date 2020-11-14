@@ -64,6 +64,13 @@ args = {
                 include_dirs=[np.get_include()],
             ),
             Extension(
+                "sklearn_extra.robust._robust_weighted_estimator_helper",
+                ["sklearn_extra/robust/_robust_weighted_estimator_helper.pyx"],
+                include_dirs=[np.get_include()],
+                libraries=["m"],
+            ),
+
+            Extension(
                 "sklearn_extra.cluster._commonnn_inner",
                 ["sklearn_extra/cluster/_commonnn_inner.pyx"],
                 include_dirs=[np.get_include()],

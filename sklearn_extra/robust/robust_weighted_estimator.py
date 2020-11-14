@@ -43,6 +43,8 @@ except ImportError:
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
+from ._robust_weighted_estimator_helper import _kmeans_loss
+
 
 LOSS_FUNCTIONS = {
     "hinge": (Hinge, 1.0),
@@ -65,27 +67,7 @@ def _mom_psisx(med_block, n):
     """MOM weight for RobustWeightedEstimator algorithm"""
     res = np.zeros(n)
     res[med_block] = 1
-    return lambda x: res
-
-
-def _kmeans_loss(X, pred):
-    """Compute the inertia for kmeans algorithm
-    Parameters
-    ----------
-    X : array-like shape (n_samples, n_features)
-        The input data.
-
-    pred : array-like, shape (n_samples,)
-        The target values (label of the cluster to which X belongs to).
-
-    """
-    return np.array(
-        [
-            np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]], axis=0))
-            ** 2
-            for i in range(X.shape[0])
-        ]
-    )
+    return res
 
 
 class _RobustWeightedEstimator(BaseEstimator):
@@ -456,7 +438,10 @@ class _RobustWeightedEstimator(BaseEstimator):
             # Compute the median-of-means of the losses using these blocks.
             # Return also the index at which this median-of-means is attained.
             mu, idmom = median_of_means_blocked(loss_values, blocks)
-            psisx = _mom_psisx(blocks[idmom], len(loss_values))
+
+            def psisx(x):
+                return _mom_psisx(blocks[idmom], len(loss_values))
+
         else:
             raise ValueError("No such weighting scheme")
         # Compute the unnormalized weights.
@@ -766,13 +751,13 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
 
         if self.multi_class == "ovr":
             self.base_estimator_ = OneVsRestClassifier(
-                base_robust_estimator_, self.n_jobs
+                base_robust_estimator_, n_jobs=self.n_jobs
             )
         elif self.multi_class == "binary":
             self.base_estimator_ = base_robust_estimator_
         elif self.multi_class == "ovo":
             self.base_estimator_ = OneVsOneClassifier(
-                base_robust_estimator_, self.n_jobs
+                base_robust_estimator_, n_jobs=self.n_jobs
             )
         else:
             raise ValueError("No such multiclass method implemented.")
