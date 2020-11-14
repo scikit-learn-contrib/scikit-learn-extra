@@ -13,11 +13,6 @@ from cython cimport floating
 # Modified from sklearn.cluster._k_means_fast.pyx
 np.import_array()
 
-
-ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INT
-
-
 cdef floating _euclidean_dense_dense(
         floating* a,  # IN
         floating* b,  # IN
@@ -50,14 +45,21 @@ cpdef np.ndarray[floating] _kmeans_loss(np.ndarray[floating, ndim=2, mode='c'] X
 
     squared distancez between each sample and its assigned center.
     """
+    if floating is float:
+        dtype = np.float32
+    elif floating is double:
+        dtype = np.double
+
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
         int i, j
         int n_classes = len(np.unique(labels))
-        np.ndarray[floating, ndim=2] centers = np.zeros([n_classes, n_features])
+        np.ndarray[floating, ndim=2] centers = np.zeros([n_classes,
+                                                         n_features],
+                                                         dtype = dtype)
         np.ndarray[long] num_in_cluster = np.zeros(n_classes, dtype = int)
-        np.ndarray[floating] inertias = np.zeros(n_samples)
+        np.ndarray[floating] inertias = np.zeros(n_samples, dtype = dtype)
     for i in range(n_samples):
         for j in range(n_features):
             centers[labels[i], j] += X[i, j]
