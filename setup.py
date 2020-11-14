@@ -69,7 +69,6 @@ args = {
                 include_dirs=[np.get_include()],
                 libraries=["m"],
             ),
-
             Extension(
                 "sklearn_extra.cluster._commonnn_inner",
                 ["sklearn_extra/cluster/_commonnn_inner.pyx"],
