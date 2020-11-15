@@ -232,7 +232,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     n_threads,
                 )
                 if optimal_swap is not None:
-                    i, j = optimal_swap
+                    i, j, _ = optimal_swap
                     medoid_idxs[medoid_idxs == i] = j
 
                     # update Djs and Ejs with new medoids
