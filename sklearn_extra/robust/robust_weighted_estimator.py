@@ -32,7 +32,15 @@ import sklearn
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
-from ._robust_weighted_estimator_helper import _kmeans_loss, Log, SquaredLoss, Hinge, Huber, ModifiedHuber, SquaredHinge
+from ._robust_weighted_estimator_helper import (
+    _kmeans_loss,
+    Log,
+    SquaredLoss,
+    Hinge,
+    Huber,
+    ModifiedHuber,
+    SquaredHinge,
+)
 
 
 LOSS_FUNCTIONS = {
@@ -298,7 +306,6 @@ class _RobustWeightedEstimator(BaseEstimator):
                 loss_values = loss(X, pred)
             else:
                 loss_values = loss(y.flatten(), pred)
-            print(loss_values)
             # Compute the weight associated with each losses.
             # Samples whose loss is far from the mean loss (robust estimation)
             # will have a small weight.
