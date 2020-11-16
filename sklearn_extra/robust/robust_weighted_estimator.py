@@ -70,7 +70,7 @@ def _mom_psisx(med_block, n):
 
 
 class _RobustWeightedEstimator(BaseEstimator):
-    """Meta algorithm for robust regression and (Binary) classification.
+    """Meta algorithm for robust regression and binary classification.
 
     This model use iterative reweighting of samples to make a regression or
     classification estimator robust.
@@ -304,6 +304,9 @@ class _RobustWeightedEstimator(BaseEstimator):
             # Compute the loss of each sample
             if self._estimator_type == "clusterer":
                 loss_values = loss(X, pred)
+            elif self._estimator_type == "classifier":
+                # For classifiers, set the labels to {-1,1} for compatibility.
+                loss_values = loss(2*y.flatten()-1, pred)
             else:
                 loss_values = loss(y.flatten(), pred)
             # Compute the weight associated with each losses.
