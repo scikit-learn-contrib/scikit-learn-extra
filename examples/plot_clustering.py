@@ -55,7 +55,7 @@ gmm = mixture.GaussianMixture(
 )
 
 
-for n_samples in [300, 3000]:
+for n_samples in [300, 600]:
     # Construct the dataset
     X, labels_true = make_blobs(
         n_samples=n_samples, centers=centers, cluster_std=0.4, random_state=rng
@@ -63,7 +63,7 @@ for n_samples in [300, 3000]:
 
     # Change the first 1% entries to outliers
     for f in range(int(n_samples / 100)):
-        X[f] = [20, 3] + rng.normal(size=2) * 0.1
+        X[f] = [10, 3] + rng.normal(size=2) * 0.1
     # Shuffle the data so that we don't know where the outlier is.
     X = shuffle(X, random_state=rng)
 
@@ -73,7 +73,7 @@ for n_samples in [300, 3000]:
         eta0=0.01,
         weighting="mom",
         max_iter=100,
-        k=int(n_samples / 50),
+        k=int(n_samples / 20),
         random_state=rng,
     )
     bandwidth = cluster.estimate_bandwidth(X, 0.2)

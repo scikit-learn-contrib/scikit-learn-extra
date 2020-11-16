@@ -54,6 +54,9 @@ EXTRAS_REQUIRE = {
         "matplotlib",
     ],
 }
+libraries = []
+if os.name == "posix":
+    libraries.append("m")
 
 args = {
     "ext_modules": cythonize(
@@ -62,6 +65,12 @@ args = {
                 "sklearn_extra.utils._cyfht",
                 ["sklearn_extra/utils/_cyfht.pyx"],
                 include_dirs=[np.get_include()],
+            ),
+            Extension(
+                "sklearn_extra.robust._robust_weighted_estimator_helper",
+                ["sklearn_extra/robust/_robust_weighted_estimator_helper.pyx"],
+                include_dirs=[np.get_include()],
+                libraries=libraries,
             ),
             Extension(
                 "sklearn_extra.cluster._commonnn_inner",

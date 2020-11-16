@@ -43,6 +43,8 @@ except ImportError:
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
+from ._robust_weighted_estimator_helper import _kmeans_loss
+
 
 LOSS_FUNCTIONS = {
     "hinge": (Hinge, 1.0),
@@ -65,27 +67,7 @@ def _mom_psisx(med_block, n):
     """MOM weight for RobustWeightedEstimator algorithm"""
     res = np.zeros(n)
     res[med_block] = 1
-    return lambda x: res
-
-
-def _kmeans_loss(X, pred):
-    """Compute the inertia for kmeans algorithm
-    Parameters
-    ----------
-    X : array-like shape (n_samples, n_features)
-        The input data.
-
-    pred : array-like, shape (n_samples,)
-        The target values (label of the cluster to which X belongs to).
-
-    """
-    return np.array(
-        [
-            np.linalg.norm(X[pred[i]] - np.mean(X[pred == pred[i]], axis=0))
-            ** 2
-            for i in range(X.shape[0])
-        ]
-    )
+    return res
 
 
 class _RobustWeightedEstimator(BaseEstimator):
@@ -164,7 +146,12 @@ class _RobustWeightedEstimator(BaseEstimator):
         (using the inter-quartile range), this tends to be conservative
         (robust).
 
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
 
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -225,6 +212,8 @@ class _RobustWeightedEstimator(BaseEstimator):
         eta0=0.1,
         c=None,
         k=0,
+        tol=1e-5,
+        n_iter_no_change=10,
         random_state=None,
     ):
         self.base_estimator = base_estimator
@@ -235,6 +224,8 @@ class _RobustWeightedEstimator(BaseEstimator):
         self.k = k
         self.loss = loss
         self.max_iter = max_iter
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -294,7 +285,9 @@ class _RobustWeightedEstimator(BaseEstimator):
             base_estimator.partial_fit(X, y)
 
         # Initialization of final weights
-        final_weight = np.zeros(len(X))
+        final_weights = np.zeros(len(X))
+        best_loss = np.inf
+        n_iter_no_change_ = 0
 
         # Optimization algorithm
         for epoch in range(self.max_iter):
@@ -319,11 +312,26 @@ class _RobustWeightedEstimator(BaseEstimator):
             # Compute the weight associated with each losses.
             # Samples whose loss is far from the mean loss (robust estimation)
             # will have a small weight.
-            weights = self._get_weights(loss_values, random_state)
+            weights, current_loss = self._get_weights(
+                loss_values, random_state
+            )
 
             # Use the optimization algorithm of self.base_estimator for one
             # epoch using the previously computed weights.
             base_estimator.partial_fit(X, y, sample_weight=weights)
+
+            if (self.tol is not None) and (
+                current_loss > best_loss - self.tol
+            ):
+                n_iter_no_change_ += 1
+            else:
+                n_iter_no_change_ = 0
+
+            if current_loss < best_loss:
+                best_loss = current_loss
+
+            if n_iter_no_change_ == self.n_iter_no_change:
+                break
 
             # Shuffle the data at each step.
             if self._estimator_type == "clusterer":
@@ -334,10 +342,10 @@ class _RobustWeightedEstimator(BaseEstimator):
                 )
 
             if self.weighting == "mom":
-                final_weight += weights
+                final_weights += weights
 
         if self.weighting == "mom":
-            self.weights_ = final_weight / self.max_iter
+            self.weights_ = final_weights / self.max_iter
         else:
             self.weights_ = weights
         self.base_estimator_ = base_estimator
@@ -430,12 +438,16 @@ class _RobustWeightedEstimator(BaseEstimator):
             # Compute the median-of-means of the losses using these blocks.
             # Return also the index at which this median-of-means is attained.
             mu, idmom = median_of_means_blocked(loss_values, blocks)
-            psisx = _mom_psisx(blocks[idmom], len(loss_values))
+
+            def psisx(x):
+                return _mom_psisx(blocks[idmom], len(loss_values))
+
         else:
             raise ValueError("No such weighting scheme")
         # Compute the unnormalized weights.
         w = psisx(loss_values - mu)
-        return w / np.sum(w) * len(loss_values)
+
+        return w / np.sum(w) * len(loss_values), mu
 
     def predict(self, X):
         """Predict using the estimator trained with RobustWeightedEstimator.
@@ -590,6 +602,13 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     n_jobs : int, default=1
         number of jobs used in the multi-class meta-algorithm computation.
 
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data. If int, random_state is the seed used by the random number
@@ -675,6 +694,8 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         sgd_args=None,
         multi_class="ovr",
         n_jobs=1,
+        tol=1e-3,
+        n_iter_no_change=10,
         random_state=None,
     ):
         self.weighting = weighting
@@ -687,6 +708,8 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         self.sgd_args = sgd_args
         self.multi_class = multi_class
         self.n_jobs = n_jobs
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -721,18 +744,20 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
             k=self.k,
             eta0=self.eta0,
             max_iter=self.max_iter,
+            tol=self.tol,
+            n_iter_no_change=self.n_iter_no_change,
             random_state=self.random_state,
         )
 
         if self.multi_class == "ovr":
             self.base_estimator_ = OneVsRestClassifier(
-                base_robust_estimator_, self.n_jobs
+                base_robust_estimator_, n_jobs=self.n_jobs
             )
         elif self.multi_class == "binary":
             self.base_estimator_ = base_robust_estimator_
         elif self.multi_class == "ovo":
             self.base_estimator_ = OneVsOneClassifier(
-                base_robust_estimator_, self.n_jobs
+                base_robust_estimator_, n_jobs=self.n_jobs
             )
         else:
             raise ValueError("No such multiclass method implemented.")
@@ -897,6 +922,12 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
     sgd_args : dict, default={}
         arguments of the SGDClassifier base estimator.
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -971,6 +1002,8 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         k=0,
         loss="squared_loss",
         sgd_args=None,
+        tol=1e-3,
+        n_iter_no_change=10,
         random_state=None,
     ):
 
@@ -982,6 +1015,8 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         self.k = k
         self.loss = loss
         self.sgd_args = sgd_args
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -1016,6 +1051,8 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
             k=self.k,
             eta0=self.eta0,
             max_iter=self.max_iter,
+            tol=self.tol,
+            n_iter_no_change=self.n_iter_no_change,
             random_state=self.random_state,
         )
         self.base_estimator_.fit(X, y)
@@ -1127,6 +1164,13 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         arguments of the MiniBatchKMeans base estimator. Must not contain
         batch_size.
 
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data. If int, random_state is the seed used by the random number
@@ -1204,6 +1248,8 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         c=None,
         k=0,
         kmeans_args=None,
+        tol=1e-3,
+        n_iter_no_change=10,
         random_state=None,
     ):
         self.n_clusters = n_clusters
@@ -1213,6 +1259,8 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         self.c = c
         self.k = k
         self.kmeans_args = kmeans_args
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -1259,6 +1307,8 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             eta0=self.eta0,
             c=self.c,
             k=self.k,
+            tol=self.tol,
+            n_iter_no_change=self.n_iter_no_change,
             random_state=self.random_state,
         )
         self.base_estimator_.fit(X)

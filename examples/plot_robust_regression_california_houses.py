@@ -5,7 +5,6 @@ A demo of Robust Regression on real dataset "california housing"
 ================================================================
 In this example we compare the RobustWeightedRegressor to other scikit-learn
 regressors on the real dataset california housing.
-WARNING: running this example can take some time (<1 hour on recent computer).
 
 One of the main point of this example is the importance of taking into account
 outliers in the test dataset when dealing with real datasets.
@@ -36,6 +35,9 @@ def quadratic_loss(est, X, y, X_test, y_test):
 
 
 X, y = fetch_california_housing(return_X_y=True)
+# Sub-sample for faster computation.
+X = X[:1000]
+y = y[:1000]
 
 # Scale the dataset with sklearn RobustScaler (important for this algorithm)
 X = RobustScaler().fit_transform(X)
@@ -46,25 +48,17 @@ X = RobustScaler().fit_transform(X)
 estimators = [
     (
         "SGD",
-        SGDRegressor(
-            learning_rate="adaptive",
-            eta0=1e-6,
-            max_iter=2000,
-            n_iter_no_change=100,
-        ),
+        SGDRegressor(learning_rate="adaptive", eta0=1e-2),
     ),
     (
         "RobustWeightedRegressor",
         RobustWeightedRegressor(
             weighting="huber",
-            c=0.5,
-            eta0=1e-6,
-            max_iter=500,
+            c=0.01,
+            eta0=1e-2,
             sgd_args={
-                "max_iter": 1000,
-                "n_iter_no_change": 100,
                 "learning_rate": "adaptive",
-                "eta0": 1e-6,
+                "eta0": 1e-3,
             },
         ),
     ),
@@ -95,7 +89,7 @@ for f in range(M):
         res[i, f, 0] = np.mean(cv)
         res[i, f, 1] = np.median(cv)
 
-fig, (axe1, axe2) = plt.subplots(2, 1)
+fig, (axe1, axe2) = plt.subplots(1, 2)
 names = [name for name, est in estimators]
 
 axe1.boxplot(res[:, :, 0].T, labels=names)
