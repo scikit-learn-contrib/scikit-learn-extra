@@ -30,26 +30,17 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 import sklearn
 
-if parse_version(sklearn.__version__) > parse_version("0.23.9"):
-    dloss_attr = "py_dloss"
-else:
-    dloss_attr = "dloss"
-# Loss functions import. Taken from scikit-learn linear SGD estimators.
-
-try:
-    from sklearn.linear_model._sgd_fast import Log, SquaredLoss, Hinge, Huber
-except ImportError:
-    from sklearn.linear_model.sgd_fast import Log, SquaredLoss, Hinge, Huber
-
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
-from ._robust_weighted_estimator_helper import _kmeans_loss
+from ._robust_weighted_estimator_helper import _kmeans_loss, Log, SquaredLoss, Hinge, Huber, ModifiedHuber, SquaredHinge
 
 
 LOSS_FUNCTIONS = {
     "hinge": (Hinge, 1.0),
     "log": (Log,),
     "squared_loss": (SquaredLoss,),
+    "squared_hinge": (SquaredHinge,),
+    "modified_huber": (ModifiedHuber,),
     "huber": (Huber, 1.35),  # 1.35 is default value. TODO : set as parameter
 }
 
@@ -103,10 +94,9 @@ class _RobustWeightedEstimator(BaseEstimator):
     loss : string or callable, mandatory
         Name of the loss used, must be the same loss as the one optimized in
         base_estimator.
-        Classification losses supported : 'log', 'hinge'.
-        If 'log', then the base_estimator must support predict_proba.
-        Regression losses supported : 'squared_loss' or 'huber'.
-        If None and if base_estimator is None, loss='squared_loss'
+        Classification losses supported : 'log', 'hinge', 'squared_hinge',
+        'modified_huber'. If 'log', then the base_estimator must support
+        predict_proba. Regression losses supported : 'squared_loss', 'huber'.
         If callable, the function is used as loss function ro construct
         the weights.
 
@@ -308,7 +298,7 @@ class _RobustWeightedEstimator(BaseEstimator):
                 loss_values = loss(X, pred)
             else:
                 loss_values = loss(y.flatten(), pred)
-
+            print(loss_values)
             # Compute the weight associated with each losses.
             # Samples whose loss is far from the mean loss (robust estimation)
             # will have a small weight.
@@ -350,12 +340,12 @@ class _RobustWeightedEstimator(BaseEstimator):
             self.weights_ = weights
         self.base_estimator_ = base_estimator
         self.n_iter_ = self.max_iter * len(X)
+
         if hasattr(base_estimator, "coef_"):
             self.coef_ = base_estimator.coef_
             self.intercept_ = base_estimator.intercept_
         if hasattr(base_estimator, "labels_"):
             self.labels_ = self.base_estimator_.labels_
-
         if hasattr(base_estimator, "cluster_centers_"):
             self.cluster_centers_ = self.base_estimator_.cluster_centers_
             self.inertia_ = self.base_estimator_.inertia_
@@ -370,7 +360,7 @@ class _RobustWeightedEstimator(BaseEstimator):
 
             loss_class, args = eff_loss[0], eff_loss[1:]
 
-            return np.vectorize(getattr(loss_class(*args), dloss_attr))
+            return np.vectorize(getattr(loss_class(*args), "py_loss"))
         else:
             return loss
 
@@ -586,11 +576,8 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         (robust).
 
     loss : string, None or callable, default="log"
-        Name of the loss used, must be the same loss as the one optimized in
-        base_estimator.
-        Classification losses supported : 'log', 'hinge'.
+        Classification losses supported : 'log', 'hinge', 'modified_huber'.
         If 'log', then the base_estimator must support predict_proba.
-        Regression losses supported : 'squared_loss', .
 
     sgd_args : dict, default={}
         arguments of the SGDClassifier base estimator.
@@ -615,8 +602,6 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by np.random.
-
-
 
     Attributes
     ----------
@@ -918,7 +903,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         (robust).
 
     loss : string, None or callable, default="squared_loss"
-        For now, only "squared_loss" or "huber" are implemented.
+        For now, only "squared_loss" and "huber" are implemented.
 
     sgd_args : dict, default={}
         arguments of the SGDClassifier base estimator.
