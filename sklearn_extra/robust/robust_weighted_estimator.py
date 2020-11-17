@@ -280,23 +280,35 @@ class _RobustWeightedEstimator(BaseEstimator):
             if len(classes) > 2:
                 raise ValueError("y must be binary.")
             # Initialization of the estimator.
-            base_estimator.classes_ = np.array([0, 1])
+            # Partial fit for the estimator to be set to "fitted" to be able
+            # to predict.
+            base_estimator.partial_fit(X, y, classes=classes)
+            # As the partial fit is here non-robust, override the
+            # learned coefs.
             base_estimator.coef_ = np.zeros([1, len(X[0])])
             base_estimator.intercept_ = np.array([0])
-            base_estimator.t_ = len(X)
-            base_estimator.loss_function_ = loss
-            base_estimator.n_iter_ = 1
             self.classes_ = base_estimator.classes_
         elif self._estimator_type == "regressor":
-            # Initialization of the estimator.
+            # Initialization of the estimator
+            # Partial fit for the estimator to be set to "fitted" to be able
+            # to predict.
+            base_estimator.partial_fit(X, y)
+            # As the partial fit is here non-robust, override the
+            # learned coefs.
             base_estimator.coef_ = np.zeros([len(X[0])])
             base_estimator.intercept_ = np.array([0])
-            base_estimator.n_iter_ = 1
-            base_estimator.t_ = len(X)
         elif self._estimator_type == "clusterer":
-            base_estimator.cluster_centers_ = np.array([np.median(X, axis=0)])
-            labels_ = np.zeros(len(X))
-            base_estimator.inertia_ = np.inf
+            # Partial fit for the estimator to be set to "fitted" to be able
+            # to predict.
+            base_estimator.partial_fit(X, y)
+            # As the partial fit is here non-robust, override the
+            # learned centers.
+            base_estimator.cluster_centers_ = np.array(
+                [
+                    np.median(X, axis=0)
+                    for _ in range(base_estimator.n_clusters)
+                ]
+            )
 
         # Initialization of final weights
         final_weights = np.zeros(len(X))
