@@ -7,7 +7,6 @@ from sklearn_extra.robust import (
     RobustWeightedKMeans,
 )
 from sklearn.datasets import make_blobs
-from sklearn.metrics import median_absolute_error
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.cluster import KMeans
 from sklearn.utils import shuffle
@@ -160,7 +159,7 @@ def test_corrupted_regression(loss, weighting, k, c):
         k=k,
         c=c,
         random_state=rng,
-        n_iter_no_change=20
+        n_iter_no_change=20,
     )
     reg.fit(X_rc, y_rc)
     assert np.abs(reg.coef_[0] - 1) < 0.1

@@ -6,7 +6,6 @@
 import numpy as np
 import warnings
 from scipy.stats import iqr
-from pkg_resources import parse_version
 
 
 from sklearn.base import (
@@ -21,7 +20,6 @@ from sklearn.utils import (
     check_random_state,
     check_array,
     check_consistent_length,
-    shuffle,
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import SGDRegressor, SGDClassifier
@@ -29,7 +27,6 @@ from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.exceptions import ConvergenceWarning
-import sklearn
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
