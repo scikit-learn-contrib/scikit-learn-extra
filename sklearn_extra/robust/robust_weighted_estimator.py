@@ -6,6 +6,8 @@
 import numpy as np
 import warnings
 from scipy.stats import iqr
+from pkg_resources import parse_version
+
 
 from sklearn.base import (
     BaseEstimator,
@@ -24,14 +26,15 @@ from sklearn.utils import (
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import SGDRegressor, SGDClassifier
 from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
-from pkg_resources import parse_version
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import euclidean_distances
-
+from sklearn.exceptions import ConvergenceWarning
 import sklearn
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
+# cython implementation of loss functions, copied from scikit-learn with light
+# modifications.
 from ._robust_weighted_estimator_helper import (
     _kmeans_loss,
     Log,
@@ -44,7 +47,7 @@ from ._robust_weighted_estimator_helper import (
 
 
 LOSS_FUNCTIONS = {
-    "hinge": (Hinge, 1.0),
+    "hinge": (Hinge,),
     "log": (Log,),
     "squared_loss": (SquaredLoss,),
     "squared_hinge": (SquaredHinge,),
@@ -55,9 +58,9 @@ LOSS_FUNCTIONS = {
 
 def _huber_psisx(x, c):
     """Huber-loss weight for RobustWeightedEstimator algorithm"""
-    res = np.ones(len(x))
-    res[x != 0] = (2 * (x[x != 0] > 0) - 1) * c / x[x != 0]
-    res[np.abs(x) < c] = 1
+    res = np.zeros(len(x))
+    res[np.abs(x) <= c] = 1
+    res[np.abs(x) > c] = c / np.abs(x)[np.abs(x) > c]
     res[~np.isfinite(x)] = 0
     return res
 
@@ -72,7 +75,7 @@ def _mom_psisx(med_block, n):
 class _RobustWeightedEstimator(BaseEstimator):
     """Meta algorithm for robust regression and binary classification.
 
-    This model use iterative reweighting of samples to make a regression or
+    This model uses iterative reweighting of samples to make a regression or
     classification estimator robust.
 
     The principle of the algorithm is to use an empirical risk minimization
@@ -271,16 +274,29 @@ class _RobustWeightedEstimator(BaseEstimator):
         # Get actual loss function from its name.
         loss = self._get_loss_function(loss_param)
 
-        # Weight initialization : do one non-robust epoch.
-        if loss_param in ["log", "hinge"]:
+        # Initialization
+        if self._estimator_type == "classifier":
             classes = np.unique(y)
             if len(classes) > 2:
                 raise ValueError("y must be binary.")
-            # If in a classification task, precise the classes.
-            base_estimator.partial_fit(X, y, classes=classes)
+            # Initialization of the estimator.
+            base_estimator.classes_ = np.array([0,1])
+            base_estimator.coef_=np.zeros([1,len(X[0])])
+            base_estimator.intercept_=np.array([0])
+            base_estimator.t_ = len(X)
+            base_estimator.loss_function_=loss
+            base_estimator.n_iter_=1
             self.classes_ = base_estimator.classes_
-        else:
-            base_estimator.partial_fit(X, y)
+        elif self._estimator_type == "regressor":
+            # Initialization of the estimator.
+            base_estimator.coef_=np.zeros([len(X[0])])
+            base_estimator.intercept_=np.array([0])
+            base_estimator.n_iter_=1
+            base_estimator.t_ = len(X)
+        elif self._estimator_type == "clusterer":
+            base_estimator.cluster_centers_ = np.array([np.median(X, axis=0)])
+            labels_=np.zeros(len(X))
+            base_estimator.inertia_ = np.inf
 
         # Initialization of final weights
         final_weights = np.zeros(len(X))
@@ -295,7 +311,7 @@ class _RobustWeightedEstimator(BaseEstimator):
                 # calibration to the one edicted by self.base_estimator.
                 base_estimator.set_params(learning_rate=learning_rate)
 
-            if loss_param in ["log", "hinge"]:
+            if self._estimator_type == "classifier":
                 # If in classification, use decision_function
                 pred = base_estimator.decision_function(X)
             else:
@@ -306,7 +322,7 @@ class _RobustWeightedEstimator(BaseEstimator):
                 loss_values = loss(X, pred)
             elif self._estimator_type == "classifier":
                 # For classifiers, set the labels to {-1,1} for compatibility.
-                loss_values = loss(2*y.flatten()-1, pred)
+                loss_values = loss(2 * y.flatten() - 1, pred)
             else:
                 loss_values = loss(y.flatten(), pred)
             # Compute the weight associated with each losses.
@@ -316,10 +332,15 @@ class _RobustWeightedEstimator(BaseEstimator):
                 loss_values, random_state
             )
 
-            # Use the optimization algorithm of self.base_estimator for one
-            # epoch using the previously computed weights.
-            base_estimator.partial_fit(X, y, sample_weight=weights)
 
+            # Use the optimization algorithm of self.base_estimator for one
+            # epoch using the previously computed weights. Also shuffle the data.
+            perm = random_state.permutation(len(X))
+            if self._estimator_type == "clusterer":
+                #Here y is None
+                base_estimator.partial_fit(X[perm], y, sample_weight=weights[perm])
+            else:
+                base_estimator.partial_fit(X[perm], y[perm], sample_weight=weights[perm])
             if (self.tol is not None) and (
                 current_loss > best_loss - self.tol
             ):
@@ -332,13 +353,12 @@ class _RobustWeightedEstimator(BaseEstimator):
 
             if n_iter_no_change_ == self.n_iter_no_change:
                 break
-
-            # Shuffle the data at each step.
-            if self._estimator_type == "clusterer":
-                X, weights = shuffle(X, weights, random_state=random_state)
-            else:
-                X, y, weights = shuffle(
-                    X, y, weights, random_state=random_state
+            elif epoch == self.max_iter-1:
+                warnings.warn(
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit.",
+                    ConvergenceWarning,
                 )
 
             if self.weighting == "mom":
@@ -446,8 +466,11 @@ class _RobustWeightedEstimator(BaseEstimator):
             raise ValueError("No such weighting scheme")
         # Compute the unnormalized weights.
         w = psisx(loss_values - mu)
+        if self._estimator_type == "regressor":
+            return w / np.sum(w) * len(w), mu
+        else:
+            return w / np.sum(w) , mu
 
-        return w / np.sum(w) * len(loss_values), mu
 
     def predict(self, X):
         """Predict using the estimator trained with RobustWeightedEstimator.
@@ -527,7 +550,7 @@ class _RobustWeightedEstimator(BaseEstimator):
 class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     """Algorithm for robust classification using reweighting algorithm.
 
-    This model use iterative reweighting of samples to make a regression or
+    This model uses iterative reweighting of samples to make a regression or
     classification estimator robust.
 
     The principle of the algorithm is to use an empirical risk minimization
@@ -603,7 +626,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         The stopping criterion. If it is not None, training will stop when
         (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
 
-    n_iter_no_change : int, default=10
+    n_iter_no_change : int, default=20
         Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -690,7 +713,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         multi_class="ovr",
         n_jobs=1,
         tol=1e-3,
-        n_iter_no_change=10,
+        n_iter_no_change=20,
         random_state=None,
     ):
         self.weighting = weighting
@@ -854,7 +877,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
 class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
     """Algorithm for robust regression using reweighting algorithm.
 
-    This model use iterative reweighting of samples to make a regression or
+    This model uses iterative reweighting of samples to make a regression or
     classification estimator robust.
 
     The principle of the algorithm is to use an empirical risk minimization
@@ -921,7 +944,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         The stopping criterion. If it is not None, training will stop when
         (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
 
-    n_iter_no_change : int, default=10
+    n_iter_no_change : int, default=20
         Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -998,7 +1021,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         loss="squared_loss",
         sgd_args=None,
         tol=1e-3,
-        n_iter_no_change=10,
+        n_iter_no_change=20,
         random_state=None,
     ):
 
@@ -1101,7 +1124,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
     """Algorithm for robust kmeans clustering using reweighting algorithm.
 
-    This model use iterative reweighting of samples to make a regression or
+    This model uses iterative reweighting of samples to make a regression or
     classification estimator robust.
 
     The principle of the algorithm is to use an empirical risk minimization
@@ -1163,7 +1186,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         The stopping criterion. If it is not None, training will stop when
         (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
 
-    n_iter_no_change : int, default=10
+    n_iter_no_change : int, default=20
         Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1244,7 +1267,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         k=0,
         kmeans_args=None,
         tol=1e-3,
-        n_iter_no_change=10,
+        n_iter_no_change=20,
         random_state=None,
     ):
         self.n_clusters = n_clusters

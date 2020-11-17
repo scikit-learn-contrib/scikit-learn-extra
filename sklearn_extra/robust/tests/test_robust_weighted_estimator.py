@@ -12,18 +12,17 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.cluster import KMeans
 from sklearn.utils import shuffle
 
-k_values = [None, 5]  # values of k for test robust
-c_values = [None, 1e-4]  # values of c for test robust
+k_values = [None, 10]  # values of k for test robust
+c_values = [None, 1e-3]  # values of c for test robust
 
 # Classification test with outliers
 rng = np.random.RandomState(42)
 X_cc, y_cc = make_blobs(
-    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+    n_samples=100, centers=np.array([[-1, -1], [1, 1],[3, 3]]), random_state=rng
 )
 for f in range(3):
-    X_cc[f] = [20, 5] + rng.normal(size=2) * 0.1
+    X_cc[f] = [1000, 5] + rng.normal(size=2) * 0.1
     y_cc[f] = 0
-X_cc, y_cc = shuffle(X_cc, y_cc, random_state=rng)
 
 classif_losses = ["log", "hinge"]
 weightings = ["huber", "mom"]
@@ -38,17 +37,16 @@ multi_class = ["ovr", "ovo"]
 def test_corrupted_classif(loss, weighting, k, c, multi_class):
     clf = RobustWeightedClassifier(
         loss=loss,
-        max_iter=50,
+        max_iter=100,
         weighting=weighting,
-        k=5,
-        c=None,
+        k=k,
+        c=c,
         multi_class=multi_class,
         random_state=rng,
     )
     clf.fit(X_cc, y_cc)
     score = clf.score(X_cc, y_cc)
-    assert score > 0.75
-
+    assert score > 0.8
 
 # Classification test without outliers
 rng = np.random.RandomState(42)
@@ -141,10 +139,9 @@ def test_robust_no_proba():
 # Regression test with outliers
 X_rc = rng.uniform(-1, 1, size=[200])
 y_rc = X_rc + 0.1 * rng.normal(size=200)
-X_rc[-1] = 10
+X_rc[0] = 10
 X_rc = X_rc.reshape(-1, 1)
-y_rc[-1] = -1
-X_rc, y_rc = shuffle(X_rc, y_rc, random_state=rng)
+y_rc[0] = -1
 regression_losses = ["squared_loss", "huber"]
 
 
@@ -158,13 +155,12 @@ def test_corrupted_regression(loss, weighting, k, c):
         max_iter=50,
         weighting=weighting,
         k=k,
-        c=None,
+        c=c,
         random_state=rng,
     )
     reg.fit(X_rc, y_rc)
-    score = median_absolute_error(reg.predict(X_rc), y_rc)
-    assert score < 0.2
-
+    assert np.abs(reg.coef_[0] -1) < 0.1
+    assert np.abs(reg.intercept_[0]) < 0.1
 
 X_r = rng.uniform(-1, 1, size=[1000])
 y_r = X_r + 0.1 * rng.normal(size=1000)
@@ -191,7 +187,7 @@ def test_not_robust_regression(loss, weighting):
     difference = [
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
-    assert np.mean(difference) < 1e-1
+    assert np.mean(difference) < 1
 
 
 # Clustering test with outliers
