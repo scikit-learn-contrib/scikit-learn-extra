@@ -255,7 +255,6 @@ class _RobustWeightedEstimator(BaseEstimator):
         self._validate_hyperparameters(len(X))
 
         # Initialization of all parameters in the base_estimator.
-
         base_estimator = clone(self.base_estimator)
         loss_param = self.loss
 
@@ -301,14 +300,6 @@ class _RobustWeightedEstimator(BaseEstimator):
             # Partial fit for the estimator to be set to "fitted" to be able
             # to predict.
             base_estimator.partial_fit(X, y)
-            # As the partial fit is here non-robust, override the
-            # learned centers.
-            base_estimator.cluster_centers_ = np.array(
-                [
-                    np.median(X, axis=0)
-                    for _ in range(base_estimator.n_clusters)
-                ]
-            )
 
         # Initialization of final weights
         final_weights = np.zeros(len(X))
