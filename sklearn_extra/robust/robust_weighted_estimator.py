@@ -33,6 +33,8 @@ import sklearn
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
+from ._robust_weighted_estimator_helper import _kmeans_loss
+
 
 # cython implementation of loss functions, copied from scikit-learn with light
 # modifications.
@@ -336,6 +338,23 @@ class _RobustWeightedEstimator(BaseEstimator):
             # Use the optimization algorithm of self.base_estimator for one
             # epoch using the previously computed weights. Also shuffle the data.
             perm = random_state.permutation(len(X))
+
+            base_estimator.partial_fit(X, y, sample_weight=weights)
+
+            if (self.tol is not None) and (
+                current_loss > best_loss - self.tol
+            ):
+                n_iter_no_change_ += 1
+            else:
+                n_iter_no_change_ = 0
+
+            if current_loss < best_loss:
+                best_loss = current_loss
+
+            if n_iter_no_change_ == self.n_iter_no_change:
+                break
+
+            # Shuffle the data at each step.
             if self._estimator_type == "clusterer":
                 # Here y is None
                 base_estimator.partial_fit(
@@ -629,7 +648,8 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         The stopping criterion. If it is not None, training will stop when
         (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
 
-    n_iter_no_change : int, default=20
+    n_iter_no_change : int, default=10
+
         Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -716,7 +736,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         multi_class="ovr",
         n_jobs=1,
         tol=1e-3,
-        n_iter_no_change=20,
+        n_iter_no_change=10,
         random_state=None,
     ):
         self.weighting = weighting
@@ -947,7 +967,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         The stopping criterion. If it is not None, training will stop when
         (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
 
-    n_iter_no_change : int, default=20
+    n_iter_no_change : int, default=10
         Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1024,7 +1044,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         loss="squared_loss",
         sgd_args=None,
         tol=1e-3,
-        n_iter_no_change=20,
+        n_iter_no_change=10,
         random_state=None,
     ):
 
@@ -1189,7 +1209,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         The stopping criterion. If it is not None, training will stop when
         (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
 
-    n_iter_no_change : int, default=20
+    n_iter_no_change : int, default=10
         Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1270,7 +1290,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         k=0,
         kmeans_args=None,
         tol=1e-3,
-        n_iter_no_change=20,
+        n_iter_no_change=10,
         random_state=None,
     ):
         self.n_clusters = n_clusters
