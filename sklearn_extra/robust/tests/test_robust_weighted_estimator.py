@@ -18,7 +18,9 @@ c_values = [None, 1e-3]  # values of c for test robust
 # Classification test with outliers
 rng = np.random.RandomState(42)
 X_cc, y_cc = make_blobs(
-    n_samples=100, centers=np.array([[-1, -1], [1, 1],[3, 3]]), random_state=rng
+    n_samples=100,
+    centers=np.array([[-1, -1], [1, 1], [3, 3]]),
+    random_state=rng,
 )
 for f in range(3):
     X_cc[f] = [1000, 5] + rng.normal(size=2) * 0.1
@@ -47,6 +49,7 @@ def test_corrupted_classif(loss, weighting, k, c, multi_class):
     clf.fit(X_cc, y_cc)
     score = clf.score(X_cc, y_cc)
     assert score > 0.8
+
 
 # Classification test without outliers
 rng = np.random.RandomState(42)
@@ -159,8 +162,9 @@ def test_corrupted_regression(loss, weighting, k, c):
         random_state=rng,
     )
     reg.fit(X_rc, y_rc)
-    assert np.abs(reg.coef_[0] -1) < 0.1
+    assert np.abs(reg.coef_[0] - 1) < 0.1
     assert np.abs(reg.intercept_[0]) < 0.1
+
 
 X_r = rng.uniform(-1, 1, size=[1000])
 y_r = X_r + 0.1 * rng.normal(size=1000)

@@ -33,6 +33,7 @@ import sklearn
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
+
 # cython implementation of loss functions, copied from scikit-learn with light
 # modifications.
 from ._robust_weighted_estimator_helper import (
@@ -280,22 +281,22 @@ class _RobustWeightedEstimator(BaseEstimator):
             if len(classes) > 2:
                 raise ValueError("y must be binary.")
             # Initialization of the estimator.
-            base_estimator.classes_ = np.array([0,1])
-            base_estimator.coef_=np.zeros([1,len(X[0])])
-            base_estimator.intercept_=np.array([0])
+            base_estimator.classes_ = np.array([0, 1])
+            base_estimator.coef_ = np.zeros([1, len(X[0])])
+            base_estimator.intercept_ = np.array([0])
             base_estimator.t_ = len(X)
-            base_estimator.loss_function_=loss
-            base_estimator.n_iter_=1
+            base_estimator.loss_function_ = loss
+            base_estimator.n_iter_ = 1
             self.classes_ = base_estimator.classes_
         elif self._estimator_type == "regressor":
             # Initialization of the estimator.
-            base_estimator.coef_=np.zeros([len(X[0])])
-            base_estimator.intercept_=np.array([0])
-            base_estimator.n_iter_=1
+            base_estimator.coef_ = np.zeros([len(X[0])])
+            base_estimator.intercept_ = np.array([0])
+            base_estimator.n_iter_ = 1
             base_estimator.t_ = len(X)
         elif self._estimator_type == "clusterer":
             base_estimator.cluster_centers_ = np.array([np.median(X, axis=0)])
-            labels_=np.zeros(len(X))
+            labels_ = np.zeros(len(X))
             base_estimator.inertia_ = np.inf
 
         # Initialization of final weights
@@ -332,15 +333,18 @@ class _RobustWeightedEstimator(BaseEstimator):
                 loss_values, random_state
             )
 
-
             # Use the optimization algorithm of self.base_estimator for one
             # epoch using the previously computed weights. Also shuffle the data.
             perm = random_state.permutation(len(X))
             if self._estimator_type == "clusterer":
-                #Here y is None
-                base_estimator.partial_fit(X[perm], y, sample_weight=weights[perm])
+                # Here y is None
+                base_estimator.partial_fit(
+                    X[perm], y, sample_weight=weights[perm]
+                )
             else:
-                base_estimator.partial_fit(X[perm], y[perm], sample_weight=weights[perm])
+                base_estimator.partial_fit(
+                    X[perm], y[perm], sample_weight=weights[perm]
+                )
             if (self.tol is not None) and (
                 current_loss > best_loss - self.tol
             ):
@@ -353,7 +357,7 @@ class _RobustWeightedEstimator(BaseEstimator):
 
             if n_iter_no_change_ == self.n_iter_no_change:
                 break
-            elif epoch == self.max_iter-1:
+            elif epoch == self.max_iter - 1:
                 warnings.warn(
                     "Maximum number of iteration reached before "
                     "convergence. Consider increasing max_iter to "
@@ -469,8 +473,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         if self._estimator_type == "regressor":
             return w / np.sum(w) * len(w), mu
         else:
-            return w / np.sum(w) , mu
-
+            return w / np.sum(w), mu
 
     def predict(self, X):
         """Predict using the estimator trained with RobustWeightedEstimator.
