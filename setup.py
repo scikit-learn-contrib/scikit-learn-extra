@@ -78,7 +78,8 @@ args = {
             Extension(
                 "sklearn_extra.cluster._k_medoids_swap",
                 ["sklearn_extra/cluster/_k_medoids_swap.pyx"],
-                **kmedoid_args),
+                **kmedoid_args
+            ),
             Extension(
                 "sklearn_extra.robust._robust_weighted_estimator_helper",
                 ["sklearn_extra/robust/_robust_weighted_estimator_helper.pyx"],
