@@ -54,6 +54,9 @@ EXTRAS_REQUIRE = {
         "matplotlib",
     ],
 }
+libraries = []
+if os.name == "posix":
+    libraries.append("m")
 
 if os.name == "posix" and os.uname().sysname == "Linux":
     kmedoid_args = {
@@ -75,7 +78,12 @@ args = {
             Extension(
                 "sklearn_extra.cluster._k_medoids_swap",
                 ["sklearn_extra/cluster/_k_medoids_swap.pyx"],
-                **kmedoid_args
+                **kmedoid_args),
+            Extension(
+                "sklearn_extra.robust._robust_weighted_estimator_helper",
+                ["sklearn_extra/robust/_robust_weighted_estimator_helper.pyx"],
+                include_dirs=[np.get_include()],
+                libraries=libraries,
             ),
             Extension(
                 "sklearn_extra.cluster._commonnn_inner",

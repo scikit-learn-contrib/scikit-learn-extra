@@ -3,13 +3,13 @@
 =============================================================
 Robust regression on simulated corrupted dataset
 =============================================================
-In this example we compare the RobustWeightedEstimator using SGDRegressor
-for regression with various robust regression algorithms from scikit-learn.
+In this example we compare the RobustWeightedRegressor
+with various robust regression algorithms from scikit-learn.
 """
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn_extra.robust import RobustWeightedEstimator
+from sklearn_extra.robust import RobustWeightedRegressor
 from sklearn.utils import shuffle
 from sklearn.linear_model import (
     SGDRegressor,
@@ -41,10 +41,8 @@ estimators = [
         SGDRegressor(loss="epsilon_insensitive", random_state=rng),
     ),
     (
-        "RobustWeightedEstimator",
-        RobustWeightedEstimator(
-            loss="squared_loss", weighting="mom", k=7, random_state=rng
-        ),
+        "RobustWeightedRegressor",
+        RobustWeightedRegressor(weighting="mom", k=7, random_state=rng),
         # The parameter k is set larger to the number of outliers
         # because here we know it.
     ),
@@ -56,7 +54,7 @@ colors = {
     "Theil-Sen": "gold",
     "RANSAC": "lightgreen",
     "HuberRegressor": "black",
-    "RobustWeightedEstimator": "magenta",
+    "RobustWeightedRegressor": "magenta",
     "SGD epsilon loss": "purple",
 }
 linestyle = {
@@ -65,7 +63,7 @@ linestyle = {
     "Theil-Sen": "-.",
     "RANSAC": "--",
     "HuberRegressor": "--",
-    "RobustWeightedEstimator": "--",
+    "RobustWeightedRegressor": "--",
 }
 lw = 3
 

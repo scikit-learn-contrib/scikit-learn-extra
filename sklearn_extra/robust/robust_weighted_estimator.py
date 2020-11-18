@@ -7,7 +7,14 @@ import numpy as np
 import warnings
 from scipy.stats import iqr
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import (
+    BaseEstimator,
+    clone,
+    is_classifier,
+    ClassifierMixin,
+    RegressorMixin,
+    ClusterMixin,
+)
 from sklearn.utils import (
     check_random_state,
     check_array,
@@ -15,8 +22,12 @@ from sklearn.utils import (
     shuffle,
 )
 from sklearn.utils.validation import check_is_fitted
-from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import SGDRegressor, SGDClassifier
+from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
 from pkg_resources import parse_version
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.metrics.pairwise import euclidean_distances
+
 import sklearn
 
 if parse_version(sklearn.__version__) > parse_version("0.23.9"):
@@ -26,17 +37,20 @@ else:
 # Loss functions import. Taken from scikit-learn linear SGD estimators.
 
 try:
-    from sklearn.linear_model._sgd_fast import Log, SquaredLoss, Hinge
+    from sklearn.linear_model._sgd_fast import Log, SquaredLoss, Hinge, Huber
 except ImportError:
-    from sklearn.linear_model.sgd_fast import Log, SquaredLoss, Hinge
+    from sklearn.linear_model.sgd_fast import Log, SquaredLoss, Hinge, Huber
 
 # Tool library in which we get robust mean estimators.
-from .mean_estimators import median_of_means_blocked, blockMOM, huber
+from .mean_estimators import median_of_means_blocked, block_mom, huber
+from ._robust_weighted_estimator_helper import _kmeans_loss
+
 
 LOSS_FUNCTIONS = {
     "hinge": (Hinge, 1.0),
     "log": (Log,),
     "squared_loss": (SquaredLoss,),
+    "huber": (Huber, 1.35),  # 1.35 is default value. TODO : set as parameter
 }
 
 
@@ -53,10 +67,10 @@ def _mom_psisx(med_block, n):
     """MOM weight for RobustWeightedEstimator algorithm"""
     res = np.zeros(n)
     res[med_block] = 1
-    return lambda x: res
+    return res
 
 
-class RobustWeightedEstimator(BaseEstimator):
+class _RobustWeightedEstimator(BaseEstimator):
     """Meta algorithm for robust regression and (Binary) classification.
 
     This model use iterative reweighting of samples to make a regression or
@@ -65,7 +79,7 @@ class RobustWeightedEstimator(BaseEstimator):
     The principle of the algorithm is to use an empirical risk minimization
     principle where the risk is estimated using a robust estimator (for example
     Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
-    algorithm was mentionned before in [2].
+    algorithm was mentioned before in [2].
     This idea translates in an iterative algorithm where the sample_weight
     are changed at each iterations and are dependent of the sample. Informally
     the outliers should have small weight while the inliers should have big
@@ -81,10 +95,20 @@ class RobustWeightedEstimator(BaseEstimator):
     Parameters
     ----------
 
-    base_estimator : object or None, default=None
+    base_estimator : object, mandatory
         The base estimator to fit. For now only SGDRegressor and SGDClassifier
         are supported.
         If None, then the base estimator is SGDRegressor with squared loss.
+
+    loss : string or callable, mandatory
+        Name of the loss used, must be the same loss as the one optimized in
+        base_estimator.
+        Classification losses supported : 'log', 'hinge'.
+        If 'log', then the base_estimator must support predict_proba.
+        Regression losses supported : 'squared_loss' or 'huber'.
+        If None and if base_estimator is None, loss='squared_loss'
+        If callable, the function is used as loss function ro construct
+        the weights.
 
     weighting : string, default="huber"
         Weighting scheme used to make the estimator robust.
@@ -106,7 +130,7 @@ class RobustWeightedEstimator(BaseEstimator):
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
-        is 'huber'. Measure the robustness of the weightint procedure. A small
+        is 'huber'. Measure the robustness of the weighting procedure. A small
         value of c means a more robust estimator.
         Can have a big effect on efficiency.
         If None, c is estimated at each step using half the Inter-quartile
@@ -122,15 +146,12 @@ class RobustWeightedEstimator(BaseEstimator):
         (using the inter-quartile range), this tends to be conservative
         (robust).
 
-    loss : string, None or callable, default=None
-        Name of the loss used, must be the same loss as the one optimized in
-        base_estimator.
-        Classification losses supported : 'log', 'hinge'.
-        If 'log', then the base_estimator must support predict_proba.
-        Regression losses supported : 'squared_loss'.
-        If None and if base_estimator is None, loss='squared_loss'
-        If callable, the function is used as loss function ro construct
-        the weights.
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -161,20 +182,6 @@ class RobustWeightedEstimator(BaseEstimator):
     For now, only binary classification is implemented. See sklearn.multiclass
     if you want to use this algorithm in multiclass classification.
 
-    Examples
-    --------
-
-    >>> from sklearn_extra.robust import RobustWeightedEstimator
-    >>> from sklearn.linear_model import SGDClassifier
-    >>> from sklearn.datasets import make_blobs
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(42)
-    >>> X,y = make_blobs(n_samples=100, centers=np.array([[-1, -1], [1, 1]]),
-    ...                  random_state=rng)
-    >>> clf=RobustWeightedEstimator(base_estimator=SGDClassifier(),
-    ...                             loss='hinge', random_state=rng)
-    >>> _ = clf.fit(X, y)
-    >>> score = np.mean(clf.predict(X)==y)
 
     References
     ----------
@@ -197,14 +204,16 @@ class RobustWeightedEstimator(BaseEstimator):
 
     def __init__(
         self,
-        base_estimator=None,
+        base_estimator,
+        loss,
         weighting="huber",
         max_iter=100,
         burn_in=10,
         eta0=0.1,
         c=None,
         k=0,
-        loss=None,
+        tol=1e-5,
+        n_iter_no_change=10,
         random_state=None,
     ):
         self.base_estimator = base_estimator
@@ -215,6 +224,8 @@ class RobustWeightedEstimator(BaseEstimator):
         self.k = k
         self.loss = loss
         self.max_iter = max_iter
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -244,21 +255,8 @@ class RobustWeightedEstimator(BaseEstimator):
 
         # Initialization of all parameters in the base_estimator.
 
-        if self.base_estimator is None:
-            base_estimator = SGDRegressor()
-            if self.loss is None:
-                loss_param = "squared_loss"
-            else:
-                loss_param = self.loss
-        else:
-            base_estimator = clone(self.base_estimator)
-            loss_param = self.loss
-
-        if loss_param is None:
-            raise ValueError(
-                "If base_estimator is not None, loss cannot "
-                "be None. Please specify a loss."
-            )
+        base_estimator = clone(self.base_estimator)
+        loss_param = self.loss
 
         parameters = list(base_estimator.get_params().keys())
         if "warm_start" in parameters:
@@ -282,11 +280,14 @@ class RobustWeightedEstimator(BaseEstimator):
                 raise ValueError("y must be binary.")
             # If in a classification task, precise the classes.
             base_estimator.partial_fit(X, y, classes=classes)
+            self.classes_ = base_estimator.classes_
         else:
             base_estimator.partial_fit(X, y)
 
         # Initialization of final weights
-        final_weight = np.zeros(len(X))
+        final_weights = np.zeros(len(X))
+        best_loss = np.inf
+        n_iter_no_change_ = 0
 
         # Optimization algorithm
         for epoch in range(self.max_iter):
@@ -311,11 +312,26 @@ class RobustWeightedEstimator(BaseEstimator):
             # Compute the weight associated with each losses.
             # Samples whose loss is far from the mean loss (robust estimation)
             # will have a small weight.
-            weights = self._get_weights(loss_values, random_state)
+            weights, current_loss = self._get_weights(
+                loss_values, random_state
+            )
 
             # Use the optimization algorithm of self.base_estimator for one
             # epoch using the previously computed weights.
             base_estimator.partial_fit(X, y, sample_weight=weights)
+
+            if (self.tol is not None) and (
+                current_loss > best_loss - self.tol
+            ):
+                n_iter_no_change_ += 1
+            else:
+                n_iter_no_change_ = 0
+
+            if current_loss < best_loss:
+                best_loss = current_loss
+
+            if n_iter_no_change_ == self.n_iter_no_change:
+                break
 
             # Shuffle the data at each step.
             if self._estimator_type == "clusterer":
@@ -326,14 +342,23 @@ class RobustWeightedEstimator(BaseEstimator):
                 )
 
             if self.weighting == "mom":
-                final_weight += weights
+                final_weights += weights
 
         if self.weighting == "mom":
-            self.weights_ = final_weight / self.max_iter
+            self.weights_ = final_weights / self.max_iter
         else:
             self.weights_ = weights
         self.base_estimator_ = base_estimator
         self.n_iter_ = self.max_iter * len(X)
+        if hasattr(base_estimator, "coef_"):
+            self.coef_ = base_estimator.coef_
+            self.intercept_ = base_estimator.intercept_
+        if hasattr(base_estimator, "labels_"):
+            self.labels_ = self.base_estimator_.labels_
+
+        if hasattr(base_estimator, "cluster_centers_"):
+            self.cluster_centers_ = self.base_estimator_.cluster_centers_
+            self.inertia_ = self.base_estimator_.inertia_
         return self
 
     def _get_loss_function(self, loss):
@@ -409,16 +434,20 @@ class RobustWeightedEstimator(BaseEstimator):
             else:
                 k = self.k
             # Choose (randomly) 2k+1 (almost-)equal blocks of data.
-            blocks = blockMOM(loss_values, k, random_state)
+            blocks = block_mom(loss_values, k, random_state)
             # Compute the median-of-means of the losses using these blocks.
             # Return also the index at which this median-of-means is attained.
             mu, idmom = median_of_means_blocked(loss_values, blocks)
-            psisx = _mom_psisx(blocks[idmom], len(loss_values))
+
+            def psisx(x):
+                return _mom_psisx(blocks[idmom], len(loss_values))
+
         else:
             raise ValueError("No such weighting scheme")
         # Compute the unnormalized weights.
         w = psisx(loss_values - mu)
-        return w / np.sum(w) * len(loss_values)
+
+        return w / np.sum(w) * len(loss_values), mu
 
     def predict(self, X):
         """Predict using the estimator trained with RobustWeightedEstimator.
@@ -454,10 +483,7 @@ class RobustWeightedEstimator(BaseEstimator):
 
     @property
     def _estimator_type(self):
-        if self.base_estimator is None:
-            return SGDRegressor()._estimator_type
-        else:
-            return self.base_estimator._estimator_type
+        return self.base_estimator._estimator_type
 
     def score(self, X, y=None):
         """Returns the score on the given data, using
@@ -477,7 +503,344 @@ class RobustWeightedEstimator(BaseEstimator):
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.score(X, y)
 
-    def _decision_function(self, X):
+    def decision_function(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+
+        Returns
+        -------
+        array, shape (n_samples,)
+           Predicted target values per element in X.
+        """
+        check_is_fitted(self, attributes=["base_estimator_"])
+        if not is_classifier(self):
+            raise ValueError(
+                "self.decision_function is only available"
+                " for classification."
+            )
+        return self.base_estimator_.decision_function(X)
+
+
+class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
+    """Algorithm for robust classification using reweighting algorithm.
+
+    This model use iterative reweighting of samples to make a regression or
+    classification estimator robust.
+
+    The principle of the algorithm is to use an empirical risk minimization
+    principle where the risk is estimated using a robust estimator (for example
+    Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
+    algorithm was mentioned before in [2].
+    This idea translates in an iterative algorithm where the sample_weight
+    are changed at each iterations and are dependent of the sample. Informally
+    the outliers should have small weight while the inliers should have big
+    weight, where outliers are sample with a big loss function.
+
+    This algorithm enjoy a non-zero breakdown-point (it can handle arbitrarily
+    bad outliers). When the "mom" weighting scheme is used, k outliers can be
+    tolerated. When the "Huber" weighting scheme is used, asymptotically the
+    number of outliers has to be less than half the sample size.
+
+    Read more in the :ref:`User Guide <robust>`.
+
+    Parameters
+    ----------
+
+    weighting : string, default="huber"
+        Weighting scheme used to make the estimator robust.
+        Can be 'huber' for huber-type weights or  'mom' for median-of-means
+        type weights.
+
+    max_iter : int, default=100
+        Maximum number of iterations.
+        For more information, see the optimization scheme of base_estimator
+        and the eta0 and burn_in parameter.
+
+    burn_in : int, default=10
+        Number of steps used without changing the learning rate.
+        Can be useful to make the weight estimation better at the beginning.
+
+    eta0 : float, default=0.01
+        Constant step-size used during the burn_in period. Used only if
+        burn_in>0. Can have a big effect on efficiency.
+
+    c : float>0 or None, default=None
+        Parameter used for Huber weighting procedure, used only if weightings
+        is 'huber'. Measure the robustness of the weighting procedure. A small
+        value of c means a more robust estimator.
+        Can have a big effect on efficiency.
+        If None, c is estimated at each step using half the Inter-quartile
+        range, this tends to be conservative (robust).
+
+    k : int < sample_size/2, default=1
+        Parameter used for mom weighting procedure, used only if weightings
+        is 'mom'. 2k+1 is the number of blocks used for median-of-means
+        estimation, higher value of k means a more robust estimator.
+        Can have a big effect on efficiency.
+        If None, k is estimated using the number of points distant from the
+        median of means of more than 2 times a robust estimate of the scale
+        (using the inter-quartile range), this tends to be conservative
+        (robust).
+
+    loss : string, None or callable, default="log"
+        Name of the loss used, must be the same loss as the one optimized in
+        base_estimator.
+        Classification losses supported : 'log', 'hinge'.
+        If 'log', then the base_estimator must support predict_proba.
+        Regression losses supported : 'squared_loss', .
+
+    sgd_args : dict, default={}
+        arguments of the SGDClassifier base estimator.
+
+    multi_class : string, default="ovr"
+        multi-class scheme. Can be either "ovo" for OneVsOneClassifier or "ovr"
+        for OneVsRestClassifier or "binary" for binary classification.
+
+    n_jobs : int, default=1
+        number of jobs used in the multi-class meta-algorithm computation.
+
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data. If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by np.random.
+
+
+
+    Attributes
+    ----------
+
+    classes_ : ndarray of shape (n_classes, )
+        A list of class labels known to the classifier.
+
+    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function. Only available if
+        multi_class = "binary"
+
+    intercept_ : ndarray of shape (1,) or (n_classes,)
+        Intercept (a.k.a. bias) added to the decision function.
+        Only available if multi_class = "binary"
+
+    n_iter_ : ndarray of shape (n_classes,) or (1, )
+        Actual number of iterations for all classes. If binary or multinomial,
+        it returns only 1 element. For liblinear solver, only the maximum
+        number of iteration across all classes is given.
+
+    base_estimator_ : object,
+        The fitted base estimator SGDCLassifier.
+
+    weights_ : array like, length = n_sample.
+        Weight of each sample at the end of the algorithm. Can be used as a
+        measure of how much of an outlier a sample is. Only available if
+        multi_class = "binary"
+
+
+    Notes
+    -----
+
+    Often, there is a need to use RobustScaler as preprocessing.
+
+    Examples
+    --------
+
+    >>> from sklearn_extra.robust import RobustWeightedClassifier
+    >>> from sklearn.datasets import make_blobs
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(42)
+    >>> X,y = make_blobs(n_samples=100, centers=np.array([[-1, -1], [1, 1]]),
+    ...                  random_state=rng)
+    >>> clf=RobustWeightedClassifier()
+    >>> _ = clf.fit(X, y)
+    >>> score = np.mean(clf.predict(X)==y)
+
+    References
+    ----------
+
+    [1] Guillaume Lecué, Matthieu Lerasle and Timothée Mathieu.
+        "Robust classification via MOM minimization", Mach Learn 109, (2020).
+        https://doi.org/10.1007/s10994-019-05863-6 (2018).
+        arXiv:1808.03106
+
+    [2] Christian Brownlees, Emilien Joly and Gábor Lugosi.
+        "Empirical risk minimization for heavy-tailed losses", Ann. Statist.
+        Volume 43, Number 6 (2015), 2507-2536.
+
+    [3] Stanislav Minsker and Timothée Mathieu.
+        "Excess risk bounds in robust empirical risk minimization"
+        arXiv preprint (2019). arXiv:1910.07485.
+
+    """
+
+    def __init__(
+        self,
+        weighting="huber",
+        max_iter=100,
+        burn_in=10,
+        eta0=0.01,
+        c=None,
+        k=0,
+        loss="log",
+        sgd_args=None,
+        multi_class="ovr",
+        n_jobs=1,
+        tol=1e-3,
+        n_iter_no_change=10,
+        random_state=None,
+    ):
+        self.weighting = weighting
+        self.max_iter = max_iter
+        self.burn_in = burn_in
+        self.eta0 = eta0
+        self.c = c
+        self.k = k
+        self.loss = loss
+        self.sgd_args = sgd_args
+        self.multi_class = multi_class
+        self.n_jobs = n_jobs
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        """Fit the model to data matrix X and target(s) y.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : returns an estimator trained with RobustWeightedClassifier.
+        """
+
+        if self.sgd_args is None:
+            sgd_args = {}
+        else:
+            sgd_args = self.sgd_args
+
+        # Define the base estimator
+        base_robust_estimator_ = _RobustWeightedEstimator(
+            SGDClassifier(**sgd_args, loss=self.loss),
+            weighting=self.weighting,
+            loss=self.loss,
+            burn_in=self.burn_in,
+            c=self.c,
+            k=self.k,
+            eta0=self.eta0,
+            max_iter=self.max_iter,
+            tol=self.tol,
+            n_iter_no_change=self.n_iter_no_change,
+            random_state=self.random_state,
+        )
+
+        if self.multi_class == "ovr":
+            self.base_estimator_ = OneVsRestClassifier(
+                base_robust_estimator_, n_jobs=self.n_jobs
+            )
+        elif self.multi_class == "binary":
+            self.base_estimator_ = base_robust_estimator_
+        elif self.multi_class == "ovo":
+            self.base_estimator_ = OneVsOneClassifier(
+                base_robust_estimator_, n_jobs=self.n_jobs
+            )
+        else:
+            raise ValueError("No such multiclass method implemented.")
+
+        self.base_estimator_.fit(X, y)
+        if self.multi_class == "binary":
+            self.weights_ = self.base_estimator_.weights_
+            self.coef_ = self.base_estimator_.coef_
+            self.intercept_ = self.base_estimator_.intercept_
+        self.n_iter_ = self.max_iter * len(X)
+        self.classes_ = self.base_estimator_.classes_
+        return self
+
+    def predict(self, X):
+        """Predict using the estimator trained with RobustWeightedClassifier.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y : array-like, shape (n_samples, n_outputs)
+            The predicted values.
+        """
+
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.predict(X)
+
+    def _check_proba(self):
+        if self.loss != "log":
+            raise AttributeError(
+                "Probability estimates are not available for"
+                " loss=%r" % self.loss
+            )
+
+    @property
+    def predict_proba(self):
+        """
+        Probability estimates when binary classification.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        T : array-like of shape (n_samples, n_classes)
+            Returns the probability of the sample for each class in the model,
+        """
+        check_is_fitted(self, attributes=["base_estimator_"])
+        self._check_proba()
+        return self._predict_proba
+
+    def _predict_proba(self, X):
+        return self.base_estimator_.predict_proba(X)
+
+    @property
+    def _estimator_type(self):
+        return self.base_estimator._estimator_type
+
+    def score(self, X, y=None):
+        """Returns the score on the given data, using
+        ``base_estimator_.score``.
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
+        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+        Returns
+        -------
+        score : float
+        """
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.score(X, y)
+
+    def decision_function(self, X):
         """Predict using the linear model
 
         Parameters
@@ -491,3 +854,534 @@ class RobustWeightedEstimator(BaseEstimator):
         """
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.decision_function(X)
+
+
+class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
+    """Algorithm for robust regression using reweighting algorithm.
+
+    This model use iterative reweighting of samples to make a regression or
+    classification estimator robust.
+
+    The principle of the algorithm is to use an empirical risk minimization
+    principle where the risk is estimated using a robust estimator (for example
+    Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
+    algorithm was mentioned before in [2].
+    This idea translates in an iterative algorithm where the sample_weight
+    are changed at each iterations and are dependent of the sample. Informally
+    the outliers should have small weight while the inliers should have big
+    weight, where outliers are sample with a big loss function.
+
+    This algorithm enjoy a non-zero breakdown-point (it can handle arbitrarily
+    bad outliers). When the "mom" weighting scheme is used, k outliers can be
+    tolerated. When the "Huber" weighting scheme is used, asymptotically the
+    number of outliers has to be less than half the sample size.
+
+    Read more in the :ref:`User Guide <robust>`.
+
+    Parameters
+    ----------
+
+    weighting : string, default="huber"
+        Weighting scheme used to make the estimator robust.
+        Can be 'huber' for huber-type weights or  'mom' for median-of-means
+        type weights.
+
+    max_iter : int, default=100
+        Maximum number of iterations.
+        For more information, see the optimization scheme of base_estimator
+        and the eta0 and burn_in parameter.
+
+    burn_in : int, default=10
+        Number of steps used without changing the learning rate.
+        Can be useful to make the weight estimation better at the beginning.
+
+    eta0 : float, default=0.01
+        Constant step-size used during the burn_in period. Used only if
+        burn_in>0. Can have a big effect on efficiency.
+
+    c : float>0 or None, default=None
+        Parameter used for Huber weighting procedure, used only if weightings
+        is 'huber'. Measure the robustness of the weighting procedure. A small
+        value of c means a more robust estimator.
+        Can have a big effect on efficiency.
+        If None, c is estimated at each step using half the Inter-quartile
+        range, this tends to be conservative (robust).
+
+    k : int < sample_size/2, default=1
+        Parameter used for mom weighting procedure, used only if weightings
+        is 'mom'. 2k+1 is the number of blocks used for median-of-means
+        estimation, higher value of k means a more robust estimator.
+        Can have a big effect on efficiency.
+        If None, k is estimated using the number of points distant from the
+        median of means of more than 2 times a robust estimate of the scale
+        (using the inter-quartile range), this tends to be conservative
+        (robust).
+
+    loss : string, None or callable, default="squared_loss"
+        For now, only "squared_loss" or "huber" are implemented.
+
+    sgd_args : dict, default={}
+        arguments of the SGDClassifier base estimator.
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data. If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by np.random.
+
+
+    Attributes
+    ----------
+
+
+    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features.
+
+    intercept_ : ndarray of shape (1,) or (n_classes,)
+        Intercept (a.k.a. bias).
+
+    n_iter_ : ndarray of shape (n_classes,) or (1, )
+        Actual number of iterations.
+
+    base_estimator_ : object,
+        The fitted base_estimator.
+
+    weights_ : array like, length = n_sample.
+        Weight of each sample at the end of the algorithm. Can be used as a
+        measure of how much of an outlier a sample is.
+
+    Notes
+    -----
+
+    Often, there is a need to use RobustScaler as preprocessing.
+
+    Examples
+    --------
+
+    >>> from sklearn_extra.robust import RobustWeightedRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(42)
+    >>> X, y = make_regression()
+    >>> reg = RobustWeightedRegressor()
+    >>> _ = reg.fit(X, y)
+    >>> score = np.mean(reg.predict(X)==y)
+
+    References
+    ----------
+
+    [1] Guillaume Lecué, Matthieu Lerasle and Timothée Mathieu.
+        "Robust classification via MOM minimization", Mach Learn 109, (2020).
+        https://doi.org/10.1007/s10994-019-05863-6 (2018).
+        arXiv:1808.03106
+
+    [2] Christian Brownlees, Emilien Joly and Gábor Lugosi.
+        "Empirical risk minimization for heavy-tailed losses", Ann. Statist.
+        Volume 43, Number 6 (2015), 2507-2536.
+
+    [3] Stanislav Minsker and Timothée Mathieu.
+        "Excess risk bounds in robust empirical risk minimization"
+        arXiv preprint (2019). arXiv:1910.07485.
+
+    """
+
+    def __init__(
+        self,
+        weighting="huber",
+        max_iter=100,
+        burn_in=10,
+        eta0=0.01,
+        c=None,
+        k=0,
+        loss="squared_loss",
+        sgd_args=None,
+        tol=1e-3,
+        n_iter_no_change=10,
+        random_state=None,
+    ):
+
+        self.weighting = weighting
+        self.max_iter = max_iter
+        self.burn_in = burn_in
+        self.eta0 = eta0
+        self.c = c
+        self.k = k
+        self.loss = loss
+        self.sgd_args = sgd_args
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        """Fit the model to data matrix X and target(s) y.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : returns an estimator trained with RobustWeightedClassifier.
+        """
+        if self.sgd_args is None:
+            sgd_args = {}
+        else:
+            sgd_args = self.sgd_args
+
+        # Define the base estimator
+
+        self.base_estimator_ = _RobustWeightedEstimator(
+            SGDRegressor(**sgd_args, loss=self.loss),
+            weighting=self.weighting,
+            loss=self.loss,
+            burn_in=self.burn_in,
+            c=self.c,
+            k=self.k,
+            eta0=self.eta0,
+            max_iter=self.max_iter,
+            tol=self.tol,
+            n_iter_no_change=self.n_iter_no_change,
+            random_state=self.random_state,
+        )
+        self.base_estimator_.fit(X, y)
+
+        self.weights_ = self.base_estimator_.weights_
+        self.n_iter_ = self.max_iter * len(X)
+        self.coef_ = self.base_estimator_.coef_
+        self.intercept_ = self.base_estimator_.intercept_
+        return self
+
+    def predict(self, X):
+        """Predict using the estimator trained with RobustWeightedRegressor.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y : array-like, shape (n_samples, n_outputs)
+            The predicted values.
+        """
+
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.predict(X)
+
+    @property
+    def _estimator_type(self):
+        return self.base_estimator._estimator_type
+
+    def score(self, X, y=None):
+        """Returns the score on the given data, using
+        ``base_estimator_.score``.
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
+        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+        Returns
+        -------
+        score : float
+        """
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.score(X, y)
+
+
+class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
+    """Algorithm for robust kmeans clustering using reweighting algorithm.
+
+    This model use iterative reweighting of samples to make a regression or
+    classification estimator robust.
+
+    The principle of the algorithm is to use an empirical risk minimization
+    principle where the risk is estimated using a robust estimator (for example
+    Huber estimator or median-of-means estimator)[1], [3]. The idea behind this
+    algorithm was mentioned before in [2].
+    This idea translates in an iterative algorithm where the sample_weight
+    are changed at each iterations and are dependent of the sample. Informally
+    the outliers should have small weight while the inliers should have big
+    weight, where outliers are sample with a big loss function.
+
+    This algorithm enjoy a non-zero breakdown-point (it can handle arbitrarily
+    bad outliers). When the "mom" weighting scheme is used, k outliers can be
+    tolerated. When the "Huber" weighting scheme is used, asymptotically the
+    number of outliers has to be less than half the sample size.
+
+    Read more in the :ref:`User Guide <robust>`.
+
+    Parameters
+    ----------
+
+    weighting : string, default="huber"
+        Weighting scheme used to make the estimator robust.
+        Can be 'huber' for huber-type weights or  'mom' for median-of-means
+        type weights.
+
+    max_iter : int, default=100
+        Maximum number of iterations.
+        For more information, see the optimization scheme of base_estimator
+        and the eta0 and burn_in parameter.
+
+    eta0 : float, default=0.01
+        Constant step-size used during the burn_in period. Used only if
+        burn_in>0. Can have a big effect on efficiency.
+
+    c : float>0 or None, default=None
+        Parameter used for Huber weighting procedure, used only if weightings
+        is 'huber'. Measure the robustness of the weighting procedure. A small
+        value of c means a more robust estimator.
+        Can have a big effect on efficiency.
+        If None, c is estimated at each step using half the Inter-quartile
+        range, this tends to be conservative (robust).
+
+    k : int < sample_size/2, default=1
+        Parameter used for mom weighting procedure, used only if weightings
+        is 'mom'. 2k+1 is the number of blocks used for median-of-means
+        estimation, higher value of k means a more robust estimator.
+        Can have a big effect on efficiency.
+        If None, k is estimated using the number of points distant from the
+        median of means of more than 2 times a robust estimate of the scale
+        (using the inter-quartile range), this tends to be conservative
+        (robust).
+
+    kmeans_args : dict, default={}
+        arguments of the MiniBatchKMeans base estimator. Must not contain
+        batch_size.
+
+    tol : float or None, (default = 1e-3)
+        The stopping criterion. If it is not None, training will stop when
+        (loss > best_loss - tol) for n_iter_no_change consecutive epochs.
+
+    n_iter_no_change : int, default=10
+        Number of iterations with no improvement to wait before early stopping.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data. If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by np.random.
+
+
+    Attributes
+    ----------
+
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
+        Coordinates of cluster centers. If the algorithm stops before fully
+        converging (see ``tol`` and ``max_iter``), these will not be
+        consistent with ``labels_``.
+
+    labels_ : ndarray of shape (n_samples,)
+        Labels of each point
+
+    inertia_ : float
+        Sum of squared distances of samples to their closest cluster center.
+
+    n_iter_ : int
+        Number of iterations run.
+
+    base_estimator_ : object,
+        The fitted base_estimator.
+
+    weights_ : array like, length = n_sample.
+        Weight of each sample at the end of the algorithm. Can be used as a
+        measure of how much of an outlier a sample is.
+
+    Notes
+    -----
+
+    One may need to use RobustScaler as a preprocessing.
+
+    Examples
+    --------
+
+    >>> from sklearn_extra.robust import RobustWeightedKMeans
+    >>> from sklearn.datasets import make_blobs
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(42)
+    >>> X,y = make_blobs(n_samples=100, centers=np.array([[-1, -1], [1, 1]]),
+    ...                  random_state=rng)
+    >>> km = RobustWeightedKMeans()
+    >>> _ = km.fit(X)
+    >>> score = np.mean((km.predict(X)-y)**2)
+
+    References
+    ----------
+
+    [1] Guillaume Lecué, Matthieu Lerasle and Timothée Mathieu.
+        "Robust classification via MOM minimization", Mach Learn 109, (2020).
+        https://doi.org/10.1007/s10994-019-05863-6 (2018).
+        arXiv:1808.03106
+
+    [2] Christian Brownlees, Emilien Joly and Gábor Lugosi.
+        "Empirical risk minimization for heavy-tailed losses", Ann. Statist.
+        Volume 43, Number 6 (2015), 2507-2536.
+
+    [3] Stanislav Minsker and Timothée Mathieu.
+        "Excess risk bounds in robust empirical risk minimization"
+        arXiv preprint (2019). arXiv:1910.07485.
+
+    """
+
+    def __init__(
+        self,
+        n_clusters=8,
+        weighting="huber",
+        max_iter=100,
+        eta0=0.01,
+        c=None,
+        k=0,
+        kmeans_args=None,
+        tol=1e-3,
+        n_iter_no_change=10,
+        random_state=None,
+    ):
+        self.n_clusters = n_clusters
+        self.weighting = weighting
+        self.max_iter = max_iter
+        self.eta0 = eta0
+        self.c = c
+        self.k = k
+        self.kmeans_args = kmeans_args
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        """Compute k-means clustering.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training instances to cluster.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        self
+            Fitted estimator.
+        """
+        if self.kmeans_args is None:
+            kmeans_args = {}
+        else:
+            kmeans_args = self.kmeans_args
+        X = check_array(
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            order="C",
+            accept_large_sparse=False,
+        )
+
+        self.base_estimator_ = _RobustWeightedEstimator(
+            MiniBatchKMeans(
+                self.n_clusters,
+                batch_size=X.shape[0],
+                random_state=self.random_state,
+                **kmeans_args
+            ),
+            burn_in=0,  # Important because it does not mean anything to
+            # have burn-in
+            # steps for kmeans. It must be 0.
+            weighting=self.weighting,
+            loss=_kmeans_loss,
+            max_iter=self.max_iter,
+            eta0=self.eta0,
+            c=self.c,
+            k=self.k,
+            tol=self.tol,
+            n_iter_no_change=self.n_iter_no_change,
+            random_state=self.random_state,
+        )
+        self.base_estimator_.fit(X)
+        self.cluster_centers_ = self.base_estimator_.cluster_centers_
+        self.n_iter_ = self.max_iter * len(X)
+        self.labels_ = self.predict(X)
+        self.inertia_ = self.base_estimator_.inertia_
+        self.weights_ = self.base_estimator_.weights_
+        return self
+
+    def predict(self, X):
+        """Predict using the estimator trained with RobustWeightedClassifier.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y : array-like, shape (n_samples, n_outputs)
+            The predicted values.
+        """
+
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.predict(X)
+
+    @property
+    def _estimator_type(self):
+        return self.base_estimator._estimator_type
+
+    def score(self, X, y=None):
+        """Returns the score on the given data, using
+        ``base_estimator_.score``.
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
+        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+        Returns
+        -------
+        score : float
+        """
+        check_is_fitted(self, attributes=["base_estimator_"])
+        return self.base_estimator_.score(X, y)
+
+    def transform(self, X):
+        """Transform X to a cluster-distance space.
+
+        In the new space, each dimension is the distance to the cluster
+        centers.  Note that even if X is sparse, the array returned by
+        `transform` will typically be dense.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to transform.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_clusters)
+            X transformed in the new space.
+        """
+        check_is_fitted(self)
+
+        return self._transform(X)
+
+    def _transform(self, X):
+        """guts of transform method; no input validation"""
+        return euclidean_distances(X, self.cluster_centers_)
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X)._transform(X)
