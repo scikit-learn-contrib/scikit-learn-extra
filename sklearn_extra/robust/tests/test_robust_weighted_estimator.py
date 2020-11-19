@@ -18,11 +18,11 @@ c_values = [None, 1e-3]  # values of c for test robust
 rng = np.random.RandomState(42)
 X_cc, y_cc = make_blobs(
     n_samples=100,
-    centers=np.array([[-1, -1], [1, 1], [3, 3]]),
+    centers=np.array([[-1, -1], [1, 1]]),
     random_state=rng,
 )
 for f in range(3):
-    X_cc[f] = [1000, 5] + rng.normal(size=2) * 0.1
+    X_cc[f] = [10, 5] + rng.normal(size=2) * 0.1
     y_cc[f] = 0
 
 classif_losses = ["log", "hinge"]
@@ -53,7 +53,9 @@ def test_corrupted_classif(loss, weighting, k, c, multi_class):
 # Classification test without outliers
 rng = np.random.RandomState(42)
 X_c, y_c = make_blobs(
-    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+    n_samples=100,
+    centers=np.array([[-1, -1], [1, 1], [3, -1]]),
+    random_state=rng,
 )
 
 # Check that the fit is close to SGD when in extremal parameter cases
@@ -74,10 +76,16 @@ def test_not_robust_classif(loss, weighting, multi_class):
     clf_not_rob = SGDClassifier(loss=loss, random_state=rng)
     clf.fit(X_c, y_c)
     clf_not_rob.fit(X_c, y_c)
-    pred1 = clf.base_estimator_.decision_function(X_c)
-    pred2 = clf_not_rob.decision_function(X_c)
+    pred1 = clf.base_estimator_.predict(X_c)
+    pred2 = clf_not_rob.predict(X_c)
 
     assert np.mean((pred1 > 0) == (pred2 > 0)) > 0.8
+
+
+# Make binary uncorrupted dataset
+X_cb, y_cb = make_blobs(
+    n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
+)
 
 
 @pytest.mark.parametrize("weighting", weightings)
@@ -92,8 +100,8 @@ def test_classif_binary(weighting):
         random_state=rng,
     )
     clf_not_rob = SGDClassifier(loss="log", random_state=rng)
-    clf.fit(X_c, y_c)
-    clf_not_rob.fit(X_c, y_c)
+    clf.fit(X_cb, y_cb)
+    clf_not_rob.fit(X_cb, y_cb)
     norm_coef1 = np.linalg.norm(np.hstack([clf.coef_.ravel(), clf.intercept_]))
     norm_coef2 = np.linalg.norm(
         np.hstack([clf_not_rob.coef_.ravel(), clf_not_rob.intercept_])
@@ -107,7 +115,23 @@ def test_classif_binary(weighting):
     assert np.linalg.norm(coef1 - coef2) < 0.5
     assert np.linalg.norm(intercept1 - intercept2) < 0.5
 
-    assert len(clf.weights_) == len(X_c)
+    assert len(clf.weights_) == len(X_cb)
+
+
+# Check that weights_ parameter can be used as outlier score.
+@pytest.mark.parametrize("weighting", weightings)
+def test_classif_corrupted_weights(weighting):
+    clf = RobustWeightedClassifier(
+        max_iter=100,
+        weighting=weighting,
+        k=5,
+        c=1,
+        burn_in=0,
+        multi_class="binary",
+        random_state=rng,
+    )
+    clf.fit(X_cc, y_cc)
+    assert np.mean(clf.weights_[:3]) < np.mean(clf.weights_[3:])
 
 
 # Case "log" loss, test predict_proba
@@ -144,6 +168,7 @@ y_rc = X_rc + 0.1 * rng.normal(size=200)
 X_rc[0] = 10
 X_rc = X_rc.reshape(-1, 1)
 y_rc[0] = -1
+
 regression_losses = ["squared_loss", "huber"]
 
 
@@ -164,6 +189,21 @@ def test_corrupted_regression(loss, weighting, k, c):
     reg.fit(X_rc, y_rc)
     assert np.abs(reg.coef_[0] - 1) < 0.1
     assert np.abs(reg.intercept_[0]) < 0.1
+
+
+# Check that weights_ parameter can be used as outlier score.
+@pytest.mark.parametrize("weighting", weightings)
+def test_regression_corrupted_weights(weighting):
+    reg = RobustWeightedRegressor(
+        max_iter=100,
+        weighting=weighting,
+        k=5,
+        c=1,
+        burn_in=0,
+        random_state=rng,
+    )
+    reg.fit(X_rc, y_rc)
+    assert reg.weights_[0] < np.mean(reg.weights_[1:])
 
 
 X_r = rng.uniform(-1, 1, size=[1000])
@@ -198,13 +238,13 @@ def test_not_robust_regression(loss, weighting):
 
 
 rng = np.random.RandomState(42)
-X_cc, y_cc = make_blobs(
+X_clusterc, y_clusterc = make_blobs(
     n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
 )
 for f in range(3):
-    X_cc[f] = [20, 5] + rng.normal(size=2) * 0.1
-    y_cc[f] = 0
-X_cc, y_cc = shuffle(X_cc, y_cc, random_state=rng)
+    X_clusterc[f] = [20, 5] + rng.normal(size=2) * 0.1
+    y_clusterc[f] = 0
+X_cluster, y_cluster = shuffle(X_clusterc, y_clusterc, random_state=rng)
 
 weightings = ["huber", "mom"]
 
@@ -221,14 +261,14 @@ def test_corrupted_cluster(weighting, k, c):
         c=None,
         random_state=rng,
     )
-    km.fit(X_cc)
-    error = np.mean((km.predict(X_cc) - y_cc) ** 2)
+    km.fit(X_clusterc)
+    error = np.mean((km.predict(X_clusterc) - y_clusterc) ** 2)
     assert error < 100
 
 
 # Clustering test without outliers
 rng = np.random.RandomState(42)
-X_c, y_c = make_blobs(
+X_cluster, y_cluster = make_blobs(
     n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
 )
 
@@ -244,10 +284,12 @@ def test_not_robust_cluster(weighting):
         random_state=rng,
     )
     clf_not_rob = KMeans(2, random_state=rng)
-    clf.fit(X_c)
-    clf_not_rob.fit(X_c)
-    pred1 = [clf.cluster_centers_[i] for i in clf.predict(X_c)]
-    pred2 = [clf_not_rob.cluster_centers_[i] for i in clf_not_rob.predict(X_c)]
+    clf.fit(X_cluster)
+    clf_not_rob.fit(X_cluster)
+    pred1 = [clf.cluster_centers_[i] for i in clf.predict(X_cluster)]
+    pred2 = [
+        clf_not_rob.cluster_centers_[i] for i in clf_not_rob.predict(X_cluster)
+    ]
     difference = [
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
