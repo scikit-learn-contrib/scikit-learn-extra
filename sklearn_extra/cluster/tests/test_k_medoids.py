@@ -22,6 +22,11 @@ def test_medoids_invalid_method():
         KMedoids(n_clusters=1, method="invalid").fit([[0, 1], [1, 1]])
 
 
+def test_medoids_invalid_init():
+    with pytest.raises(ValueError, match="init needs to be one of"):
+        KMedoids(n_clusters=1, init="invalid").fit([[0, 1], [1, 1]])
+
+
 def test_kmedoids_input_validation_and_fit_check():
     rng = np.random.RandomState(seed)
     # Invalid parameters
@@ -33,9 +38,9 @@ def test_kmedoids_input_validation_and_fit_check():
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=None).fit(X)
 
-    msg = "max_iter should be a nonnegative integer. 0 was given"
+    msg = "max_iter should be a nonnegative integer. -1 was given"
     with pytest.raises(ValueError, match=msg):
-        KMedoids(n_clusters=1, max_iter=0).fit(X)
+        KMedoids(n_clusters=1, max_iter=-1).fit(X)
 
     msg = "max_iter should be a nonnegative integer. None was given"
     with pytest.raises(ValueError, match=msg):

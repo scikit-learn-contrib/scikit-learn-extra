@@ -139,14 +139,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     def _check_nonnegative_int(self, value, desc, strict=True):
         """Validates if value is a valid integer > 0"""
         if strict:
-            negative = value <= 0
+            negative = (value is None) or (value <= 0)
         else:
-            negative = value < 0
-        if (
-            value is None
-            or negative
-            or not isinstance(value, (int, np.integer))
-        ):
+            negative = (value is None) or (value < 0)
+        if negative or not isinstance(value, (int, np.integer)):
             raise ValueError(
                 "%s should be a nonnegative integer. "
                 "%s was given" % (desc, value)
