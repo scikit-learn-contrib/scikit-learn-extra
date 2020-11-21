@@ -17,6 +17,11 @@ seed = 0
 X = np.random.RandomState(seed).rand(100, 5)
 
 
+def test_medoids_invalid_method():
+    with pytest.raises(ValueError, match="invalid is not supported"):
+        KMedoids(method="invalid").fit([[0, 1], [1, 1]])
+
+
 def test_kmedoids_input_validation_and_fit_check():
     rng = np.random.RandomState(seed)
     # Invalid parameters
