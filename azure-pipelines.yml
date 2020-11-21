@@ -56,6 +56,7 @@ jobs:
       # TODO: remove "|| .." once at least one doctest is added
       python -m pytest doc/*rst doc/modules/*rst || echo "Ignoring exit status"
       python -m pytest --durations 10 --cov=. sklearn_extra
+      codecov || echo "codecov upload failed"
     displayName: 'Test'
 
 
@@ -107,6 +108,7 @@ jobs:
       set -xe
       python -m pip install pytest pytest-azurepipelines pytest pytest-cov codecov
       python -m pytest --durations 10 --cov=. sklearn_extra
+      codecov || echo "codecov upload failed"
     displayName: 'Test'
 
 
@@ -150,4 +152,5 @@ jobs:
       cd ..
       python -m pip install pytest pytest-azurepipelines pytest-cov codecov
       python -m pytest --durations 10 --pyargs --cov=. sklearn_extra
+      codecov || echo "codecov upload failed"
     displayName: 'Test'
