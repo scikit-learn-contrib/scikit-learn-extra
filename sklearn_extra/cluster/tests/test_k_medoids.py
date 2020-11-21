@@ -12,9 +12,33 @@ from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn_extra.cluster import KMedoids
 from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+
 
 seed = 0
 X = np.random.RandomState(seed).rand(100, 5)
+
+# test kmedoid's results
+rng = np.random.RandomState(seed)
+X_cc, y_cc = make_blobs(
+    n_samples=100,
+    centers=np.array([[-1, -1], [1, 1]]),
+    random_state=rng,
+    shuffle=False,
+)
+
+
+@pytest.mark.parametrize("method", ["alternate", "pam"])
+@pytest.mark.parametrize(
+    "init", ["random", "heuristic", "build", "k-medoids++"]
+)
+def test_kmedoid_results(method, init):
+    expected = np.hstack([np.zeros(50), np.ones(50)])
+    km = KMedoids(n_clusters=2, init=init, method=method)
+    km.fit(X_cc)
+    assert (np.mean(km.labels_ == expected) > 0.8) or (
+        1 - np.mean(km.labels_ == expected) > 0.8
+    )
 
 
 def test_medoids_invalid_method():
