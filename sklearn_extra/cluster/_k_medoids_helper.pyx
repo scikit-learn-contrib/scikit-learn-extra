@@ -6,26 +6,29 @@
 cimport cython
 from cython.parallel import prange
 
-def _compute_optimal_swap( double[:,:] D,
+import numpy as np
+cimport numpy as np
+from cython cimport floating
+
+@cython.boundscheck(False)  # Deactivate bounds checking
+def _compute_optimal_swap( floating[:,:] D,
                            long[:] medoid_idxs,
                            long[:] not_medoid_idxs,
-                           double[:] Djs,
-                           double[:] Ejs,
-                           int n_clusters,
-                           int n_threads):
+                           floating[:] Djs,
+                           floating[:] Ejs,
+                           int n_clusters):
     """Compute best cost change for all the possible swaps"""
 
     # Initialize best cost change and the associated swap couple.
-    cdef (int, int, double) best_cost_change = (1, 1, 0.0)
+    cdef (int, int, floating) best_cost_change = (1, 1, 0.0)
     cdef int sample_size = len(D)
     cdef int i, j, h, id_i, id_h, id_j
-    cdef double T
+    cdef floating T
     cdef int not_medoid_shape = sample_size - n_clusters
     cdef bint cluster_i_bool, not_cluster_i_bool, second_best_medoid, not_second_best_medoid
-    cdef double to_add
 
     # Compute the change in cost for each swap.
-    for h in prange(not_medoid_shape,  nogil=True, num_threads = n_threads):
+    for h in range(not_medoid_shape):
         # id of the potential new medoid.
         id_h = not_medoid_idxs[h]
         for i in range(n_clusters):
@@ -61,3 +64,45 @@ def _compute_optimal_swap( double[:,:] D,
         return best_cost_change
     else:
         return None
+
+
+
+
+def _build( floating[:,:] D, int n_clusters):
+    cdef long[:] medoid_idxs = np.zeros(n_clusters, dtype = np.int)
+    cdef int sample_size = len(D)
+    cdef long[:] not_medoid_idxs = np.arange(sample_size).astype(np.int)
+
+    cdef long i, j,  id_i, id_j
+
+    medoid_idxs[0] = np.argmin(np.sum(D,axis=0))
+    not_medoid_idxs = np.delete(not_medoid_idxs, medoid_idxs[0])
+
+    cdef int n_medoids_current = 1
+
+    cdef floating[:] Dj = D[medoid_idxs[0]].copy()
+    cdef floating T
+    cdef (long, int) new_medoid = (medoid_idxs[0], 0)
+    cdef floating Tmax
+
+    for _ in range(n_clusters -1):
+        Tmax = 0
+        for i in range(sample_size - n_medoids_current):
+            id_i = not_medoid_idxs[i]
+            T = 0
+            for j in range(sample_size - n_medoids_current):
+                id_j = not_medoid_idxs[j]
+                T =  T + max(0, Dj[id_j] - D[id_i, id_j])
+            if T >= Tmax:
+                Tmax = T
+                new_medoid = (id_i, i)
+
+
+        medoid_idxs[n_medoids_current] = new_medoid[0]
+        n_medoids_current = n_medoids_current + 1
+        not_medoid_idxs = np.delete(not_medoid_idxs, new_medoid[1])
+
+
+        for id_j in range(sample_size):
+            Dj[id_j] = min(Dj[id_j], D[id_j,new_medoid[0]])
+    return np.array(medoid_idxs)

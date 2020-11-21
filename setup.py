@@ -58,15 +58,6 @@ libraries = []
 if os.name == "posix":
     libraries.append("m")
 
-if os.name == "posix" and os.uname().sysname == "Linux":
-    kmedoid_args = {
-        "include_dirs": [np.get_include()],
-        "extra_compile_args": ["-fopenmp"],
-        "extra_link_args": ["-fopenmp"],
-    }
-
-else:
-    kmedoid_args = {"include_dirs": [np.get_include()]}
 args = {
     "ext_modules": cythonize(
         [
@@ -76,9 +67,9 @@ args = {
                 include_dirs=[np.get_include()],
             ),
             Extension(
-                "sklearn_extra.cluster._k_medoids_swap",
-                ["sklearn_extra/cluster/_k_medoids_swap.pyx"],
-                **kmedoid_args
+                "sklearn_extra.cluster._k_medoids_helper",
+                ["sklearn_extra/cluster/_k_medoids_helper.pyx"],
+                include_dirs=[np.get_include()],
             ),
             Extension(
                 "sklearn_extra.robust._robust_weighted_estimator_helper",

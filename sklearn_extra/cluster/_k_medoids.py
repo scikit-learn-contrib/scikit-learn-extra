@@ -9,7 +9,6 @@
 import warnings
 
 import numpy as np
-import multiprocessing
 
 from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
 from sklearn.metrics.pairwise import (
@@ -22,7 +21,7 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import ConvergenceWarning
 
 # cython implementation of swap step in PAM algorithm.
-from ._k_medoids_swap import _compute_optimal_swap
+from ._k_medoids_helper import _compute_optimal_swap, _build
 
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
@@ -42,7 +41,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     method : {"alternating", "pam"}, default: "alternating"
         Which algorithm to use.
 
-    init : {'random', 'heuristic', 'k-medoids++'}, optional, default: 'heuristic'
+    init : {'random', 'heuristic', 'k-medoids++', 'build'}, optional, default: 'heuristic'
         Specify medoid initialization method. 'random' selects n_clusters
         elements from the dataset. 'heuristic' picks the n_clusters points
         with the smallest sum distance to every other point. 'k-medoids++'
@@ -53,10 +52,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     max_iter : int, optional, default : 300
         Specify the maximum number of iterations when fitting.
-
-    n_threads : int or None, optional, default : None
-        Number of threads to be used for "pam" method. If None, n_threads is set
-        to the number of CPU's.
 
     random_state : int, RandomState instance or None, optional
         Specify random state for the random number generator. Used to
@@ -126,7 +121,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         method="alternating",
         init="heuristic",
         max_iter=300,
-        n_threads=None,
         random_state=None,
     ):
         self.n_clusters = n_clusters
@@ -134,7 +128,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.method = method
         self.init = init
         self.max_iter = max_iter
-        self.n_threads = n_threads
         self.random_state = random_state
 
     def _check_nonnegative_int(self, value, desc):
@@ -158,7 +151,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_nonnegative_int(self.max_iter, "max_iter")
 
         # Check init
-        init_methods = ["random", "heuristic", "k-medoids++"]
+        init_methods = ["random", "heuristic", "k-medoids++", "build"]
         if self.init not in init_methods:
             raise ValueError(
                 "init needs to be one of "
@@ -203,12 +196,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # among medoids.
             Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
-            # set number of threads
-            if self.n_threads is None:
-                n_threads = multiprocessing.cpu_count()
-            else:
-                n_threads = self.n_threads
-
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
         # of iterations is not exceeded
@@ -229,7 +216,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     Djs,
                     Ejs,
                     self.n_clusters,
-                    n_threads,
                 )
                 if optimal_swap is not None:
                     i, j, _ = optimal_swap
@@ -391,6 +377,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             medoids = np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
                 :n_clusters
             ]
+        elif self.init == "build":  # Build initialization
+            medoids = _build(D, n_clusters)
         else:
             raise ValueError(f"init value '{self.init}' not recognized")
 
