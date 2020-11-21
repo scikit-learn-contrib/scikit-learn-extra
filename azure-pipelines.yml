@@ -17,6 +17,11 @@ jobs:
         SKLEARN_VERSION: "0.22.2post1"
       Python38:
         python.version: '3.8'
+        NUMPY_VERSION: "1.16.5"
+        SCIPY_VERSION: "1.1.0"
+        SKLEARN_VERSION: "0.23.2"
+      Python39:
+        python.version: '3.8'
         SKLEARN_VERSION: "nightly"
   variables:
     OMP_NUM_THREADS: '2'
@@ -46,13 +51,17 @@ jobs:
   
   - script: |
       set -xe
-      python -m pip install pytest pytest-azurepipelines
+      python -m pip install pytest pytest-azurepipelines pytest-cov codecov
       # run doctests in the documentation
       # TODO: remove "|| .." once at least one doctest is added
       python -m pytest doc/*rst doc/modules/*rst || echo "Ignoring exit status"
-      python -m pytest --durations 10 sklearn_extra
+      python -m pytest --durations 10 --cov=sklearn_extra sklearn_extra
     displayName: 'Test'
 
+  - script: codecov -t $CODECOV_TOKEN || echo "codecov upload failed"
+    displayName: 'Upload coverage report'
+    env:
+      CODECOV_TOKEN: $(CODECOV_TOKEN)
 
 - job: 'macOS1014'
   pool:
@@ -100,9 +109,14 @@ jobs:
   
   - script: |
       set -xe
-      python -m pip install pytest pytest-azurepipelines pytest
-      python -m pytest --durations 10 sklearn_extra
+      python -m pip install pytest pytest-azurepipelines pytest pytest-cov codecov
+      python -m pytest --durations 10 --cov=sklearn_extra sklearn_extra
     displayName: 'Test'
+
+  - script: codecov -t $CODECOV_TOKEN || echo "codecov upload failed"
+    displayName: 'Upload coverage report'
+    env:
+      CODECOV_TOKEN: $(CODECOV_TOKEN)
 
 
 - job: 'win2016'
@@ -143,6 +157,11 @@ jobs:
   
   - script: |
       cd ..
-      python -m pip install pytest pytest-azurepipelines
-      python -m pytest --durations 10 --pyargs sklearn_extra
+      python -m pip install pytest pytest-azurepipelines pytest-cov codecov
+      python -m pytest --durations 10 --pyargs --cov=sklearn_extra sklearn_extra
     displayName: 'Test'
+
+  - script: codecov -t %CODECOV_TOKEN% || echo "codecov upload failed"
+    displayName: 'Upload coverage report'
+    env:
+      CODECOV_TOKEN: $(CODECOV_TOKEN)
