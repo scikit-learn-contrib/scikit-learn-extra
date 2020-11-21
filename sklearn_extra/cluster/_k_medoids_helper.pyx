@@ -97,7 +97,7 @@ def _build( floating[:, :] D, int n_clusters):
                 cost_change +=   max(0, Dj[id_j] - D[id_i, id_j])
             if cost_change >= cost_change_max:
                 cost_change_max = cost_change
-                new_medoid += (id_i, i)
+                new_medoid = (id_i, i)
 
 
         medoid_idxs[n_medoids_current] = new_medoid[0]
