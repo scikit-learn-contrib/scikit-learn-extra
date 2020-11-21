@@ -73,9 +73,9 @@ def _compute_optimal_swap( floating[:,:] D,
 def _build( floating[:, :] D, int n_clusters):
     """Compute BUILD initialization, a greedy medoid initialization."""
 
-    cdef int64_t[:] medoid_idxs = np.zeros(n_clusters, dtype = np.int)
+    cdef int64_t[:] medoid_idxs = np.zeros(n_clusters, dtype = np.int64)
     cdef int sample_size = len(D)
-    cdef int64_t[:] not_medoid_idxs = np.arange(sample_size).astype(np.int)
+    cdef int64_t[:] not_medoid_idxs = np.arange(sample_size, dtype=np.int64)
     cdef long i, j,  id_i, id_j
 
     medoid_idxs[0] = np.argmin(np.sum(D,axis=0))
