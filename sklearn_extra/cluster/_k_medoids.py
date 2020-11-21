@@ -387,7 +387,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 :n_clusters
             ]
         elif self.init == "build":  # Build initialization
-            medoids = _build(D, n_clusters)
+            medoids = _build(D, n_clusters).astype(np.int64)
         else:
             raise ValueError(f"init value '{self.init}' not recognized")
 

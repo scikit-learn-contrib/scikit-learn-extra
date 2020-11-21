@@ -1,5 +1,5 @@
 # cython: infer_types=True
-# Fast swap step in PAM algorithm for k_medoid.
+# Fast swap step and build step in PAM algorithm for k_medoid.
 # Author: Timothée Mathieu
 # License: 3-clause BSD
 
@@ -7,8 +7,7 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
-from cython cimport floating
-from libc.stdint cimport int32_t, int64_t
+from cython cimport floating, integral
 
 @cython.boundscheck(False)  # Deactivate bounds checking
 def _compute_optimal_swap( floating[:,:] D,
@@ -73,9 +72,9 @@ def _compute_optimal_swap( floating[:,:] D,
 def _build( floating[:, :] D, int n_clusters):
     """Compute BUILD initialization, a greedy medoid initialization."""
 
-    cdef int64_t[:] medoid_idxs = np.zeros(n_clusters, dtype = np.int64)
+    cdef int[:] medoid_idxs = np.zeros(n_clusters, dtype = np.intc)
     cdef int sample_size = len(D)
-    cdef int64_t[:] not_medoid_idxs = np.arange(sample_size, dtype=np.int64)
+    cdef int[:] not_medoid_idxs = np.zeros(sample_size, dtype = np.intc)
     cdef long i, j,  id_i, id_j
 
     medoid_idxs[0] = np.argmin(np.sum(D,axis=0))
@@ -85,7 +84,7 @@ def _build( floating[:, :] D, int n_clusters):
 
     cdef floating[:] Dj = D[medoid_idxs[0]].copy()
     cdef floating cost_change
-    cdef (int64_t, int) new_medoid = (medoid_idxs[0], 0)
+    cdef (int, int) new_medoid = (medoid_idxs[0], 0)
     cdef floating cost_change_max
 
     for _ in range(n_clusters -1):
