@@ -43,7 +43,7 @@ def _compute_optimal_swap( floating[:,:] D,
                 second_best_medoid = D[id_h, id_j] < Ejs[id_j]
                 not_second_best_medoid = D[id_h, id_j] >= Ejs[id_j]
                 if cluster_i_bool & second_best_medoid:
-                    T = T + D[id_j, id_h] -Djs[id_j]
+                    T += D[id_j, id_h] - Djs[id_j]
                 elif cluster_i_bool & not_second_best_medoid:
                     T = T + Ejs[id_j] - Djs[id_j]
                 elif not_cluster_i_bool & (D[id_j, id_h] < Djs[id_j]):

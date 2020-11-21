@@ -224,7 +224,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     # update Djs and Ejs with new medoids
                     Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
             else:
-                raise ValueError("No such method implemented.")
+                raise ValueError(
+                    f"method={self.method} is not supported. Supported methods "
+                    f"are 'pam' and 'alternating'."
+                )
 
             if np.all(old_medoid_idxs == medoid_idxs):
                 break
