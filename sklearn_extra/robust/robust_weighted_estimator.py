@@ -258,6 +258,9 @@ class _RobustWeightedEstimator(BaseEstimator):
         base_estimator = clone(self.base_estimator)
         loss_param = self.loss
 
+        # Get actual loss function from its name.
+        loss = self._get_loss_function(loss_param)
+
         parameters = list(base_estimator.get_params().keys())
         if "warm_start" in parameters:
             base_estimator.set_params(warm_start=True)
@@ -269,9 +272,6 @@ class _RobustWeightedEstimator(BaseEstimator):
         if self.burn_in > 0:
             learning_rate = base_estimator.learning_rate
             base_estimator.set_params(learning_rate="constant", eta0=self.eta0)
-
-        # Get actual loss function from its name.
-        loss = self._get_loss_function(loss_param)
 
         # Initialization
         if self._estimator_type == "classifier":
@@ -777,7 +777,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
 
         # Define the base estimator
         base_robust_estimator_ = _RobustWeightedEstimator(
-            SGDClassifier(**sgd_args, loss=self.loss),
+            SGDClassifier(**sgd_args),
             weighting=self.weighting,
             loss=self.loss,
             burn_in=self.burn_in,
@@ -1084,7 +1084,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         # Define the base estimator
 
         self.base_estimator_ = _RobustWeightedEstimator(
-            SGDRegressor(**sgd_args, loss=self.loss),
+            SGDRegressor(**sgd_args),
             weighting=self.weighting,
             loss=self.loss,
             burn_in=self.burn_in,

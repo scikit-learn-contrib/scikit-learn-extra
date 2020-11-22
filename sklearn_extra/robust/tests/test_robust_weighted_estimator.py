@@ -10,6 +10,9 @@ from sklearn.datasets import make_blobs
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.cluster import KMeans
 from sklearn.utils import shuffle
+from sklearn.metrics import r2_score
+from sklearn.utils._testing import assert_array_almost_equal
+
 
 k_values = [None, 10]  # values of k for test robust
 c_values = [None, 1e-3]  # values of c for test robust
@@ -28,6 +31,61 @@ for f in range(3):
 classif_losses = ["log", "hinge"]
 weightings = ["huber", "mom"]
 multi_class = ["ovr", "ovo"]
+
+
+def test_robust_estimator_max_iter():
+    """Test that warning message is thrown when max_iter is reached."""
+    model = RobustWeightedClassifier(max_iter=1)
+    msg = "Maximum number of iteration reached before"
+    with pytest.warns(UserWarning, match=msg):
+        model.fit(X_cc, y_cc)
+
+
+def test_robust_estimator_unsupported_loss():
+    """Test that warning message is thrown when unsupported loss."""
+    model = RobustWeightedClassifier(loss="invalid")
+    msg = "The loss invalid is not supported. "
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X_cc, y_cc)
+
+
+def test_robust_estimator_unsupported_weighting():
+    """Test that warning message is thrown when unsupported weighting."""
+    model = RobustWeightedClassifier(weighting="invalid")
+    msg = "No such weighting scheme"
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X_cc, y_cc)
+
+
+def test_robust_estimator_unsupported_multiclass():
+    """Test that warning message is thrown when unsupported weighting."""
+    model = RobustWeightedClassifier(multi_class="invalid")
+    msg = "No such multiclass method implemented."
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X_cc, y_cc)
+
+
+def test_robust_estimator_input_validation_and_fit_check():
+    # Invalid parameters
+    msg = "max_iter must be > 0, got 0."
+    with pytest.raises(ValueError, match=msg):
+        RobustWeightedKMeans(max_iter=0).fit(X_cc)
+
+    msg = "c must be > 0, got 0."
+    with pytest.raises(ValueError, match=msg):
+        RobustWeightedKMeans(c=0).fit(X_cc)
+
+    msg = "burn_in must be >= 0, got -1."
+    with pytest.raises(ValueError, match=msg):
+        RobustWeightedClassifier(burn_in=-1).fit(X_cc, y_cc)
+
+    msg = "eta0 must be > 0, got 0."
+    with pytest.raises(ValueError, match=msg):
+        RobustWeightedClassifier(burn_in=1, eta0=0).fit(X_cc, y_cc)
+
+    msg = "k must be integer >= 0, and smaller than floor"
+    with pytest.raises(ValueError, match=msg):
+        RobustWeightedKMeans(k=-1).fit(X_cc)
 
 
 @pytest.mark.parametrize("loss", classif_losses)
@@ -58,6 +116,14 @@ X_c, y_c = make_blobs(
     random_state=rng,
 )
 
+# check binary throw an error
+def test_robust_estimator_unsupported_loss():
+    model = RobustWeightedClassifier(multi_class="binary")
+    msg = "y must be binary."
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X_c, y_c)
+
+
 # Check that the fit is close to SGD when in extremal parameter cases
 @pytest.mark.parametrize("loss", classif_losses)
 @pytest.mark.parametrize("weighting", weightings)
@@ -76,10 +142,11 @@ def test_not_robust_classif(loss, weighting, multi_class):
     clf_not_rob = SGDClassifier(loss=loss, random_state=rng)
     clf.fit(X_c, y_c)
     clf_not_rob.fit(X_c, y_c)
-    pred1 = clf.base_estimator_.predict(X_c)
+    pred1 = clf.predict(X_c)
     pred2 = clf_not_rob.predict(X_c)
 
     assert np.mean((pred1 > 0) == (pred2 > 0)) > 0.8
+    assert clf.score(X_c, y_c) == np.mean(pred1 == y_c)
 
 
 # Make binary uncorrupted dataset
@@ -214,7 +281,7 @@ X_r = X_r.reshape(-1, 1)
 @pytest.mark.parametrize("loss", regression_losses)
 @pytest.mark.parametrize("weighting", weightings)
 def test_not_robust_regression(loss, weighting):
-    clf = RobustWeightedRegressor(
+    reg = RobustWeightedRegressor(
         loss=loss,
         max_iter=100,
         weighting=weighting,
@@ -223,15 +290,16 @@ def test_not_robust_regression(loss, weighting):
         burn_in=0,
         random_state=rng,
     )
-    clf_not_rob = SGDRegressor(loss=loss, random_state=rng)
-    clf.fit(X_r, y_r)
-    clf_not_rob.fit(X_r, y_r)
-    pred1 = clf.predict(X_r)
-    pred2 = clf_not_rob.predict(X_r)
+    reg_not_rob = SGDRegressor(loss=loss, random_state=rng)
+    reg.fit(X_r, y_r)
+    reg_not_rob.fit(X_r, y_r)
+    pred1 = reg.predict(X_r)
+    pred2 = reg_not_rob.predict(X_r)
     difference = [
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
     assert np.mean(difference) < 1
+    assert reg.score(X_r, y_r) == r2_score(y_r, reg.predict(X_r))
 
 
 # Clustering test with outliers
@@ -294,3 +362,28 @@ def test_not_robust_cluster(weighting):
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
     assert np.mean(difference) < 1
+
+
+def test_transform():
+    n_clusters = 2
+    km = RobustWeightedKMeans(n_clusters=n_clusters, random_state=rng)
+    km.fit(X_cluster)
+    X_new = km.transform(km.cluster_centers_)
+
+    for c in range(n_clusters):
+        assert X_new[c, c] == 0
+        for c2 in range(n_clusters):
+            if c != c2:
+                assert X_new[c, c2] > 0
+
+
+def test_fit_transform():
+    X1 = (
+        RobustWeightedKMeans(n_clusters=2, random_state=42)
+        .fit(X_cluster)
+        .transform(X_cluster)
+    )
+    X2 = RobustWeightedKMeans(n_clusters=2, random_state=42).fit_transform(
+        X_cluster
+    )
+    assert_array_almost_equal(X1, X2)
