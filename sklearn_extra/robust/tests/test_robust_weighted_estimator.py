@@ -11,7 +11,10 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.cluster import KMeans
 from sklearn.utils import shuffle
 from sklearn.metrics import r2_score
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import (
+    assert_array_almost_equal,
+    assert_almost_equal,
+)
 
 
 k_values = [None, 10]  # values of k for test robust
@@ -299,7 +302,7 @@ def test_not_robust_regression(loss, weighting):
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
     assert np.mean(difference) < 1
-    assert reg.score(X_r, y_r) == r2_score(y_r, reg.predict(X_r))
+    assert_almost_equal(reg.score(X_r, y_r), r2_score(y_r, reg.predict(X_r)))
 
 
 # Clustering test with outliers
