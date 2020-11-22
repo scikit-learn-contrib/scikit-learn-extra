@@ -11,8 +11,8 @@ from cython cimport floating, integral
 
 @cython.boundscheck(False)  # Deactivate bounds checking
 def _compute_optimal_swap( floating[:,:] D,
-                           long[:] medoid_idxs,
-                           long[:] not_medoid_idxs,
+                           int[:] medoid_idxs,
+                           int[:] not_medoid_idxs,
                            floating[:] Djs,
                            floating[:] Ejs,
                            int n_clusters):
@@ -75,7 +75,7 @@ def _build( floating[:, :] D, int n_clusters):
     cdef int[:] medoid_idxs = np.zeros(n_clusters, dtype = np.intc)
     cdef int sample_size = len(D)
     cdef int[:] not_medoid_idxs = np.zeros(sample_size, dtype = np.intc)
-    cdef long i, j,  id_i, id_j
+    cdef int i, j,  id_i, id_j
 
     medoid_idxs[0] = np.argmin(np.sum(D,axis=0))
     not_medoid_idxs = np.delete(not_medoid_idxs, medoid_idxs[0])

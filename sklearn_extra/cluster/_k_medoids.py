@@ -217,8 +217,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 not_medoid_idxs = np.delete(np.arange(len(D)), medoid_idxs)
                 optimal_swap = _compute_optimal_swap(
                     D,
-                    medoid_idxs,
-                    not_medoid_idxs,
+                    medoid_idxs.astype(np.intc),
+                    not_medoid_idxs.astype(np.intc),
                     Djs,
                     Ejs,
                     self.n_clusters,
