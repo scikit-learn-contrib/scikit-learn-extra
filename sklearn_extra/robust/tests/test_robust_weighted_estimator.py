@@ -7,7 +7,7 @@ from sklearn_extra.robust import (
     RobustWeightedKMeans,
 )
 from sklearn.datasets import make_blobs
-from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.linear_model import SGDClassifier, SGDRegressor, HuberRegressor
 from sklearn.cluster import KMeans
 from sklearn.utils import shuffle
 from sklearn.metrics import r2_score
@@ -303,6 +303,29 @@ def test_not_robust_regression(loss, weighting):
     ]
     assert np.mean(difference) < 1
     assert_almost_equal(reg.score(X_r, y_r), r2_score(y_r, reg.predict(X_r)))
+
+
+# Compare with HuberRegressor on dataset corrupted in y
+X_rcy = rng.uniform(-1, 1, size=[200])
+y_rcy = X_rcy + 0.1 * rng.normal(size=200)
+X_rcy = X_rcy.reshape(-1, 1)
+y_rcy[0] = -1
+
+
+def test_vs_huber():
+    reg1 = RobustWeightedRegressor(
+        max_iter=100,
+        weighting="huber",
+        k=5,
+        c=1,
+        burn_in=0,
+        sgd_args={"learning_rate": "adaptive"},  # test sgd_args
+        random_state=rng,
+    )
+    reg2 = HuberRegressor()
+    reg1.fit(X_rcy, y_rcy)
+    reg2.fit(X_rcy, y_rcy)
+    assert np.abs(reg1.coef_[0] - reg2.coef_[0]) < 1e-2
 
 
 # Clustering test with outliers

@@ -154,6 +154,9 @@ class _RobustWeightedEstimator(BaseEstimator):
     n_iter_no_change : int, default=10
         Number of iterations with no improvement to wait before early stopping.
 
+    verbose: int, default=0
+        If >0 will display the (robust) estimated loss every 10 epochs.
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data. If int, random_state is the seed used by the random number
@@ -215,6 +218,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         k=0,
         tol=1e-5,
         n_iter_no_change=10,
+        verbose=0,
         random_state=None,
     ):
         self.base_estimator = base_estimator
@@ -227,6 +231,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         self.max_iter = max_iter
         self.tol = tol
         self.n_iter_no_change = n_iter_no_change
+        self.verbose = verbose
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -267,6 +272,9 @@ class _RobustWeightedEstimator(BaseEstimator):
 
         if "loss" in parameters:
             base_estimator.set_params(loss=loss_param)
+
+        if "eta0" in parameters:
+            base_estimator.set_params(eta0=self.eta0)
 
         base_estimator.set_params(random_state=random_state)
         if self.burn_in > 0:
@@ -335,6 +343,8 @@ class _RobustWeightedEstimator(BaseEstimator):
                 loss_values, random_state
             )
 
+            if self.verbose > 0:
+                print("Epoch ", epoch, " loss: %.2F" % (current_loss))
             # Use the optimization algorithm of self.base_estimator for one
             # epoch using the previously computed weights. Also shuffle the data.
             perm = random_state.permutation(len(X))
@@ -549,7 +559,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         return self.base_estimator_.score(X, y)
 
     def decision_function(self, X):
-        """Predict using the linear model
+        """Predict using the linear model. For classifiers only.
 
         Parameters
         ----------
@@ -561,11 +571,6 @@ class _RobustWeightedEstimator(BaseEstimator):
            Predicted target values per element in X.
         """
         check_is_fitted(self, attributes=["base_estimator_"])
-        if not is_classifier(self):
-            raise ValueError(
-                "self.decision_function is only available"
-                " for classification."
-            )
         return self.base_estimator_.decision_function(X)
 
 
@@ -652,6 +657,9 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
 
         Number of iterations with no improvement to wait before early stopping.
 
+    verbose: int, default=0
+        If >0 will display the (robust) estimated loss every 10 epochs.
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data. If int, random_state is the seed used by the random number
@@ -737,6 +745,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         n_jobs=1,
         tol=1e-3,
         n_iter_no_change=10,
+        verbose=0,
         random_state=None,
     ):
         self.weighting = weighting
@@ -751,6 +760,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         self.n_jobs = n_jobs
         self.tol = tol
         self.n_iter_no_change = n_iter_no_change
+        self.verbose = verbose
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -777,7 +787,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
 
         # Define the base estimator
         base_robust_estimator_ = _RobustWeightedEstimator(
-            SGDClassifier(**sgd_args),
+            SGDClassifier(**sgd_args, eta0=self.eta0),
             weighting=self.weighting,
             loss=self.loss,
             burn_in=self.burn_in,
@@ -787,6 +797,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
             max_iter=self.max_iter,
             tol=self.tol,
             n_iter_no_change=self.n_iter_no_change,
+            verbose=self.verbose,
             random_state=self.random_state,
         )
 
@@ -970,6 +981,9 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
     n_iter_no_change : int, default=10
         Number of iterations with no improvement to wait before early stopping.
 
+    verbose: int, default=0
+        If >0 will display the (robust) estimated loss every 10 epochs.
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data. If int, random_state is the seed used by the random number
@@ -1045,6 +1059,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         sgd_args=None,
         tol=1e-3,
         n_iter_no_change=10,
+        verbose=0,
         random_state=None,
     ):
 
@@ -1058,6 +1073,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         self.sgd_args = sgd_args
         self.tol = tol
         self.n_iter_no_change = n_iter_no_change
+        self.verbose = verbose
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -1084,7 +1100,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         # Define the base estimator
 
         self.base_estimator_ = _RobustWeightedEstimator(
-            SGDRegressor(**sgd_args),
+            SGDRegressor(**sgd_args, eta0=self.eta0),
             weighting=self.weighting,
             loss=self.loss,
             burn_in=self.burn_in,
@@ -1094,6 +1110,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
             max_iter=self.max_iter,
             tol=self.tol,
             n_iter_no_change=self.n_iter_no_change,
+            verbose=self.verbose,
             random_state=self.random_state,
         )
         self.base_estimator_.fit(X, y)
@@ -1212,6 +1229,9 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
     n_iter_no_change : int, default=10
         Number of iterations with no improvement to wait before early stopping.
 
+    verbose: int, default=0
+        If >0 will display the (robust) estimated loss every 10 epochs.
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data. If int, random_state is the seed used by the random number
@@ -1291,6 +1311,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         kmeans_args=None,
         tol=1e-3,
         n_iter_no_change=10,
+        verbose=0,
         random_state=None,
     ):
         self.n_clusters = n_clusters
@@ -1302,6 +1323,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         self.kmeans_args = kmeans_args
         self.tol = tol
         self.n_iter_no_change = n_iter_no_change
+        self.verbose = verbose
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -1350,6 +1372,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             k=self.k,
             tol=self.tol,
             n_iter_no_change=self.n_iter_no_change,
+            verbose=self.verbose,
             random_state=self.random_state,
         )
         self.base_estimator_.fit(X)
