@@ -11,7 +11,6 @@ from scipy.stats import iqr
 from sklearn.base import (
     BaseEstimator,
     clone,
-    is_classifier,
     ClassifierMixin,
     RegressorMixin,
     ClusterMixin,
