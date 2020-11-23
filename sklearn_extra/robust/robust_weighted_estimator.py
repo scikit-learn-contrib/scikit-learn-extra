@@ -342,7 +342,7 @@ class _RobustWeightedEstimator(BaseEstimator):
                 loss_values, random_state
             )
 
-            if self.verbose > 0:
+            if (self.verbose > 0) and (epoch % 10 == 0):
                 print("Epoch ", epoch, " loss: %.2F" % (current_loss))
             # Use the optimization algorithm of self.base_estimator for one
             # epoch using the previously computed weights. Also shuffle the data.
