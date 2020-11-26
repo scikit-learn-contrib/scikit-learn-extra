@@ -12,9 +12,45 @@ from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn_extra.cluster import KMedoids
 from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+
 
 seed = 0
 X = np.random.RandomState(seed).rand(100, 5)
+
+# test kmedoid's results
+rng = np.random.RandomState(seed)
+X_cc, y_cc = make_blobs(
+    n_samples=100,
+    centers=np.array([[-1, -1], [1, 1]]),
+    random_state=rng,
+    shuffle=False,
+)
+
+
+@pytest.mark.parametrize("method", ["alternate", "pam"])
+@pytest.mark.parametrize(
+    "init", ["random", "heuristic", "build", "k-medoids++"]
+)
+def test_kmedoid_results(method, init):
+    expected = np.hstack([np.zeros(50), np.ones(50)])
+    km = KMedoids(n_clusters=2, init=init, method=method)
+    km.fit(X_cc)
+    # This test use data that are not perfectly separable so the
+    # accuracy is not 1. Accuracy around 0.85
+    assert (np.mean(km.labels_ == expected) > 0.8) or (
+        1 - np.mean(km.labels_ == expected) > 0.8
+    )
+
+
+def test_medoids_invalid_method():
+    with pytest.raises(ValueError, match="invalid is not supported"):
+        KMedoids(n_clusters=1, method="invalid").fit([[0, 1], [1, 1]])
+
+
+def test_medoids_invalid_init():
+    with pytest.raises(ValueError, match="init needs to be one of"):
+        KMedoids(n_clusters=1, init="invalid").fit([[0, 1], [1, 1]])
 
 
 def test_kmedoids_input_validation_and_fit_check():
@@ -28,9 +64,9 @@ def test_kmedoids_input_validation_and_fit_check():
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=None).fit(X)
 
-    msg = "max_iter should be a nonnegative integer. 0 was given"
+    msg = "max_iter should be a nonnegative integer. -1 was given"
     with pytest.raises(ValueError, match=msg):
-        KMedoids(n_clusters=1, max_iter=0).fit(X)
+        KMedoids(n_clusters=1, max_iter=-1).fit(X)
 
     msg = "max_iter should be a nonnegative integer. None was given"
     with pytest.raises(ValueError, match=msg):

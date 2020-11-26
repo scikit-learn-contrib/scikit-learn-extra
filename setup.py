@@ -67,6 +67,11 @@ args = {
                 include_dirs=[np.get_include()],
             ),
             Extension(
+                "sklearn_extra.cluster._k_medoids_helper",
+                ["sklearn_extra/cluster/_k_medoids_helper.pyx"],
+                include_dirs=[np.get_include()],
+            ),
+            Extension(
                 "sklearn_extra.robust._robust_weighted_estimator_helper",
                 ["sklearn_extra/robust/_robust_weighted_estimator_helper.pyx"],
                 include_dirs=[np.get_include()],
