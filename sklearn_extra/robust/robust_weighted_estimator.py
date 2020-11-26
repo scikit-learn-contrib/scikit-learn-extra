@@ -26,6 +26,7 @@ from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils.metaestimators import if_delegate_has_method
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
