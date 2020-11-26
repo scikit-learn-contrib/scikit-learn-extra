@@ -39,7 +39,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         What distance metric to use. See :func:metrics.pairwise_distances
 
     method : {'alternate', 'pam'}, default: 'alternate'
-        Which algorithm to use.
+        Which algorithm to use. 'alternate' is faster while 'pam' is more accurate.
 
     init : {'random', 'heuristic', 'k-medoids++', 'build'}, optional, default: 'build'
         Specify medoid initialization method. 'random' selects n_clusters
