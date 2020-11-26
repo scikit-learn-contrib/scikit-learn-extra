@@ -55,7 +55,7 @@ plt.plot(
     cobj.cluster_centers_[:, 0],
     cobj.cluster_centers_[:, 1],
     "o",
-    markerfacecolor='cyan',
+    markerfacecolor="cyan",
     markeredgecolor="k",
     markersize=6,
 )
