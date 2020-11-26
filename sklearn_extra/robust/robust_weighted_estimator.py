@@ -275,6 +275,9 @@ class _RobustWeightedEstimator(BaseEstimator):
         if "eta0" in parameters:
             base_estimator.set_params(eta0=self.eta0)
 
+        if "n_iter_no_change" in parameters:
+            base_estimator.set_params(n_iter_no_change=self.n_iter_no_change)
+
         base_estimator.set_params(random_state=random_state)
         if self.burn_in > 0:
             learning_rate = base_estimator.learning_rate
