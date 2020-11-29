@@ -1,4 +1,4 @@
-from ._k_medoids import KMedoids
+from ._k_medoids import KMedoids, CLARA
 from ._commonnn import commonnn, CommonNNClustering
 
-__all__ = ["KMedoids", "CommonNNClustering", "commonnn"]
+__all__ = ["KMedoids", "CLARA", "CommonNNClustering", "commonnn"]

@@ -39,9 +39,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         What distance metric to use. See :func:metrics.pairwise_distances
 
     method : {'alternate', 'pam'}, default: 'alternate'
-        Which algorithm to use.
+        Which algorithm to use. 'pam' can be more efficient but slower.
 
-    init : {'random', 'heuristic', 'k-medoids++', 'build'}, optional, default: 'build'
+    init : {'random', 'heuristic', 'k-medoids++', 'build'}, optional, default: 'heuristic'
         Specify medoid initialization method. 'random' selects n_clusters
         elements from the dataset. 'heuristic' picks the n_clusters points
         with the smallest sum distance to every other point. 'k-medoids++'
@@ -229,6 +229,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
                     # update Djs and Ejs with new medoids
                     Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+
             else:
                 raise ValueError(
                     f"method={self.method} is not supported. Supported methods "
@@ -476,3 +477,218 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             closest_dist_sq = best_dist_sq
 
         return centers
+
+
+class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
+    """CLARA clustering.
+
+    Read more in the :ref:`User Guide <CLARA>`.
+    CLARA (Clustering for Large Applications) extends k-medoids approach for a
+    large number of objects. This algorithm use a sampling approach.
+
+    Parameters
+    ----------
+    n_clusters : int, optional, default: 8
+        The number of clusters to form as well as the number of medoids to
+        generate.
+
+    metric : string, or callable, optional, default: 'euclidean'
+        What distance metric to use. See :func:metrics.pairwise_distances
+
+    max_iter : int, optional, default : 300
+        Specify the maximum number of iterations when fitting PAM. It can be zero in
+        which case only the initialization is computed.
+
+    random_state : int, RandomState instance or None, optional
+        Specify random state for the random number generator. Used to
+        initialise medoids when init='random'.
+
+    Attributes
+    ----------
+    cluster_centers_ : array, shape = (n_clusters, n_features)
+            or None if metric == 'precomputed'
+        Cluster centers, i.e. medoids (elements from the original dataset)
+
+    medoid_indices_ : array, shape = (n_clusters,)
+        The indices of the medoid rows in X
+
+    labels_ : array, shape = (n_samples,)
+        Labels of each point
+
+    inertia_ : float
+        Sum of distances of samples to their closest cluster center.
+
+    Examples
+    --------
+    >>> from sklearn_extra.cluster import KMedoids
+    >>> import numpy as np
+
+    >>> X = np.asarray([[1, 2], [1, 4], [1, 0],
+    ...                 [4, 2], [4, 4], [4, 0]])
+    >>> clara = CLARA(n_clusters=2, random_state=0).fit(X)
+    >>> clara.labels_
+    array([0, 0, 0, 1, 1, 1])
+    >>> clara.predict([[0,0], [4,4]])
+    array([0, 1])
+    >>> clara.cluster_centers_
+    array([[1, 2],
+           [4, 2]])
+    >>> clara.inertia_
+    8.0
+
+
+    References
+    ----------
+        Kaufman, L. and Rousseeuw, P.J. (2008). Partitioning Around Medoids (Program PAM).
+        In Finding Groups in Data (eds L. Kaufman and P.J. Rousseeuw).
+        doi:10.1002/9780470316801.ch2
+
+    See also
+    --------
+
+    KMedoids
+        CLARA is a variant of KMedoids that use sub-sampling scheme as such if the
+        dataset is sufficiently small, KMedoids is preferable.
+
+    Notes
+    -----
+    Contrary to KMedoids, CLARA is linear in N the sample size for both the spacial
+    and time complexity. On the other hand, it scales quadratically with sampling_size.
+
+    """
+
+    def __init__(
+        self,
+        n_clusters=8,
+        metric="euclidean",
+        init="build",
+        max_iter=300,
+        sampling_size=None,
+        samples=5,
+        random_state=None,
+    ):
+        self.n_clusters = n_clusters
+        self.metric = metric
+        self.init = init
+        self.max_iter = max_iter
+        self.sampling_size = sampling_size
+        self.samples = samples
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        n = len(X)
+
+        if self.sampling_size is None:
+            sampling_size = min(n, 40 + 2 * self.n_clusters)
+        else:
+            sampling_size = self.sampling_size
+        rng = np.random.RandomState(self.random_state)
+        medoids_idxs = rng.choice(
+            np.arange(n), size=self.n_clusters, replace=False
+        )
+        best_score = np.inf
+        for _ in range(self.samples):
+            sample_idxs = np.hstack(
+                [
+                    medoids_idxs,
+                    rng.choice(
+                        np.delete(np.arange(n), medoids_idxs),
+                        size=sampling_size - self.n_clusters,
+                        replace=False,
+                    ),
+                ]
+            )
+            pam = KMedoids(
+                n_clusters=self.n_clusters,
+                metric=self.metric,
+                method="pam",
+                init=self.init,
+                max_iter=self.max_iter,
+                random_state=rng,
+            )
+            pam.fit(X[sample_idxs])
+            self.cluster_centers_ = pam.cluster_centers_
+            self.inertia_ = self._compute_inertia(self.transform(X))
+
+            if pam.inertia_ < best_score:
+                best_score = self.inertia_
+                medoids_idxs = pam.medoid_indices_
+                best_sample_idxs = sample_idxs
+
+        self.medoid_indices_ = medoids_idxs
+        self.labels_ = np.argmin(self.transform(X), axis=0)
+
+        return self
+
+    def _compute_inertia(self, distances):
+        """Compute inertia of new samples. Inertia is defined as the sum of the
+        sample distances to closest cluster centers.
+
+        Parameters
+        ----------
+        distances : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
+            Distances to cluster centers.
+
+        Returns
+        -------
+        Sum of sample distances to closest cluster centers.
+        """
+
+        # Define inertia as the sum of the sample-distances
+        # to closest cluster centers
+        inertia = np.sum(np.min(distances, axis=1))
+
+        return inertia
+
+    def transform(self, X):
+        """Transforms X to cluster-distance space.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Data to transform.
+
+        Returns
+        -------
+        X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
+            X transformed in the new space of distances to cluster centers.
+        """
+        X = check_array(X, accept_sparse=["csr", "csc"])
+
+        if self.metric == "precomputed":
+            check_is_fitted(self, "medoid_indices_")
+            return X[:, self.medoid_indices_]
+        else:
+            check_is_fitted(self, "cluster_centers_")
+
+            Y = self.cluster_centers_
+            return pairwise_distances(X, Y=Y, metric=self.metric)
+
+    def predict(self, X):
+        """Predict the closest cluster for each sample in X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape = (n_query,)
+            Index of the cluster each sample belongs to.
+        """
+        X = check_array(X, accept_sparse=["csr", "csc"])
+
+        if self.metric == "precomputed":
+            check_is_fitted(self, "medoid_indices_")
+            return np.argmin(X[:, self.medoid_indices_], axis=1)
+        else:
+            check_is_fitted(self, "cluster_centers_")
+
+            # Return data points to clusters based on which cluster assignment
+            # yields the smallest distance
+            return pairwise_distances_argmin(
+                X, Y=self.cluster_centers_, metric=self.metric
+            )
