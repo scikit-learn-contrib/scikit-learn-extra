@@ -41,7 +41,7 @@ plt.figure()
 plt.clf()
 
 plt.suptitle(
-    "Comparing multiple K-Medoids metrics to K-Means and each other",
+    "Comparing KMedoids and CLARA",
     fontsize=14,
 )
 
