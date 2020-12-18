@@ -101,5 +101,3 @@ axe1.set_title("mean of errors")
 axe2.set_title("median of errors")
 
 fig.suptitle("Boxplots of the test squared error")
-
-plt.show()

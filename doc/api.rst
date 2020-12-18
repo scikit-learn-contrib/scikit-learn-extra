@@ -40,5 +40,6 @@ Robust
    :toctree: generated/
    :template: class.rst
 
-   robust.RobustWeightedEstimator
-
+   robust.RobustWeightedClassifier
+   robust.RobustWeightedRegressor
+   robust.RobustWeightedKMeans

@@ -81,7 +81,5 @@ plt.boxplot(
 )
 plt.ylabel("AUC")
 
-plt.show()
-
 # Remark : when using accuracy score, the optimal hyperparameters change and
 #          for example the parameter c changes from 1.35 to 10.
