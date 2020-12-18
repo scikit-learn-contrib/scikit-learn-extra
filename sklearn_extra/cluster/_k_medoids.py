@@ -520,22 +520,16 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn_extra.cluster import KMedoids
+    >>> from sklearn_extra.cluster import CLARA
     >>> import numpy as np
-
-    >>> X = np.asarray([[1, 2], [1, 4], [1, 0],
-    ...                 [4, 2], [4, 4], [4, 0]])
+    >>> from sklearn.datasets import make_blobs
+    >>> X, _ = make_blobs(centers=[[0,0],[1,1]],n_samples=100, n_features=2,
+                          random_state=0)
     >>> clara = CLARA(n_clusters=2, random_state=0).fit(X)
-    >>> clara.labels_
-    array([0, 0, 0, 1, 1, 1])
     >>> clara.predict([[0,0], [4,4]])
     array([0, 1])
-    >>> clara.cluster_centers_
-    array([[1, 2],
-           [4, 2]])
     >>> clara.inertia_
-    8.0
-
+    122.44919397611667
 
     References
     ----------
@@ -616,7 +610,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
                 best_sample_idxs = sample_idxs
 
         self.medoid_indices_ = medoids_idxs
-        self.labels_ = np.argmin(self.transform(X), axis=0)
+        self.labels_ = np.argmin(self.transform(X), axis=1)
 
         return self
 
