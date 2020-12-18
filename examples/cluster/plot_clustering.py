@@ -129,5 +129,3 @@ for n_samples in [300, 600]:
             size=20,
         )
         plot_num += 1
-
-    plt.show()
