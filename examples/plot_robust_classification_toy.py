@@ -44,7 +44,7 @@ estimators = [
         RobustWeightedClassifier(
             max_iter=100,
             weighting="mom",
-            k=6,
+            k=8,
             random_state=rng,
         ),
         # The parameter k is set larger the number of outliers

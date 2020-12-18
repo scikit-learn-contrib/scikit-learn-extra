@@ -20,7 +20,7 @@ from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import ConvergenceWarning
 
-# cython implementation of swap step in PAM algorithm.
+# cython implementation of steps in PAM algorithm.
 from ._k_medoids_helper import _compute_optimal_swap, _build
 
 
@@ -39,7 +39,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         What distance metric to use. See :func:metrics.pairwise_distances
 
     method : {'alternate', 'pam'}, default: 'alternate'
-        Which algorithm to use. 'pam' can be more efficient but slower.
+        Which algorithm to use. 'alternate' is faster while 'pam' is more accurate.
 
     init : {'random', 'heuristic', 'k-medoids++', 'build'}, optional, default: 'heuristic'
         Specify medoid initialization method. 'random' selects n_clusters
