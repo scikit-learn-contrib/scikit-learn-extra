@@ -37,6 +37,8 @@ def test_kmedoid_results(method, init):
     expected = np.hstack([np.zeros(50), np.ones(50)])
     km = KMedoids(n_clusters=2, init=init, method=method, random_state=rng)
     km.fit(X_cc)
+    # This test use data that are not perfectly separable so the
+    # accuracy is not 1. Accuracy around 0.85
     assert (np.mean(km.labels_ == expected) > 0.8) or (
         1 - np.mean(km.labels_ == expected) > 0.8
     )
