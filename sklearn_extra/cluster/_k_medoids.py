@@ -540,8 +540,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> from sklearn_extra.cluster import CLARA
     >>> import numpy as np
     >>> from sklearn.datasets import make_blobs
-    >>> X, _ = make_blobs(centers=[[0,0],[1,1]],n_samples=100, n_features=2,
-                          random_state=0)
+    >>> X, _ = make_blobs(centers=[[0,0],[1,1]], n_features=2,random_state=0)
     >>> clara = CLARA(n_clusters=2, random_state=0).fit(X)
     >>> clara.predict([[0,0], [4,4]])
     array([0, 1])
@@ -622,21 +621,17 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
                 "sample_size should be greater than self.n_clusters"
             )
 
+        if self.n_clusters <= sampling_size:
+            raise ValueError(
+                "sampling size must be strictly greater than self.n_clustes"
+            )
+
         medoids_idxs = random_state_.choice(
             np.arange(n), size=self.n_clusters, replace=False
         )
         best_score = np.inf
         for _ in range(self.samples):
-            sample_idxs = np.hstack(
-                [
-                    medoids_idxs,
-                    random_state_.choice(
-                        np.delete(np.arange(n), medoids_idxs),
-                        size=sampling_size - self.n_clusters,
-                        replace=False,
-                    ),
-                ]
-            )
+
             pam = KMedoids(
                 n_clusters=self.n_clusters,
                 metric=self.metric,
