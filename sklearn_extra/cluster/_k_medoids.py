@@ -606,24 +606,22 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state_ = check_random_state(self.random_state)
 
         if self.sampling_size is None:
-            sampling_size = min(n, 40 + 2 * self.n_clusters)
+            sampling_size = max(
+                min(n, 40 + 2 * self.n_clusters), self.n_clusters + 1
+            )
         else:
             sampling_size = self.sampling_size
 
         # Check sampling_size.
-        if n < sampling_size:
-            raise ValueError(
-                "sample_size should be greater than self.sampling_size"
-            )
 
         if n < self.n_clusters:
             raise ValueError(
                 "sample_size should be greater than self.n_clusters"
             )
 
-        if self.n_clusters <= sampling_size:
+        if self.n_clusters >= sampling_size:
             raise ValueError(
-                "sampling size must be strictly greater than self.n_clustes"
+                "sampling size must be strictly greater than self.n_clusters"
             )
 
         medoids_idxs = random_state_.choice(
@@ -631,7 +629,19 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         )
         best_score = np.inf
         for _ in range(self.samples):
-
+            if sampling_size >= n:
+                sample_idxs = np.arange(n)
+            else:
+                sample_idxs = np.hstack(
+                    [
+                        medoids_idxs,
+                        random_state_.choice(
+                            np.delete(np.arange(n), medoids_idxs),
+                            size=sampling_size - self.n_clusters,
+                            replace=False,
+                        ),
+                    ]
+                )
             pam = KMedoids(
                 n_clusters=self.n_clusters,
                 metric=self.metric,
