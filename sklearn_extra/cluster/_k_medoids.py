@@ -200,7 +200,15 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         if self.method == "pam":
             # Compute the distance to the first and second closest points
             # among medoids.
-            Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+            if self.n_clusters == 1 and self.max_iter > 0:
+                # PAM SWAP step can only be used for n_clusters > 1
+                warnings.warn(
+                    "n_clusters should be larger than 2 if max_iter != 0 "
+                    "setting max_iter to 0."
+                )
+                self.max_iter = 0
+            elif self.max_iter > 0:
+                Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
@@ -496,8 +504,17 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         What distance metric to use. See :func:metrics.pairwise_distances
 
     max_iter : int, optional, default : 300
-        Specify the maximum number of iterations when fitting PAM. It can be zero in
-        which case only the initialization is computed.
+        Specify the maximum number of iterations when fitting PAM. It can be zero
+        in which case only the initialization is computed.
+
+    sampling_size : int or None, optional, default : None
+        Size of the sampled dataset at each iteration. sampling-size a trade-off
+        between complexity and efficiency. If None, then sampling-size is set
+        to min(sample_size, 40 + 2 * self.n_clusters) as suggested by the authors of the
+        algorithm. must be smaller than sample_size.
+
+    samples : int, optional, default : 5
+        Number of different samples that have to be done, or number of iterations.
 
     random_state : int, RandomState instance or None, optional
         Specify random state for the random number generator. Used to
@@ -570,14 +587,42 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
+        """Fit CLARA to the provided data.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features), \
+                or (n_samples, n_samples) if metric == 'precomputed'
+            Dataset to cluster.
+
+        y : Ignored
+
+        Returns
+        -------
+        self
+        """
+        X = check_array(X)
         n = len(X)
+
+        random_state_ = check_random_state(self.random_state)
 
         if self.sampling_size is None:
             sampling_size = min(n, 40 + 2 * self.n_clusters)
         else:
             sampling_size = self.sampling_size
-        rng = np.random.RandomState(self.random_state)
-        medoids_idxs = rng.choice(
+
+        # Check sampling_size.
+        if n < sampling_size:
+            raise ValueError(
+                "sample_size should be greater than self.sampling_size"
+            )
+
+        if n < self.n_clusters:
+            raise ValueError(
+                "sample_size should be greater than self.n_clusters"
+            )
+
+        medoids_idxs = random_state_.choice(
             np.arange(n), size=self.n_clusters, replace=False
         )
         best_score = np.inf
@@ -585,7 +630,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
             sample_idxs = np.hstack(
                 [
                     medoids_idxs,
-                    rng.choice(
+                    random_state_.choice(
                         np.delete(np.arange(n), medoids_idxs),
                         size=sampling_size - self.n_clusters,
                         replace=False,
@@ -598,7 +643,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
                 method="pam",
                 init=self.init,
                 max_iter=self.max_iter,
-                random_state=rng,
+                random_state=random_state_,
             )
             pam.fit(X[sample_idxs])
             self.cluster_centers_ = pam.cluster_centers_
@@ -611,6 +656,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self.medoid_indices_ = medoids_idxs
         self.labels_ = np.argmin(self.transform(X), axis=1)
+        self.n_iter_ = self.samples
 
         return self
 
