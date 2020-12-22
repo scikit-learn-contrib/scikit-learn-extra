@@ -40,7 +40,7 @@ jobs:
       python -m pip install --upgrade pip
       if [[ "$SKLEARN_VERSION" == "nightly" ]]; then
           # This also installs latest numpy, scipy and joblib.
-          pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+          pip install --pre scikit-learn
       else
           python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
       fi
