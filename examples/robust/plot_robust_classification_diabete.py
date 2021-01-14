@@ -21,7 +21,7 @@ import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-X, y = fetch_openml(name="diabetes", return_X_y=True)
+X, y = fetch_openml(name="diabetes", as_frame=False, return_X_y=True)
 
 # replace the label names with 0 or 1
 y = (y == "tested_positive").astype(int)
@@ -83,3 +83,4 @@ plt.ylabel("AUC")
 
 # Remark : when using accuracy score, the optimal hyperparameters change and
 #          for example the parameter c changes from 1.35 to 10.
+plt.show()

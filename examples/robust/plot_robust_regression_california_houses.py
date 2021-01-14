@@ -34,7 +34,7 @@ def quadratic_loss(est, X, y, X_test, y_test):
     return (est.predict(X_test) - y_test) ** 2
 
 
-X, y = fetch_california_housing(return_X_y=True)
+X, y = fetch_california_housing(as_frame=False, return_X_y=True)
 # Sub-sample for faster computation.
 X = X[:1000]
 y = y[:1000]
