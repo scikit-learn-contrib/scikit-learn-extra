@@ -21,34 +21,36 @@ jobs:
         SCIPY_VERSION: "1.1.0"
         SKLEARN_VERSION: "0.23.2"
       Python39:
-        python.version: '3.8'
+        python.version: '3.9'
+        NUMPY_VERSION: "1.19.4"
+        SCIPY_VERSION: "1.5.4"
         SKLEARN_VERSION: "nightly"
   variables:
     OMP_NUM_THREADS: '2'
-  
+
   steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
-  
+
   - script: |
       set -xe
       python --version
       python -m pip install --upgrade pip
       if [[ "$SKLEARN_VERSION" == "nightly" ]]; then
           # This also installs latest numpy, scipy and joblib.
-          pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+          pip install --pre scikit-learn
       else
           python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
       fi
     displayName: 'Install dependencies'
-  
+
   - script: |
       set -xe
       pip install -e .
     displayName: 'Install scikit-learn-extra'
-  
+
   - script: |
       set -xe
       python -m pip install pytest pytest-azurepipelines pytest-cov codecov
@@ -89,7 +91,7 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
-  
+
   - script: |
       set -xe
       python --version
@@ -101,12 +103,12 @@ jobs:
           python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
       fi
     displayName: 'Install dependencies'
-  
+
   - script: |
       set -xe
       pip install -e .
     displayName: 'Install scikit-learn-extra'
-  
+
   - script: |
       set -xe
       python -m pip install pytest pytest-azurepipelines pytest pytest-cov codecov
@@ -143,18 +145,18 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
-  
+
   - script: |
       python --version
       python -m pip install --upgrade pip
       python -m pip install numpy==%NUMPY_VERSION% scipy==%SCIPY_VERSION% scikit-learn==%SKLEARN_VERSION%
     displayName: 'Install dependencies'
-  
+
   - script: |
       pip wheel . -w dist\
       pip install --pre --no-index --find-links dist\ scikit-learn-extra
     displayName: 'Install scikit-learn-extra'
-  
+
   - script: |
       cd ..
       python -m pip install pytest pytest-azurepipelines pytest-cov codecov
