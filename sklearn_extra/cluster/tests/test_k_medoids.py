@@ -5,9 +5,10 @@ from unittest import mock
 from scipy.sparse import csc_matrix
 import pytest
 
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, fetch_20newsgroups_vectorized
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
+
 from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn_extra.cluster import KMedoids
@@ -331,3 +332,18 @@ def test_kmedoids_on_sparse_input():
     labels = model.fit_predict(X)
     assert len(labels) == 2
     assert_array_equal(labels, model.labels_)
+
+
+# Test the build initialization.
+def test_build():
+    X, y = fetch_20newsgroups_vectorized(return_X_y=True)
+    # Select only the first 1000 samples
+    X = X[:500]
+    y = y[:500]
+    # Precompute cosine distance matrix
+    diss = cosine_distances(X)
+    # run build
+    ske = KMedoids(20, "precomputed", init="build", max_iter=0)
+    ske.fit(diss)
+    assert ske.inertia_ <= 230
+    assert len(np.unique(ske.labels_)) == 20
