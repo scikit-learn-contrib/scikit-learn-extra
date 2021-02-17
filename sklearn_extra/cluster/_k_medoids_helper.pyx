@@ -84,7 +84,7 @@ def _build( floating[:, :] D, int n_clusters):
 
     cdef floating[:] Dj = D[medoid_idxs[0]].copy()
     cdef floating cost_change
-    cdef (int, int) new_medoid
+    cdef (int, int) new_medoid = (0,0)
     cdef floating cost_change_max
 
     for _ in range(n_clusters -1):
