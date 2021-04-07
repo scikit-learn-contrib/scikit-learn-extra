@@ -74,7 +74,7 @@ def _build( floating[:, :] D, int n_clusters):
 
     cdef int[:] medoid_idxs = np.zeros(n_clusters, dtype = np.intc)
     cdef int sample_size = len(D)
-    cdef int[:] not_medoid_idxs = np.zeros(sample_size, dtype = np.intc)
+    cdef int[:] not_medoid_idxs = np.arange(sample_size, dtype = np.intc)
     cdef int i, j,  id_i, id_j
 
     medoid_idxs[0] = np.argmin(np.sum(D,axis=0))
@@ -84,7 +84,7 @@ def _build( floating[:, :] D, int n_clusters):
 
     cdef floating[:] Dj = D[medoid_idxs[0]].copy()
     cdef floating cost_change
-    cdef (int, int) new_medoid = (medoid_idxs[0], 0)
+    cdef (int, int) new_medoid = (0,0)
     cdef floating cost_change_max
 
     for _ in range(n_clusters -1):
