@@ -118,9 +118,10 @@ def huber(X, c=1.35, T=20):
 
     def psisx(x, c):
         # Huber weight function.
-        res = np.ones(len(x))
-        res[x != 0] = (2 * (x[x != 0] > 0) - 1) * c / x[x != 0]
-        res[np.abs(x) < c] = 1
+        res = np.zeros(len(x))
+        mask = np.abs(x) <= c
+        res[mask] = 1
+        res[~mask] = (c / np.abs(x))[~mask]
         res[~np.isfinite(x)] = 0
         return res
 
