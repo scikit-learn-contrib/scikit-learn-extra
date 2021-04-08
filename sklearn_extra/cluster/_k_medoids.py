@@ -37,6 +37,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     metric : string, or callable, optional, default: 'euclidean'
         What distance metric to use. See :func:metrics.pairwise_distances
+        metric can be 'precomputed', the user must then feed the fit method
+        with a precomputed kernel matrix and not the design matrix X.
 
     method : {'alternate', 'pam'}, default: 'alternate'
         Which algorithm to use. 'alternate' is faster while 'pam' is more accurate.

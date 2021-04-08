@@ -4,15 +4,17 @@
 Clustering with KMedoids and Common-nearest-neighbors
 =====================================================
 .. _k_medoids:
+.. currentmodule:: sklearn_extra.cluster
 
 K-Medoids
 =========
+
 
 :class:`KMedoids` is related to the :class:`KMeans` algorithm. While
 :class:`KMeans` tries to minimize the within cluster sum-of-squares,
 :class:`KMedoids` tries to minimize the sum of distances between each point and
 the medoid of its cluster. The medoid is a data point (unlike the centroid)
-which has least total distance to the other members of its cluster. The use of
+which has the least total distance to the other members of its cluster. The use of
 a data point to represent each cluster's center allows the use of any distance
 metric for clustering. It may also be a practical advantage, for instance K-Medoids
 algorithms have been used for facial recognition for which the medoid is a
@@ -60,12 +62,12 @@ when speed is an issue.
 * PAM method works as follows:
 
     * Initialize: Greedy initialization of ``n_clusters``. First select the point
-      in the dataset that minimize the sum of distances to a point. Then, add one
-      point that minimize the cost and loop until ``n_clusters`` point are selected.
+      in the dataset that minimizes the sum of distances to a point. Then, add one
+      point that minimizes the cost and loop until ``n_clusters`` points are selected.
       This is the ``init`` parameter called ``build``.
-    * Swap Step: for all medoids already selected, compute the cost of swaping this
-      medoid with any non-medoid point. Then, make the swap that decrease the cost
-      the moste. Loop and stop when there is no change anymore.
+    * Swap Step: for all medoids already selected, compute the cost of swapping this
+      medoid with any non-medoid point. Then, make the swap that decreases the cost
+      the most. Loop and stop when there is no change anymore.
 
 .. topic:: References:
 
