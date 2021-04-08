@@ -29,7 +29,7 @@ significant speed and storage advantages.  The computational complexity for
 mapping a single example is O(n_components log d).  The space complexity is
 O(n_components).  
 
-See `scikit-learn User-guide <https://scikit-learn.org/stable/modules/kernel_approximation.html#kernel-approximation>`_ for more general informations on kernel approximations in general.
+See `scikit-learn User-guide <https://scikit-learn.org/stable/modules/kernel_approximation.html#kernel-approximation>`_ for more general informations on kernel approximations.
 
 See also :class:`EigenProRegressor <sklearn_extra.kernel_methods.EigenProRegressor>` and :class:`EigenProClassifier <sklearn_extra.kernel_methods.EigenProClassifier>` for another 
 way to compute fast kernel methods algorithms.

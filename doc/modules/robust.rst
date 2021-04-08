@@ -161,7 +161,7 @@ regressions are robust only to outliers in the label Y but not in X.
 Pro: RANSACRegressor and TheilSenRegressor both use a hard rejection of
 outlier. This can be interpreted as though there was an outlier detection
 step and then a regression step whereas RobustWeightedRegressor is directly
-robust to outliers. This often increase the performance on moderately corrupted
+robust to outliers. This often increases the performance on moderately corrupted
 datasets.
 
 Con: In general, this algorithm is slower than both  TheilSenRegressor and
