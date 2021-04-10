@@ -14,13 +14,15 @@ The preferred workflow to contribute is:
 1. Fork this repository into your own github account.
 2. Clone the fork on your account onto your local disk:
  
-:: 
+.. code-block:: console
+
     git clone git@github.com:YourLogin/scikit-learn-extra.git
     cd scikit-learn-extra
     
 3. Create a branch for your new feature, do not work in the master branch:
 
-::
+.. code-block:: console
+
     git checkout -b new-feature
     
 4. Write some code, or docs, or tests.
@@ -42,7 +44,8 @@ Running Tests
 
 To run the tests, use:
 
-::
+.. code-block:: console
+
     pytest
     
 Easy Issues / Getting Started
