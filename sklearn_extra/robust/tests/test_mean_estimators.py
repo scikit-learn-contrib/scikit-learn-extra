@@ -23,12 +23,12 @@ def test_mom():
         sample_cor[:num_out] = np.inf
         assert np.abs(median_of_means(sample_cor, num_out, rng)) < 2
 
-        
+
 def test_huber():
     X = np.hstack([np.zeros(90), np.ones(10)])
     error = False
     with warnings.catch_warnings():
-        warnings.filterwarnings('error')
+        warnings.filterwarnings("error")
         try:
             huber(X)
         except Warning as e:
