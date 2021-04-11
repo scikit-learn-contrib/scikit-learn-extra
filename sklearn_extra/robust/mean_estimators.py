@@ -122,7 +122,6 @@ def huber(X, c=1.35, T=20):
         mask = np.abs(x) <= c
         res[mask] = 1
         res[~mask] = (c / np.abs(x[~mask]))
-        res[~np.isfinite(x)] = 0
         return res
 
     # Run the iterative reweighting algorithm to compute M-estimator.
