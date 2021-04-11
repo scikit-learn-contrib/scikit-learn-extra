@@ -33,4 +33,4 @@ def test_huber():
             huber(X)
         except Warning as e:
             error = True
-    assert error
+    assert ~error
