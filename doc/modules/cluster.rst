@@ -4,11 +4,11 @@
 Clustering with KMedoids and Common-nearest-neighbors
 =====================================================
 .. _k_medoids:
-.. currentmodule:: sklearn_extra.cluster
 
 K-Medoids
 =========
 
+.. currentmodule:: sklearn_extra.cluster
 
 :class:`KMedoids` is related to the :class:`KMeans <sklearn.cluster.KMeans>` algorithm. While
 :class:`KMeans <sklearn.cluster.KMeans>` tries to minimize the within cluster sum-of-squares,
