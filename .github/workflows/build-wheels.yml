@@ -3,14 +3,14 @@ name: build_wheels
 on:
   push
   pull_request
-  #release:
-  #  types:
-  #    - created
-  #workflow_dispatch:
-  #  inputs:
-  #    version:
-  #      description: 'Manually trigger wheel build in Github UI'
-  #      required: true
+  # release:
+  #   types:
+  #     - created
+  # workflow_dispatch:
+  #   inputs:
+  #     version:
+  #       description: 'Manually trigger wheel build in Github UI'
+  #       required: true
 
 
 jobs:
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.7'
+          python-version: '3.8'
 
       - name: Install dependencies
         run: pip install setuptools cython numpy
