@@ -65,7 +65,7 @@ Contributing
 -------------
 We appreciate and welcome contributions. If you would like to take part in scikit-learn development, take a look at the file `CONTRIBUTING.rst`_.
 
-.. _CONTRIBUTING.rst : https://github.com/scikit-learn-contrib/scikit-learn-extra/CONTRIBUTING.rst
+.. _CONTRIBUTING.rst : https://github.com/scikit-learn-contrib/scikit-learn-extra/blob/master/CONTRIBUTING.rst
 License
 -------
 
