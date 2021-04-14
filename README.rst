@@ -59,7 +59,7 @@ The developement version can be installed with,
 
 .. code::
 
-    pip install https://github.com/scikit-learn-contrib/scikit-learn-extra/archive/master.zip
+    pip install scikit-learn-extra
 
 License
 -------

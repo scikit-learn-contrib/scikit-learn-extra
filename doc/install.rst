@@ -25,10 +25,6 @@ or from PyPi with,
    
    pip install scikit-learn-extra
 
-Note that installing from PyPi requires a working C compiler (cf `installation
-instructions
-<https://scikit-learn.org/dev/developers/advanced_installation.html#platform-specific-instructions>`_).
-
 Latest development version can be installed with,
 
 .. code::
