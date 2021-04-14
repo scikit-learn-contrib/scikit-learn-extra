@@ -8,13 +8,13 @@ Kernel map approximation for faster kernel methods
 .. currentmodule:: sklearn_extra.kernel_approximation
 
 Kernel methods, which are among the most flexible and influential tools in 
-machine learning with applications at virtually all areas of the field, rely 
-on high-dimensional ideas in order to construct powerfull classifiers or
+machine learning with applications in virtually all areas of the field, rely 
+on high-dimensional feature spaces in order to construct powerfull classifiers or
 regressors or clustering algorithms. The main drawback of kernel methods
-is their prohibitive complexity, both spatial and temporal complexity is at 
-least quadratic because we have to compute the whole kernel matrix.
+is their prohibitive computational complexity. Both spatial and temporal complexity
+ is at least quadratic because we have to compute the whole kernel matrix.
 
-One of the popular way to handle the complexity problem of kernel methods is
+One of the popular way to improve the computational scalability of kernel methods is
 to approximate the feature map impicit behind the kernel method. In practice,
 this means that we will compute a low dimensional approximation of the 
 the otherwise high-dimensional embedding used to define the kernel method.
