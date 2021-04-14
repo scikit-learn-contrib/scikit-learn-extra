@@ -61,8 +61,13 @@ The developement version can be installed with,
 
     pip install https://github.com/scikit-learn-contrib/scikit-learn-extra/archive/master.zip
 
+Contributing
+-------------
+We appreciate and welcome contributions. If you would like to take part in scikit-learn development, take a look at the file `CONTRIBUTING.rst`_.
 
+.. _CONTRIBUTING.rst : https://github.com/scikit-learn-contrib/scikit-learn-extra/CONTRIBUTING.rst
 License
 -------
 
 This package is released under the 3-Clause BSD license.
+

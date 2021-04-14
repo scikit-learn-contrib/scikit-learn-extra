@@ -4,36 +4,38 @@
 Clustering with KMedoids and Common-nearest-neighbors
 =====================================================
 .. _k_medoids:
+.. currentmodule:: sklearn_extra.cluster
 
 K-Medoids
 =========
 
-:class:`KMedoids` is related to the :class:`KMeans` algorithm. While
-:class:`KMeans` tries to minimize the within cluster sum-of-squares,
+
+:class:`KMedoids` is related to the :class:`KMeans <sklearn.cluster.KMeans>` algorithm. While
+:class:`KMeans <sklearn.cluster.KMeans>` tries to minimize the within cluster sum-of-squares,
 :class:`KMedoids` tries to minimize the sum of distances between each point and
 the medoid of its cluster. The medoid is a data point (unlike the centroid)
-which has least total distance to the other members of its cluster. The use of
+which has the least total distance to the other members of its cluster. The use of
 a data point to represent each cluster's center allows the use of any distance
 metric for clustering. It may also be a practical advantage, for instance K-Medoids
 algorithms have been used for facial recognition for which the medoid is a
 typical photo of the person to recognize while K-Means would have obtained a blurry
 image that mixed several pictures of the person to recognize.
 
-:class:`KMedoids` can be more robust to noise and outliers than :class:`KMeans`
+:class:`KMedoids` can be more robust to noise and outliers than :class:`KMeans <sklearn.cluster.KMeans>`
 as it will choose one of the cluster members as the medoid while
-:class:`KMeans` will move the center of the cluster towards the outlier which
+:class:`KMeans <sklearn.cluster.KMeans>` will move the center of the cluster towards the outlier which
 might in turn move other points away from the cluster centre.
 
-:class:`KMedoids` is also different from K-Medians, which is analogous to :class:`KMeans`
+:class:`KMedoids` is also different from K-Medians, which is analogous to :class:`KMeans <sklearn.cluster.KMeans>`
 except that the Manhattan Median is used for each cluster center instead of
 the centroid. K-Medians is robust to outliers, but it is limited to the
-Manhattan Distance metric and, similar to :class:`KMeans`, it does not guarantee
+Manhattan Distance metric and, similar to :class:`KMeans <sklearn.cluster.KMeans>`, it does not guarantee
 that the center of each cluster will be a member of the original dataset.
 
 The complexity of K-Medoids is :math:`O(N^2 K T)` where :math:`N` is the number
 of samples, :math:`T` is the number of iterations and :math:`K` is the number of
 clusters. This makes it more suitable for smaller datasets in comparison to
-:class:`KMeans` which is :math:`O(N K T)`.
+:class:`KMeans <sklearn.cluster.KMeans>` which is :math:`O(N K T)`.
 
 .. topic:: Examples:
 
@@ -60,12 +62,12 @@ when speed is an issue.
 * PAM method works as follows:
 
     * Initialize: Greedy initialization of ``n_clusters``. First select the point
-      in the dataset that minimize the sum of distances to a point. Then, add one
-      point that minimize the cost and loop until ``n_clusters`` point are selected.
+      in the dataset that minimizes the sum of distances to a point. Then, add one
+      point that minimizes the cost and loop until ``n_clusters`` points are selected.
       This is the ``init`` parameter called ``build``.
-    * Swap Step: for all medoids already selected, compute the cost of swaping this
-      medoid with any non-medoid point. Then, make the swap that decrease the cost
-      the moste. Loop and stop when there is no change anymore.
+    * Swap Step: for all medoids already selected, compute the cost of swapping this
+      medoid with any non-medoid point. Then, make the swap that decreases the cost
+      the most. Loop and stop when there is no change anymore.
 
 .. topic:: References:
 

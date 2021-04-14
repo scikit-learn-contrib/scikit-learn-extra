@@ -26,7 +26,7 @@ What is an outlier ?
 
 The term "outlier" refers to a discordant minority of the dataset. It is
 generally assumed to be a set of points situated outside the bulk of the data
-but there exists more complex cases as illustrated in the figure below.
+but there exist more complex cases as illustrated in the figure below.
 
 Formally, we define outliers for a given task by considering  points for
 which the loss function takes unusually high values.
@@ -140,7 +140,7 @@ important to do it for SGD). In the context of a corrupted dataset, please use
 
 This algorithm has been studied in the context of "mom" weights in the
 article [1]_, the context of "huber" weights has been mentioned in [2]_.
-Both weighting scheme can be seen as special cases of the algorithm in [3]_.
+Both weighting schemes can be seen as special cases of the algorithm in [3]_.
 
 Comparison with other robust estimators
 ---------------------------------------
@@ -161,7 +161,7 @@ regressions are robust only to outliers in the label Y but not in X.
 Pro: RANSACRegressor and TheilSenRegressor both use a hard rejection of
 outlier. This can be interpreted as though there was an outlier detection
 step and then a regression step whereas RobustWeightedRegressor is directly
-robust to outliers. This often increase the performance on moderatly corrupted
+robust to outliers. This often increases the performance on moderately corrupted
 datasets.
 
 Con: In general, this algorithm is slower than both  TheilSenRegressor and
@@ -172,7 +172,7 @@ Speed and limits of the algorithm
 
 Most of the time, it is interesting to do robust statistics only when there
 are outliers and notice that a lot of dataset have previously been "cleaned"
-of an outliers in which case this algorithm is not better than base_estimator.
+of outliers in which case this algorithm is not better than base_estimator.
 
 In high dimension, the algorithm is expected to be as good
 (or as bad) as base_estimator do in high dimension.
