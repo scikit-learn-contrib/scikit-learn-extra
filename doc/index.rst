@@ -21,3 +21,9 @@ scikit-learn-extra is a Python module for machine learning that extends scikit-l
    :caption: Examples
 
    auto_examples/index
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Project
+
+  contributing

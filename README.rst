@@ -31,7 +31,7 @@ Dependencies
 ^^^^^^^^^^^^
 
 scikit-learn-extra requires,
- 
+
 - Python (>=3.6)
 - scikit-learn (>=0.23), and its dependencies
 
@@ -48,26 +48,20 @@ Latest release can be installed with conda,
 or from PyPi with,
 
 .. code::
-   
+
    pip install scikit-learn-extra
 
 Note that installing from PyPi requires a working C compiler (cf `installation
 instructions
 <https://scikit-learn.org/dev/developers/advanced_installation.html#platform-specific-instructions>`_).
-   
+
 The developement version can be installed with,
 
 .. code::
 
     pip install https://github.com/scikit-learn-contrib/scikit-learn-extra/archive/master.zip
 
-Contributing
--------------
-We appreciate and welcome contributions. If you would like to take part in scikit-learn development, take a look at the file `CONTRIBUTING.rst`_.
-
-.. _CONTRIBUTING.rst : https://github.com/scikit-learn-contrib/scikit-learn-extra/CONTRIBUTING.rst
 License
 -------
 
 This package is released under the 3-Clause BSD license.
-
