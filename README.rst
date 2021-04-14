@@ -36,8 +36,8 @@ scikit-learn-extra requires,
 - scikit-learn (>=0.23), and its dependencies
 
 
-User installation
-^^^^^^^^^^^^^^^^^
+Installation
+^^^^^^^^^^^^
 
 Latest release can be installed with conda,
 
@@ -51,15 +51,6 @@ or from PyPi with,
 
    pip install scikit-learn-extra
 
-Note that installing from PyPi requires a working C compiler (cf `installation
-instructions
-<https://scikit-learn.org/dev/developers/advanced_installation.html#platform-specific-instructions>`_).
-
-The developement version can be installed with,
-
-.. code::
-
-    pip install https://github.com/scikit-learn-contrib/scikit-learn-extra/archive/master.zip
 
 License
 -------

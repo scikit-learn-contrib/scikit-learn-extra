@@ -1,4 +1,3 @@
-include requirements.txt
 recursive-include doc *
 recursive-include examples *
 recursive-include sklearn_extra *.pyx *.pxd *.pxi *.py
