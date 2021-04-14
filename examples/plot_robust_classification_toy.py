@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-=============================================================
+==============================================================
 A demo of Robust Classification on Simulated corrupted dataset
-=============================================================
+==============================================================
 In this example we compare the RobustWeightedClassifier using SGDClassifier
 for classification with the vanilla SGDClassifier with various losses.
 """

@@ -4,10 +4,9 @@
 KMedoids Demo
 =============
 
-KMedoids clustering of data points. The goal is to find medoids than minimize the
-sum of absolute distance to the closest medoid. A medoid is a point of the dataset.
-Read more in the :ref:`User Guide
-<_k_medoids>`.
+KMedoids clustering of data points. The goal is to find medoids than minimize
+the sum of absolute distance to the closest medoid. A medoid is a point of the
+dataset.  Read more in the :ref:`User Guide <_k_medoids>`.
 
 """
 import matplotlib.pyplot as plt
@@ -31,7 +30,7 @@ X, labels_true = make_blobs(
 cobj = KMedoids(n_clusters=3).fit(X)
 labels = cobj.labels_
 
-############################################################"""
+##############################################################
 # Plot results
 unique_labels = set(labels)
 colors = [

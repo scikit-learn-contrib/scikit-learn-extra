@@ -3,7 +3,6 @@
 ==================================================
 Kernel map approximation for faster kernel methods
 ==================================================
-.. _kernel_approximation:
 
 .. currentmodule:: sklearn_extra.kernel_approximation
 
