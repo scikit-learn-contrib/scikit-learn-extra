@@ -9,17 +9,17 @@ jobs:
         python.version: '3.6'
         NUMPY_VERSION: "1.13.3"
         SCIPY_VERSION: "0.19.1"
-        SKLEARN_VERSION: "0.22.2post1"
+        SKLEARN_VERSION: "0.23.0"
       Python37:
         python.version: '3.7'
         NUMPY_VERSION: "1.16.5"
         SCIPY_VERSION: "1.1.0"
-        SKLEARN_VERSION: "0.22.2post1"
+        SKLEARN_VERSION: "0.23.2"
       Python38:
         python.version: '3.8'
         NUMPY_VERSION: "1.19.4"
         SCIPY_VERSION: "1.4.1"
-        SKLEARN_VERSION: "0.23.2"
+        SKLEARN_VERSION: "0.24.1"
       Python39:
         python.version: '3.9'
         NUMPY_VERSION: "1.19.4"
@@ -74,12 +74,12 @@ jobs:
         python.version: '3.6'
         NUMPY_VERSION: "1.13.3"
         SCIPY_VERSION: "0.19.1"
-        SKLEARN_VERSION: "0.22.2post1"
+        SKLEARN_VERSION: "0.23.2"
       Python37:
         python.version: '3.7'
         NUMPY_VERSION: "1.16.5"
         SCIPY_VERSION: "1.1.0"
-        SKLEARN_VERSION: "0.22.2post1"
+        SKLEARN_VERSION: "0.24.1"
       Python38:
         python.version: '3.8'
         SKLEARN_VERSION: "*"
@@ -131,13 +131,13 @@ jobs:
         python.version: '3.6'
         NUMPY_VERSION: "1.13.3"
         SCIPY_VERSION: "1.0.1"
-        SKLEARN_VERSION: "0.22.2post1"
+        SKLEARN_VERSION: "0.23.2"
       Python38:
         python_ver: '38'
         python.version: '3.8'
         NUMPY_VERSION: "1.18.2"
         SCIPY_VERSION: "1.4.1"
-        SKLEARN_VERSION: "0.22.2post1"
+        SKLEARN_VERSION: "0.24.1"
   variables:
     OMP_NUM_THREADS: '2'
 
