@@ -7,7 +7,7 @@ Contributing
 We welcome and in fact would love some help.
 
 How to Contribute
-=================
+^^^^^^^^^^^^^^^^^
 
 The preferred workflow to contribute is:
 
@@ -29,7 +29,7 @@ The preferred workflow to contribute is:
 5. When you are done, submit a pull request.
 
 Guidelines
-==========
+^^^^^^^^^^
 
 This is still a very young project, but we do have a few guiding principles:
 
@@ -40,7 +40,7 @@ This is still a very young project, but we do have a few guiding principles:
 5. Format with black
 
 Running Tests
-=============
+^^^^^^^^^^^^^
 
 To run the tests, use:
 
@@ -49,7 +49,7 @@ To run the tests, use:
     pytest
 
 Easy Issues / Getting Started
-=============================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are usually some issues in the project github page looking for contributors, if not you're welcome to propose some
 ideas there, or a great first step is often to just use the library, and add to the examples directory. This helps us
