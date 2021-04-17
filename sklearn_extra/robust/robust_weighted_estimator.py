@@ -1346,9 +1346,13 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             kmeans_args = {}
         else:
             kmeans_args = self.kmeans_args
-        X = self._validate_data(X, accept_sparse='csr',
-                                dtype=[np.float64, np.float32],
-                                order='C', accept_large_sparse=False)
+        X = self._validate_data(
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            order="C",
+            accept_large_sparse=False,
+        )
         self.base_estimator_ = _RobustWeightedEstimator(
             MiniBatchKMeans(
                 self.n_clusters,
