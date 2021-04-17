@@ -874,7 +874,6 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     def _predict_proba(self, X):
         return self.base_estimator_.predict_proba(X)
 
-
     def score(self, X, y=None):
         """Returns the score on the given data, using
         ``base_estimator_.score``.
