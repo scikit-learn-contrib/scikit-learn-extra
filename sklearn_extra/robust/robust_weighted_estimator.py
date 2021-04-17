@@ -874,9 +874,6 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     def _predict_proba(self, X):
         return self.base_estimator_.predict_proba(X)
 
-    @property
-    def _estimator_type(self):
-        return self.base_estimator._estimator_type
 
     def score(self, X, y=None):
         """Returns the score on the given data, using
@@ -1142,10 +1139,6 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.predict(X)
 
-    @property
-    def _estimator_type(self):
-        return self.base_estimator._estimator_type
-
     def score(self, X, y=None):
         """Returns the score on the given data, using
         ``base_estimator_.score``.
@@ -1403,10 +1396,6 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
 
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.predict(X)
-
-    @property
-    def _estimator_type(self):
-        return self.base_estimator._estimator_type
 
     def score(self, X, y=None):
         """Returns the score on the given data, using
