@@ -1,7 +1,4 @@
 #! /usr/bin/env python
-"""A template for scikit-learn compatible packages."""
-
-import codecs
 import os
 
 from setuptools import find_packages, setup, Extension
@@ -18,7 +15,7 @@ with open(ver_file) as f:
 
 DISTNAME = "scikit-learn-extra"
 DESCRIPTION = "A set of tools for scikit-learn."
-with codecs.open("README.rst", encoding="utf-8-sig") as f:
+with open("README.rst", encoding="utf-8") as f:
     LONG_DESCRIPTION = f.read()
 URL = "https://github.com/scikit-learn-contrib/scikit-learn-extra"
 LICENSE = "new BSD"
@@ -91,6 +88,7 @@ args = {
 setup(
     name=DISTNAME,
     description=DESCRIPTION,
+    long_description_content_type="text/x-rst",
     license=LICENSE,
     url=URL,
     version=VERSION,
