@@ -3,7 +3,7 @@ Changelog
 
 Unreleased
 ----------
-*April 14, 2021*
+*April 17, 2021*
 
 - Fix `_estimator_type` for :class:`~sklearn_extra.robust.RobustWeightedClassifier`,
   :class:`~sklearn_extra.robust.RobustWeightedRegressor` and
