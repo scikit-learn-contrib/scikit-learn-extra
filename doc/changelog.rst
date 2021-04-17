@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Fix `_estimator_type` for :class:`~sklearn_extra.robust` estimators. Fix
+  misbehavior of scikit-learn's :class:`~sklearn.model_selection.cross_val_score` and
+  :class:`~sklearn.grid_search.GridSearchCV` for :class:`~sklearn_extra.robust.RobustWeightedClassifier`
 
 Version 0.2.0
 -------------
