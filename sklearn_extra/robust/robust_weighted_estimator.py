@@ -790,6 +790,8 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
             sgd_args = self.sgd_args
 
         # Define the base estimator
+        X, y = self._validate_data(X, y, y_numeric=False)
+
         base_robust_estimator_ = _RobustWeightedEstimator(
             SGDClassifier(**sgd_args, eta0=self.eta0),
             weighting=self.weighting,
@@ -1099,6 +1101,8 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
         # Define the base estimator
 
+        X, y = self._validate_data(X, y, y_numeric=True)
+
         self.base_estimator_ = _RobustWeightedEstimator(
             SGDRegressor(**sgd_args, eta0=self.eta0),
             weighting=self.weighting,
@@ -1342,14 +1346,9 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             kmeans_args = {}
         else:
             kmeans_args = self.kmeans_args
-        X = check_array(
-            X,
-            accept_sparse="csr",
-            dtype=[np.float64, np.float32],
-            order="C",
-            accept_large_sparse=False,
-        )
-
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=[np.float64, np.float32],
+                                order='C', accept_large_sparse=False)
         self.base_estimator_ = _RobustWeightedEstimator(
             MiniBatchKMeans(
                 self.n_clusters,
