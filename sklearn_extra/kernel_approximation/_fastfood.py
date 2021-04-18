@@ -167,7 +167,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        X = check_array(X, dtype=np.float64)
+        X = check_array(X, order="C", dtype=np.float64)
 
         d_orig = X.shape[1]
         rng = check_random_state(self.random_state)
@@ -217,7 +217,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = check_array(X, dtype=np.float64)
+        X = check_array(X, order="C", dtype=np.float64)
         X_padded = self._pad_with_zeros(X)
         HGPHBX = self._apply_approximate_gaussian_matrix(
             self._B, self._G, self._P, X_padded
