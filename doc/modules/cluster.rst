@@ -1,8 +1,8 @@
 .. _cluster:
 
-=====================================================
-Clustering with KMedoids and Common-nearest-neighbors
-=====================================================
+============================================================
+Clustering with KMedoids, CLARA and Common-nearest-neighbors
+============================================================
 .. _k_medoids:
 
 K-Medoids
@@ -89,7 +89,7 @@ CLARA
 
     :class:`CLARA` is related to the :class:`KMedoids` algorithm. CLARA
     (Clustering for Large Applications) extends k-medoids approach for a
-    large number of objects. This algorithm use a sampling approach.
+    large number of objects. This algorithm uses a sampling approach.
 
     .. topic:: Examples:
 
