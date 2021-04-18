@@ -37,7 +37,12 @@ This is still a very young project, but we do have a few guiding principles:
 2. Write detailed docstrings in numpy format
 3. Support pandas dataframes and numpy arrays as inputs
 4. Write tests
-5. Format with black
+5. Format with black. You can use `pre-commit <https://pre-commit.com/>`_ to auto-format code on each commit,
+
+   .. code-block:: console
+
+       pip install pre-commit
+       pre-commit install
 
 Running Tests
 ^^^^^^^^^^^^^
