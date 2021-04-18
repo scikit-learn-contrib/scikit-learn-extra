@@ -54,11 +54,10 @@ estimators = [
         "RobustWeightedRegressor",
         RobustWeightedRegressor(
             weighting="huber",
-            c=0.01,
+            c=0.1,
             eta0=1e-2,
             sgd_args={
-                "learning_rate": "adaptive",
-                "eta0": 1e-3,
+                "learning_rate": "invscaling",
             },
         ),
     ),
@@ -89,7 +88,7 @@ for f in range(M):
         res[i, f, 0] = np.mean(cv)
         res[i, f, 1] = np.median(cv)
 
-fig, (axe1, axe2) = plt.subplots(1, 2)
+fig, (axe1, axe2) = plt.subplots(2, 1)
 names = [name for name, est in estimators]
 
 axe1.boxplot(res[:, :, 0].T, labels=names)

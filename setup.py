@@ -1,7 +1,4 @@
 #! /usr/bin/env python
-"""A template for scikit-learn compatible packages."""
-
-import codecs
 import os
 
 from setuptools import find_packages, setup, Extension
@@ -18,15 +15,13 @@ with open(ver_file) as f:
 
 DISTNAME = "scikit-learn-extra"
 DESCRIPTION = "A set of tools for scikit-learn."
-with codecs.open("README.rst", encoding="utf-8-sig") as f:
+with open("README.rst", encoding="utf-8") as f:
     LONG_DESCRIPTION = f.read()
-MAINTAINER = "G. Lemaitre"
-MAINTAINER_EMAIL = "g.lemaitre58@gmail.com"
 URL = "https://github.com/scikit-learn-contrib/scikit-learn-extra"
 LICENSE = "new BSD"
 DOWNLOAD_URL = "https://github.com/scikit-learn-contrib/scikit-learn-extra"
 VERSION = __version__  # noqa
-INSTALL_REQUIRES = ["numpy>=1.13.3", "scipy>=0.19.1", "scikit-learn>=0.22.0"]
+INSTALL_REQUIRES = ["numpy>=1.13.3", "scipy>=0.19.1", "scikit-learn>=0.23.0"]
 CLASSIFIERS = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
@@ -41,6 +36,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 EXTRAS_REQUIRE = {
@@ -91,9 +87,8 @@ args = {
 
 setup(
     name=DISTNAME,
-    maintainer=MAINTAINER,
-    maintainer_email=MAINTAINER_EMAIL,
     description=DESCRIPTION,
+    long_description_content_type="text/x-rst",
     license=LICENSE,
     url=URL,
     version=VERSION,
@@ -104,5 +99,6 @@ setup(
     packages=find_packages(),
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
+    python_requires=">=3.6",
     **args
 )

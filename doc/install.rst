@@ -7,7 +7,7 @@ Dependencies
 scikit-learn-extra requires,
  
 - Python (>=3.6)
-- scikit-learn (>=0.22), and its dependencies
+- scikit-learn (>=0.23), and its dependencies
 
 
 User installation
@@ -24,10 +24,6 @@ or from PyPi with,
 .. code::
    
    pip install scikit-learn-extra
-
-Note that installing from PyPi requires a working C compiler (cf `installation
-instructions
-<https://scikit-learn.org/dev/developers/advanced_installation.html#platform-specific-instructions>`_).
 
 Latest development version can be installed with,
 
