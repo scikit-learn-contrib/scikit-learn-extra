@@ -324,11 +324,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             check_is_fitted(self, "cluster_centers_")
 
             Y = self.cluster_centers_
+            kwargs = {}
             if self.metric == "seuclidean":
-                V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
-                DXY = pairwise_distances(X, Y=Y, metric=self.metric, V=V)
-            else:
-                DXY = pairwise_distances(X, Y=Y, metric=self.metric)
+                kwargs['V'] = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+            DXY = pairwise_distances(X, Y=Y, metric=self.metric, **kwargs)
 
             return DXY
 
