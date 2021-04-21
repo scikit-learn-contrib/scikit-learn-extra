@@ -326,7 +326,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             Y = self.cluster_centers_
             kwargs = {}
             if self.metric == "seuclidean":
-                kwargs['V'] = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+                kwargs["V"] = np.var(np.vstack([X, Y]), axis=0, ddof=1)
             DXY = pairwise_distances(X, Y=Y, metric=self.metric, **kwargs)
 
             return DXY
@@ -355,15 +355,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Return data points to clusters based on which cluster assignment
             # yields the smallest distance
+            kwargs = {}
             if self.metric == "seuclidean":
-                V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
-                pd_argmin = pairwise_distances_argmin(
-                    X, Y=Y, metric=self.metric, V=V
-                )
-            else:
-                pd_argmin = pairwise_distances_argmin(
-                    X, Y=self.cluster_centers_, metric=self.metric
-                )
+                kwargs["V"] = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+            pd_argmin = pairwise_distances_argmin(
+                X, Y=self.cluster_centers_, metric=self.metric, **kwargs
+            )
 
             return pd_argmin
 

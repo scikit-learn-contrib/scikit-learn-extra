@@ -347,3 +347,9 @@ def test_build():
     ske.fit(diss)
     assert ske.inertia_ <= 230
     assert len(np.unique(ske.labels_)) == 20
+
+
+def test_seuclidean():
+    with pytest.warns(None) as record:
+        KMedoids(metric="seuclidean")
+    assert len(record) == 0
