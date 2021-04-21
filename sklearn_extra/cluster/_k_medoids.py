@@ -324,7 +324,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             check_is_fitted(self, "cluster_centers_")
 
             Y = self.cluster_centers_
-            return pairwise_distances(X, Y=Y, metric=self.metric)
+            kwargs = {}
+            if self.metric == "seuclidean":
+                kwargs["V"] = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+            DXY = pairwise_distances(X, Y=Y, metric=self.metric, **kwargs)
+
+            return DXY
 
     def predict(self, X):
         """Predict the closest cluster for each sample in X.
@@ -350,9 +355,19 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Return data points to clusters based on which cluster assignment
             # yields the smallest distance
-            return pairwise_distances_argmin(
-                X, Y=self.cluster_centers_, metric=self.metric
+            kwargs = {}
+            if self.metric == "seuclidean":
+                kwargs["V"] = np.var(
+                    np.vstack([X, self.cluster_centers_]), axis=0, ddof=1
+                )
+            pd_argmin = pairwise_distances_argmin(
+                X,
+                Y=self.cluster_centers_,
+                metric=self.metric,
+                metric_kwargs=kwargs,
             )
+
+            return pd_argmin
 
     def _compute_inertia(self, distances):
         """Compute inertia of new samples. Inertia is defined as the sum of the
