@@ -351,5 +351,8 @@ def test_build():
 
 def test_seuclidean():
     with pytest.warns(None) as record:
-        KMedoids(metric="seuclidean")
+        km = KMedoids(2, metric="seuclidean", method="pam")
+        km.fit(np.array([0, 0, 0, 1]).reshape((4, 1)))
+        km.predict(np.array([0, 0, 0, 1]).reshape((4, 1)))
+        km.transform(np.array([0, 0, 0, 1]).reshape((4, 1)))
     assert len(record) == 0
