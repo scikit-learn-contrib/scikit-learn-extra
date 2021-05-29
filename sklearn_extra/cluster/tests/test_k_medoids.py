@@ -375,3 +375,12 @@ def test_clara_consistency_iris():
     model.fit(X_iris)
     clara.fit(X_iris)
     assert np.sum(model.labels_ == clara.labels_) == len(X_iris)
+
+
+def test_seuclidean():
+    with pytest.warns(None) as record:
+        km = KMedoids(2, metric="seuclidean", method="pam")
+        km.fit(np.array([0, 0, 0, 1]).reshape((4, 1)))
+        km.predict(np.array([0, 0, 0, 1]).reshape((4, 1)))
+        km.transform(np.array([0, 0, 0, 1]).reshape((4, 1)))
+    assert len(record) == 0
