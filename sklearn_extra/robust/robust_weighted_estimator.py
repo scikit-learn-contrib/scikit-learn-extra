@@ -418,7 +418,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         return self
 
     def _get_loss_function(self, loss):
-        """Get concrete ''LossFunction'' object for str ''loss''. """
+        """Get concrete ''LossFunction'' object for str ''loss''."""
         if type(loss) == str:
             eff_loss = LOSS_FUNCTIONS.get(loss)
             if eff_loss is None:
