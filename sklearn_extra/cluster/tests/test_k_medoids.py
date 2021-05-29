@@ -348,7 +348,7 @@ def test_kmedoids_on_sparse_input():
 # Test the build initialization.
 def test_build():
     X, y = fetch_20newsgroups_vectorized(return_X_y=True)
-    # Select only the first 1000 samples
+    # Select only the first 500 samples
     X = X[:500]
     y = y[:500]
     # Precompute cosine distance matrix
@@ -358,3 +358,20 @@ def test_build():
     ske.fit(diss)
     assert ske.inertia_ <= 230
     assert len(np.unique(ske.labels_)) == 20
+
+
+def test_clara_consistency_iris():
+    # test that CLARA is PAM when full sample is used
+
+    rng = np.random.RandomState(seed)
+    X_iris = load_iris()["data"]
+
+    clara = CLARA(
+        n_clusters=3, samples=1, sampling_size=len(X_iris), random_state=rng
+    )
+
+    model = KMedoids(n_clusters=3, init="build", random_state=rng)
+
+    model.fit(X_iris)
+    clara.fit(X_iris)
+    assert np.sum(model.labels_ == clara.labels_) == len(X_iris)
