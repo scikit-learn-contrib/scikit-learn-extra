@@ -116,7 +116,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
             return None
 
     def _apply_approximate_gaussian_matrix(self, B, G, P, X):
-        """ Create mapping of all x_i by applying B, G and P step-wise """
+        """Create mapping of all x_i by applying B, G and P step-wise"""
         num_examples = X.shape[0]
 
         result = np.multiply(B, X.reshape((1, num_examples, 1, self._d)))
@@ -134,7 +134,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return result
 
     def _scale_transformed_data(self, S, VX):
-        """ Scale mapped data VX to match kernel(e.g. RBF-Kernel) """
+        """Scale mapped data VX to match kernel(e.g. RBF-Kernel)"""
         VX = VX.reshape(-1, self._times_to_stack_v * self._d)
 
         return (
