@@ -152,7 +152,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             )
 
     def _check_init_args(self):
-        """Validates the input arguments. """
+        """Validates the input arguments."""
 
         # Check n_clusters and max_iter
         self._check_nonnegative_int(self.n_clusters, "n_clusters")
@@ -298,7 +298,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
 
     def _compute_cost(self, D, medoid_idxs):
-        """ Compute the cose for a given configuration of the medoids"""
+        """Compute the cose for a given configuration of the medoids"""
         return self._compute_inertia(D[:, medoid_idxs])
 
     def transform(self, X):
