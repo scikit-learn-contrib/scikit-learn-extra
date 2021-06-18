@@ -194,6 +194,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             )
 
         D = pairwise_distances(X, metric=self.metric)
+
         medoid_idxs = self._initialize_medoids(
             D, self.n_clusters, random_state_
         )
@@ -202,6 +203,11 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         if self.method == "pam":
             # Compute the distance to the first and second closest points
             # among medoids.
+            if (X.dtype is np.dtype(np.float32)) or (
+                X.dtype is np.dtype(np.float16)
+            ):
+                D = D.astype(np.float32)
+
             if self.n_clusters == 1 and self.max_iter > 0:
                 # PAM SWAP step can only be used for n_clusters > 1
                 warnings.warn(
@@ -211,6 +217,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 self.max_iter = 0
             elif self.max_iter > 0:
                 Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+        elif self.init != "build":
+            D = D.astype(X.dtype)
 
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
