@@ -724,7 +724,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"], dtypes=[np.float64, np.float32])
+        X = check_array(X, accept_sparse=["csr", "csc"])
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -749,7 +749,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"], dtypes=[np.float64, np.float32])
+        X = check_array(X, accept_sparse=["csr", "csc"])
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
