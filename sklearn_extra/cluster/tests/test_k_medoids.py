@@ -45,6 +45,7 @@ def test_kmedoid_results(method, init, dtype):
         1 - np.mean(km.labels_ == expected) > 0.8
     )
     assert dtype is np.dtype(km.cluster_centers_.dtype).type
+    assert dtype is np.dtype(km.transform(X_cc.astype(dtype)).dtype).type
 
 
 def test_medoids_invalid_method():
