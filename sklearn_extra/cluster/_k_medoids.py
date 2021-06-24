@@ -94,8 +94,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> kmedoids.predict([[0,0], [4,4]])
     array([0, 1])
     >>> kmedoids.cluster_centers_
-    array([[1, 2],
-           [4, 2]])
+    array([[1., 2.],
+           [4., 2.]])
     >>> kmedoids.inertia_
     8.0
 
