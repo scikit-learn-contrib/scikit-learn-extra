@@ -34,15 +34,18 @@ X_cc, y_cc = make_blobs(
 @pytest.mark.parametrize(
     "init", ["random", "heuristic", "build", "k-medoids++"]
 )
-def test_kmedoid_results(method, init):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kmedoid_results(method, init, dtype):
     expected = np.hstack([np.zeros(50), np.ones(50)])
     km = KMedoids(n_clusters=2, init=init, method=method, random_state=rng)
-    km.fit(X_cc)
+    km.fit(X_cc.astype(dtype))
     # This test use data that are not perfectly separable so the
     # accuracy is not 1. Accuracy around 0.85
     assert (np.mean(km.labels_ == expected) > 0.8) or (
         1 - np.mean(km.labels_ == expected) > 0.8
     )
+    assert dtype is np.dtype(km.cluster_centers_.dtype).type
+    assert dtype is np.dtype(km.transform(X_cc.astype(dtype)).dtype).type
 
 
 def test_medoids_invalid_method():

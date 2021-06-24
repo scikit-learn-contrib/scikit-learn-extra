@@ -94,8 +94,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> kmedoids.predict([[0,0], [4,4]])
     array([0, 1])
     >>> kmedoids.cluster_centers_
-    array([[1, 2],
-           [4, 2]])
+    array([[1., 2.],
+           [4., 2.]])
     >>> kmedoids.inertia_
     8.0
 
@@ -185,7 +185,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state_ = check_random_state(self.random_state)
 
         self._check_init_args()
-        X = check_array(X, accept_sparse=["csr", "csc"])
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
         if self.n_clusters > X.shape[0]:
             raise ValueError(
                 "The number of medoids (%d) must be less "
@@ -315,7 +317,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"])
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -345,7 +349,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"])
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
