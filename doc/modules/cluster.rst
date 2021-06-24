@@ -88,8 +88,8 @@ CLARA
 =====
 
     :class:`CLARA` is related to the :class:`KMedoids` algorithm. CLARA
-    (Clustering for Large Applications) extends k-medoids approach for a
-    large number of objects. This algorithm uses a sampling approach.
+    (Clustering for Large Applications) extends k-medoids to be more scalable,
+    uses a sampling approach.
 
     .. topic:: Examples:
 
@@ -98,7 +98,7 @@ CLARA
 
 
     **Algorithm description:**
-    CLARA use `sample` random samples of the dataset, each of size `sampling_size`
+    CLARA uses random samples of the dataset, each of size `sampling_size`
     The algorith is iterative, first we select one sub-sample, then CLARA applies
     KMedoids on this sub-sample to obtain `n_clusters` medoids. At the next step,
     CLARA sample `sampling_size`-`n_clusters` from the dataset and the next sub-sample
