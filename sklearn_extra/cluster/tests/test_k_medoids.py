@@ -370,7 +370,10 @@ def test_clara_consistency_iris():
     X_iris = load_iris()["data"]
 
     clara = CLARA(
-        n_clusters=3, samples=1, sampling_size=len(X_iris), random_state=rng
+        n_clusters=3,
+        n_sampling_iter=1,
+        n_sampling=len(X_iris),
+        random_state=rng,
     )
 
     model = KMedoids(n_clusters=3, init="build", random_state=rng)

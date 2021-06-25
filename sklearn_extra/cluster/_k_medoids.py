@@ -205,10 +205,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         if self.method == "pam":
             # Compute the distance to the first and second closest points
             # among medoids.
-            if (X.dtype is np.dtype(np.float32)) or (
-                X.dtype is np.dtype(np.float16)
-            ):
-                D = D.astype(np.float32)
 
             if self.n_clusters == 1 and self.max_iter > 0:
                 # PAM SWAP step can only be used for n_clusters > 1
@@ -219,8 +215,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 self.max_iter = 0
             elif self.max_iter > 0:
                 Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-        elif self.init != "build":
-            D = D.astype(X.dtype)
 
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
@@ -538,13 +532,13 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         Specify the maximum number of iterations when fitting PAM. It can be zero
         in which case only the initialization is computed.
 
-    sampling_size : int or None, optional, default : None
+    n_sampling : int or None, optional, default : None
         Size of the sampled dataset at each iteration. sampling-size a trade-off
         between complexity and efficiency. If None, then sampling-size is set
         to min(sample_size, 40 + 2 * self.n_clusters) as suggested by the authors of the
         algorithm. must be smaller than sample_size.
 
-    samples : int, optional, default : 5
+    n_sampling_iter : int, optional, default : 5
         Number of different samples that have to be done, or number of iterations.
 
     random_state : int, RandomState instance or None, optional
@@ -594,7 +588,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
     Notes
     -----
     Contrary to KMedoids, CLARA is linear in N the sample size for both the spacial
-    and time complexity. On the other hand, it scales quadratically with sampling_size.
+    and time complexity. On the other hand, it scales quadratically with n_sampling.
 
     """
 
@@ -604,16 +598,16 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         metric="euclidean",
         init="build",
         max_iter=300,
-        sampling_size=None,
-        samples=5,
+        n_sampling=None,
+        n_sampling_iter=5,
         random_state=None,
     ):
         self.n_clusters = n_clusters
         self.metric = metric
         self.init = init
         self.max_iter = max_iter
-        self.sampling_size = sampling_size
-        self.samples = samples
+        self.n_sampling = n_sampling
+        self.n_sampling_iter = n_sampling_iter
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -622,7 +616,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features), \
-                or (n_samples, n_samples) if metric == 'precomputed'
+                or (n_n_sampling_iter, n_n_sampling_iter) if metric == 'precomputed'
             Dataset to cluster.
 
         y : Ignored
@@ -631,26 +625,26 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         -------
         self
         """
-        X = check_array(X)
+        X = check_array(X, dtype=[np.float64, np.float32])
         n = len(X)
 
         random_state_ = check_random_state(self.random_state)
 
-        if self.sampling_size is None:
-            sampling_size = max(
+        if self.n_sampling is None:
+            n_sampling = max(
                 min(n, 40 + 2 * self.n_clusters), self.n_clusters + 1
             )
         else:
-            sampling_size = self.sampling_size
+            n_sampling = self.n_sampling
 
-        # Check sampling_size.
+        # Check n_sampling.
 
         if n < self.n_clusters:
             raise ValueError(
                 "sample_size should be greater than self.n_clusters"
             )
 
-        if self.n_clusters >= sampling_size:
+        if self.n_clusters >= n_sampling:
             raise ValueError(
                 "sampling size must be strictly greater than self.n_clusters"
             )
@@ -659,8 +653,8 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
             np.arange(n), size=self.n_clusters, replace=False
         )
         best_score = np.inf
-        for _ in range(self.samples):
-            if sampling_size >= n:
+        for _ in range(self.n_sampling_iter):
+            if n_sampling >= n:
                 sample_idxs = np.arange(n)
             else:
                 sample_idxs = np.hstack(
@@ -668,7 +662,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
                         medoids_idxs,
                         random_state_.choice(
                             np.delete(np.arange(n), medoids_idxs),
-                            size=sampling_size - self.n_clusters,
+                            size=n_sampling - self.n_clusters,
                             replace=False,
                         ),
                     ]
@@ -692,7 +686,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self.medoid_indices_ = medoids_idxs
         self.labels_ = np.argmin(self.transform(X), axis=1)
-        self.n_iter_ = self.samples
+        self.n_iter_ = self.n_sampling_iter
 
         return self
 
@@ -730,7 +724,9 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"])
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -755,7 +751,9 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"])
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
