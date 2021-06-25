@@ -24,6 +24,27 @@ from sklearn.exceptions import ConvergenceWarning
 from ._k_medoids_helper import _compute_optimal_swap, _build
 
 
+def _compute_inertia(distances):
+    """Compute inertia of new samples. Inertia is defined as the sum of the
+    sample distances to closest cluster centers.
+
+    Parameters
+    ----------
+    distances : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
+        Distances to cluster centers.
+
+    Returns
+    -------
+    Sum of sample distances to closest cluster centers.
+    """
+
+    # Define inertia as the sum of the sample-distances
+    # to closest cluster centers
+    inertia = np.sum(np.min(distances, axis=1))
+
+    return inertia
+
+
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     """k-medoids clustering.
 
@@ -270,7 +291,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # the training data to clusters
         self.labels_ = np.argmin(D[medoid_idxs, :], axis=0)
         self.medoid_indices_ = medoid_idxs
-        self.inertia_ = self._compute_inertia(self.transform(X))
+        self.inertia_ = _compute_inertia(self.transform(X))
 
         # Return self to enable method chaining
         return self
@@ -312,7 +333,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _compute_cost(self, D, medoid_idxs):
         """Compute the cose for a given configuration of the medoids"""
-        return self._compute_inertia(D[:, medoid_idxs])
+        return _compute_inertia(D[:, medoid_idxs])
 
     def transform(self, X):
         """Transforms X to cluster-distance space.
@@ -385,26 +406,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             )
 
             return pd_argmin
-
-    def _compute_inertia(self, distances):
-        """Compute inertia of new samples. Inertia is defined as the sum of the
-        sample distances to closest cluster centers.
-
-        Parameters
-        ----------
-        distances : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
-            Distances to cluster centers.
-
-        Returns
-        -------
-        Sum of sample distances to closest cluster centers.
-        """
-
-        # Define inertia as the sum of the sample-distances
-        # to closest cluster centers
-        inertia = np.sum(np.min(distances, axis=1))
-
-        return inertia
 
     def _initialize_medoids(self, D, n_clusters, random_state_):
         """Select initial mediods when beginning clustering."""
@@ -677,7 +678,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
             )
             pam.fit(X[sample_idxs])
             self.cluster_centers_ = pam.cluster_centers_
-            self.inertia_ = self._compute_inertia(self.transform(X))
+            self.inertia_ = _compute_inertia(self.transform(X))
 
             if pam.inertia_ < best_score:
                 best_score = self.inertia_
@@ -689,26 +690,6 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         self.n_iter_ = self.n_sampling_iter
 
         return self
-
-    def _compute_inertia(self, distances):
-        """Compute inertia of new samples. Inertia is defined as the sum of the
-        sample distances to closest cluster centers.
-
-        Parameters
-        ----------
-        distances : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
-            Distances to cluster centers.
-
-        Returns
-        -------
-        Sum of sample distances to closest cluster centers.
-        """
-
-        # Define inertia as the sum of the sample-distances
-        # to closest cluster centers
-        inertia = np.sum(np.min(distances, axis=1))
-
-        return inertia
 
     def transform(self, X):
         """Transforms X to cluster-distance space.
