@@ -11,7 +11,7 @@ from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
 
 from numpy.testing import assert_allclose, assert_array_equal
 
-from sklearn_extra.cluster import KMedoids
+from sklearn_extra.cluster import KMedoids, CLARA
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 
@@ -46,6 +46,17 @@ def test_kmedoid_results(method, init, dtype):
     )
     assert dtype is np.dtype(km.cluster_centers_.dtype).type
     assert dtype is np.dtype(km.transform(X_cc.astype(dtype)).dtype).type
+
+
+def test_clara_results():
+    expected = np.hstack([np.zeros(50), np.ones(50)])
+    km = CLARA(n_clusters=2)
+    km.fit(X_cc)
+    # This test use data that are not perfectly separable so the
+    # accuracy is not 1. Accuracy around 0.85
+    assert (np.mean(km.labels_ == expected) > 0.8) or (
+        1 - np.mean(km.labels_ == expected) > 0.8
+    )
 
 
 def test_medoids_invalid_method():
@@ -340,7 +351,7 @@ def test_kmedoids_on_sparse_input():
 # Test the build initialization.
 def test_build():
     X, y = fetch_20newsgroups_vectorized(return_X_y=True)
-    # Select only the first 1000 samples
+    # Select only the first 500 samples
     X = X[:500]
     y = y[:500]
     # Precompute cosine distance matrix
@@ -350,6 +361,26 @@ def test_build():
     ske.fit(diss)
     assert ske.inertia_ <= 230
     assert len(np.unique(ske.labels_)) == 20
+
+
+def test_clara_consistency_iris():
+    # test that CLARA is PAM when full sample is used
+
+    rng = np.random.RandomState(seed)
+    X_iris = load_iris()["data"]
+
+    clara = CLARA(
+        n_clusters=3,
+        n_sampling_iter=1,
+        n_sampling=len(X_iris),
+        random_state=rng,
+    )
+
+    model = KMedoids(n_clusters=3, init="build", random_state=rng)
+
+    model.fit(X_iris)
+    clara.fit(X_iris)
+    assert np.sum(model.labels_ == clara.labels_) == len(X_iris)
 
 
 def test_seuclidean():
