@@ -175,10 +175,9 @@ def make_huber_metric(score_func=mean_squared_error, c=None, T=20):
     >>> robust_mse = make_huber_metric(mean_squared_error, c=5)
     >>> y_true = np.hstack([np.zeros(98), 20*np.ones(2)]) # corrupted test values
     >>> np.random.shuffle(y_true) # shuffle them
-    >>> _ = clf.fit(X, y)
     >>> y_pred = np.zeros(100) # predicted values
     >>> robust_mse(y_true, y_pred)
-    0.26315789473684204
+    0.1020408163265306
     """
 
     def metric(y_true, y_pred):
