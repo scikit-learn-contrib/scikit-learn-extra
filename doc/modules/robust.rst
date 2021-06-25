@@ -142,6 +142,57 @@ This algorithm has been studied in the context of "mom" weights in the
 article [1]_, the context of "huber" weights has been mentioned in [2]_.
 Both weighting schemes can be seen as special cases of the algorithm in [3]_.
 
+
+Robust model selection
+----------------------
+
+one of the big challenge of robust machine learning is that the usual scoring
+scheme (cross_validation with mean squared error for instance) is not robust.
+Indeed, if the dataset has some outliers, then the test sets in cross-validation
+may have outliers and then the cross_validation MSE would give us a huge error
+for our robust algorithm on any corrupted data.
+
+To solve this problem, one can use robust score methods when doing
+cross-validation using `make_huber_metric`. The following example show how
+`make_huber_metric` can be used and it shows that `HuberRegressor` is robust
+to outliers in the variable y.
+
+Example :
+
+Import the libraries
+
+    >>>import numpy as np
+    >>>from sklearn.metrics import mean_squared_error, make_scorer
+    >>>from sklearn.model_selection import cross_val_score
+    >>>from sklearn_extra.robust import make_huber_metric
+    >>>from sklearn.linear_model import LinearRegression, HuberRegressor
+
+Define the robust metric
+
+    >>>robust_mse = make_huber_metric(mean_squared_error, c=9)
+
+Define a corrupted dataset
+
+    >>>rng = np.random.RandomState(42)
+    >>>X = rng.uniform(size=100)[:,np.newaxis]
+    >>>y = 3*X.ravel()
+    >>>y[[42//2,42, 42*2]] = 200 # outliers
+
+Get the non robust errors:
+
+    >>>for reg in [LinearRegression(), HuberRegressor()]:
+    >>>    print(reg, " mse : %.2F" %(np.mean(cross_val_score(reg, X, y, scoring = make_scorer(mean_squared_error)))))
+    LinearRegression()  mse : 1154.63
+    HuberRegressor()  mse : 1194.19
+
+Get the robust errors:
+
+    >>>for reg in [LinearRegression(), HuberRegressor()]:
+    >>>    print(reg, " mse : %.2F" %(np.mean(cross_val_score(reg, X, y, scoring = make_scorer(robust_mse)))))
+    LinearRegression()  mse : 51.93
+    HuberRegressor()  mse : 0.28
+
+
 Comparison with other robust estimators
 ---------------------------------------
 
