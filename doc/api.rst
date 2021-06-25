@@ -43,3 +43,4 @@ Robust
    robust.RobustWeightedClassifier
    robust.RobustWeightedRegressor
    robust.RobustWeightedKMeans
+   robust.make_huber_metric
