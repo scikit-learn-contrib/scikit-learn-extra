@@ -88,7 +88,7 @@ def median_of_means(X, k, random_state=np.random.RandomState(42)):
     return median_of_means_blocked(x, blocks)[0]
 
 
-def huber(X, c=1.35, T=20):
+def huber(X, c=1.35, T=20, tol=1e-3):
     """Compute the Huber estimator of location of X with parameter c
 
     Parameters
@@ -104,6 +104,9 @@ def huber(X, c=1.35, T=20):
 
     T : int, default = 20
         Number of iterations of the algorithm.
+
+    tol : float, default=1e-3
+        Tolerance on stopping criterion.
 
     Return
     ------
@@ -124,6 +127,9 @@ def huber(X, c=1.35, T=20):
         res[~mask] = c / np.abs(x[~mask])
         return res
 
+    # Create a list to keep the ten last values of mu
+    last_mu = mu
+
     # Run the iterative reweighting algorithm to compute M-estimator.
     for t in range(T):
         # Compute the weights
@@ -135,4 +141,11 @@ def huber(X, c=1.35, T=20):
         # Update the value of the estimate with the new estimate using the
         # new weights.
         mu = np.sum(np.array(w[ind_pos]) * x[ind_pos]) / np.sum(w[ind_pos])
+
+        # Stopping criterion. The error is decreasing at each iteration
+        if np.abs(mu - last_mu) < tol:
+            break
+        else:
+            last_mu = mu
+
     return mu
