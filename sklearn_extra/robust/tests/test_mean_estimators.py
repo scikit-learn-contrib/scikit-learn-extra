@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
 
-from sklearn_extra.robust.mean_estimators import median_of_means, huber
+from sklearn_extra.robust.mean_estimators import (
+    median_of_means,
+    huber,
+    make_huber_metric,
+)
+from sklearn.metrics import mean_squared_error
 
 
 rng = np.random.RandomState(42)
@@ -29,3 +34,12 @@ def test_huber():
     with pytest.warns(None) as record:
         huber(X)
     assert len(record) == 0
+
+
+def test_robust_metric():
+    robust_mse = make_huber_metric(mean_squared_error, c=5)
+    y_true = np.hstack([np.zeros(95), 20 * np.ones(5)])
+    np.random.shuffle(y_true)
+    y_pred = np.zeros(100)
+
+    assert robust_mse(y_true, y_pred) < 1

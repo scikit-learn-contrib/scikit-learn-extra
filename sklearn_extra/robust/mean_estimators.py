@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+from scipy.stats import iqr
 
 
 def block_mom(X, k, random_state):
@@ -136,3 +137,26 @@ def huber(X, c=1.35, T=20):
         # new weights.
         mu = np.sum(np.array(w[ind_pos]) * x[ind_pos]) / np.sum(w[ind_pos])
     return mu
+
+
+def make_huber_metric(metric_func, c=None, T=20):
+    """
+    Make a robust metric using Huber estimator.
+    """
+
+    def metric(y_true, y_pred):
+        # change size in order to use the raw multisample
+        # to have individual values
+        y1 = [y_true]
+        y2 = [y_pred]
+        values = metric_func(y1, y2, multioutput="raw_values")
+        if c is None:
+            c_ = iqr(values)
+        else:
+            c_ = c
+        if c_ == 0:
+            return np.median(values)
+        else:
+            return huber(values, c_, T)
+
+    return metric
