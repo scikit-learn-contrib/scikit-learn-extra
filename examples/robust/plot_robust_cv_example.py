@@ -6,8 +6,8 @@ An example of a robust cross-validation evaluation in regression
 In this example we compare `LinearRegression` (OLS) with `HuberRegressor`  from
 scikit-learn using cross-validation.
 
-We show that a robust cross-validation scheme is better to have a better
-evaluation of the generalisation error on the majority of the data.
+We show that a robust cross-validation scheme gives a better
+evaluation of the generalisation error in a corrupted dataset.
 """
 print(__doc__)
 

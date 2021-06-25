@@ -146,7 +146,7 @@ Both weighting schemes can be seen as special cases of the algorithm in [3]_.
 Robust model selection
 ----------------------
 
-one of the big challenge of robust machine learning is that the usual scoring
+One of the big challenge of robust machine learning is that the usual scoring
 scheme (cross_validation with mean squared error for instance) is not robust.
 Indeed, if the dataset has some outliers, then the test sets in cross-validation
 may have outliers and then the cross_validation MSE would give us a huge error
