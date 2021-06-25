@@ -155,7 +155,7 @@ for our robust algorithm on any corrupted data.
 To solve this problem, one can use robust score methods when doing
 cross-validation using `make_huber_metric`. See the following example:
 
-:ref:`../auto_examples/robust/robust_cv_example.html#sphx-glr-download-auto-examples-robust-robust-cv-example-py`
+:ref:`../auto_examples/robust/plot_robust_cv_example.html`
 
 This type of robust cross-validation was mentioned for instance in [4]_.
 

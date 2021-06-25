@@ -40,6 +40,7 @@ for reg in [LinearRegression(), HuberRegressor()]:
         ),
     )
 
+
 print("\n")
 print("Robust error:")
 for reg in [LinearRegression(), HuberRegressor()]:
