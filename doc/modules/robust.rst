@@ -176,7 +176,9 @@ loss function as such:
 where :math:`\widehat{\mathrm{Hub}}` is the Huber estimator of location. It is a
 robust estimator of the mean, and :math:`\widehat{L}_{rob}` is robust in the sense
 that an especially large value of :math:`\ell(Y_i, f(X_i))` would not change the
-value of the result by a lot.
+value of the result by a lot. The constant `c` used when tuning
+:math:`\widehat{\mathrm{Hub}}` has the same role of tuning the robustness as in
+the case of regression and classification using Huber weights.
 
 Comparison with other robust estimators
 ---------------------------------------
