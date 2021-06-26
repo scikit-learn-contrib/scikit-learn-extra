@@ -145,6 +145,7 @@ Both weighting schemes can be seen as special cases of the algorithm in [3]_.
 
 Robust model selection
 ----------------------
+.. _make_huber_metric:
 
 One of the big challenge of robust machine learning is that the usual scoring
 scheme (cross_validation with mean squared error for instance) is not robust.
@@ -158,6 +159,24 @@ cross-validation using `make_huber_metric`. See the following example:
 :ref:`../auto_examples/robust/plot_robust_cv_example.html`
 
 This type of robust cross-validation was mentioned for instance in [4]_.
+
+
+Here is what `make_huber_metric` computes: suppose that we compute a
+loss function as such:
+
+.. math::
+
+    \widehat L = \frac{1}{n}\sum_{i=1}^n \ell(Y_i, f(X_i))
+
+`make_huber_metric` propose to change this computation for
+
+.. math::
+    \widehat L_{rob}=\widehat{\mathrm{Hub}}\left(\ell(Y_i, f(X_i))\right)
+
+where :math:`\widehat{\mathrm{Hub}}` is the Huber estimator of location. It is a
+robust estimator of the mean, and :math:`\widehat{L}_{rob}` is robust in the sense
+that an especially large value of :math:`\ell(Y_i, f(X_i))` would not change the
+value of the result by a lot.
 
 Comparison with other robust estimators
 ---------------------------------------

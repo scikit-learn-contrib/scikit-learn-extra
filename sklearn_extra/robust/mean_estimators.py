@@ -90,7 +90,7 @@ def median_of_means(X, k, random_state=np.random.RandomState(42)):
     return median_of_means_blocked(x, blocks)[0]
 
 
-def huber(X, c=1.35, T=20):
+def huber(X, c=1.35, n_iter=20):
     """Compute the Huber estimator of location of X with parameter c
 
     Parameters
@@ -104,7 +104,7 @@ def huber(X, c=1.35, T=20):
         c going to zero gives a  behavior close to the median.
         c going to infinity gives a behavior close to sample mean.
 
-    T : int, default = 20
+    n_iter : int, default = 20
         Number of iterations of the algorithm.
 
     Return
@@ -127,7 +127,7 @@ def huber(X, c=1.35, T=20):
         return res
 
     # Run the iterative reweighting algorithm to compute M-estimator.
-    for t in range(T):
+    for t in range(n_iter):
         # Compute the weights
         w = psisx(x - mu, c)
 
@@ -140,9 +140,13 @@ def huber(X, c=1.35, T=20):
     return mu
 
 
-def make_huber_metric(score_func=mean_squared_error, c=None, T=20):
+def make_huber_metric(
+    score_func=mean_squared_error, sample_weight=None, c=None, n_iter=20
+):
     """
     Make a robust metric using Huber estimator.
+
+    Read more in the :ref:`User Guide <make_huber_metric>`.
 
     Parameters
     ----------
@@ -151,13 +155,17 @@ def make_huber_metric(score_func=mean_squared_error, c=None, T=20):
         Score function (or loss function) with signature
         ``score_func(y, y_pred, **kwargs)``.
 
-    c : float >0, default = 1.35
+    sample_weight: array-like of shape (n_samples,), default=None
+        Sample weights.
+
+
+    c : float >0, default = None
         parameter that control the robustness of the estimator.
         c going to zero gives a  behavior close to the median.
         c going to infinity gives a behavior close to sample mean.
-        if c is None, the iqr is used as heuristic.
+        if c is None, the iqr (inter quartile range) is used as heuristic.
 
-    T : int, default = 20
+    n_iter : int, default = 20
         Number of iterations of the algorithm.
 
     Return
@@ -185,7 +193,9 @@ def make_huber_metric(score_func=mean_squared_error, c=None, T=20):
         # to have individual values
         y1 = [y_true]
         y2 = [y_pred]
-        values = score_func(y1, y2, multioutput="raw_values")
+        values = score_func(
+            y1, y2, sample_weight=sample_weight, multioutput="raw_values"
+        )
         if c is None:
             c_ = iqr(values)
         else:
@@ -193,6 +203,6 @@ def make_huber_metric(score_func=mean_squared_error, c=None, T=20):
         if c_ == 0:
             return np.median(values)
         else:
-            return huber(values, c_, T)
+            return huber(values, c_, n_iter)
 
     return metric
