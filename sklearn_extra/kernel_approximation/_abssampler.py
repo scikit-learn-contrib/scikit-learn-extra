@@ -9,7 +9,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
         K(x, x') = 1 - 1/a * ||x - x'||_1
 
     In this implementation width of kernel 'a' is defined proportional to maximum
-    absolute values of columns, so the whole kernel would be scale invariant, 
+    absolute values of columns, so the whole kernel would be scale invariant,
     which changes formula to::
 
         K(x, x') = 1 - 1/(max(|x|) * a) * ||x - x'||_1
@@ -37,7 +37,13 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
     Benjamin Recht.
     (https://authors.library.caltech.edu/75528/1/04797607.pdf)
     """
-    def __init__(self, *, a=1.0, n_components=100, random_state=None):
+    def __init__(
+        self,
+        *,
+        a=1.0,
+        n_components=100,
+        random_state=None
+    ):
         self.n_components = n_components
         self.random_state = random_state
         self.a = a
@@ -45,11 +51,13 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
     def fit(self, X, y=None):
         """Fit the model with X.
         Samples random projection according to n_features.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
+
         Returns
         -------
         self : object
@@ -64,11 +72,13 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
 
     def transform(self, X):
         """Apply the approximate feature map to X.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
