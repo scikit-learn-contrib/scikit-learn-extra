@@ -129,12 +129,12 @@ class _RobustWeightedEstimator(BaseEstimator):
         Constant step-size used during the burn_in period. Used only if
         burn_in>0. Can have a big effect on efficiency.
 
-    c : float>0 or None, default=None
+    scale_param : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
         is 'huber'. Measure the robustness of the weighting procedure. A small
-        value of c means a more robust estimator.
+        value of scale_param means a more robust estimator.
         Can have a big effect on efficiency.
-        If None, c is estimated at each step using half the Inter-quartile
+        If None, scale_param is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
     k : int < sample_size/2, default=1
@@ -214,7 +214,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         max_iter=100,
         burn_in=10,
         eta0=0.1,
-        c=None,
+        scale_param=None,
         k=0,
         tol=1e-5,
         n_iter_no_change=10,
@@ -225,7 +225,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         self.weighting = weighting
         self.eta0 = eta0
         self.burn_in = burn_in
-        self.c = c
+        self.scale_param = scale_param
         self.k = k
         self.loss = loss
         self.max_iter = max_iter
@@ -436,8 +436,8 @@ class _RobustWeightedEstimator(BaseEstimator):
         if self.max_iter <= 0:
             raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
 
-        if not (self.c is None) and (self.c <= 0):
-            raise ValueError("c must be > 0, got %s." % self.c)
+        if not (self.scale_param is None) and (self.scale_param <= 0):
+            raise ValueError("c must be > 0, got %s." % self.scale_param)
 
         if self.burn_in < 0:
             raise ValueError("burn_in must be >= 0, got %s." % self.burn_in)
@@ -458,10 +458,10 @@ class _RobustWeightedEstimator(BaseEstimator):
     def _get_weights(self, loss_values, random_state):
         # Compute the robust weight of the samples.
         if self.weighting == "huber":
-            if self.c is None:
+            if self.scale_param is None:
                 # If no c parameter given, estimate using inter quartile range.
-                c = iqr(loss_values) / 2
-                if c == 0:
+                scale_param = iqr(loss_values) / 2
+                if scale_param == 0:
                     warnings.warn(
                         "Too many samples are parfectly predicted "
                         "according to the loss function. "
@@ -470,15 +470,15 @@ class _RobustWeightedEstimator(BaseEstimator):
                         "or using a constant c value to remove "
                         "this warning."
                     )
-                    c = 1.35
+                    scale_param = 1.35
             else:
-                c = self.c
+                scale_param = self.scale_param
 
             def psisx(x):
-                return _huber_psisx(x, c)
+                return _huber_psisx(x, scale_param)
 
             # Robust estimation of the risk is in mu.
-            mu = huber(loss_values, c)
+            mu = huber(loss_values, scale_param)
 
         elif self.weighting == "mom":
             if self.k is None:
@@ -621,12 +621,12 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         Constant step-size used during the burn_in period. Used only if
         burn_in>0. Can have a big effect on efficiency.
 
-    c : float>0 or None, default=None
+    scale_param : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
         is 'huber'. Measure the robustness of the weighting procedure. A small
-        value of c means a more robust estimator.
+        value of scale_param means a more robust estimator.
         Can have a big effect on efficiency.
-        If None, c is estimated at each step using half the Inter-quartile
+        If None, scale_param is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
     k : int < sample_size/2, default=1
@@ -741,7 +741,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         max_iter=100,
         burn_in=10,
         eta0=0.01,
-        c=None,
+        scale_param=None,
         k=0,
         loss="log",
         sgd_args=None,
@@ -756,7 +756,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         self.max_iter = max_iter
         self.burn_in = burn_in
         self.eta0 = eta0
-        self.c = c
+        self.scale_param = scale_param
         self.k = k
         self.loss = loss
         self.sgd_args = sgd_args
@@ -797,7 +797,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
             weighting=self.weighting,
             loss=self.loss,
             burn_in=self.burn_in,
-            c=self.c,
+            scale_param=self.scale_param,
             k=self.k,
             eta0=self.eta0,
             max_iter=self.max_iter,
@@ -1069,7 +1069,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         self.max_iter = max_iter
         self.burn_in = burn_in
         self.eta0 = eta0
-        self.c = c
+        self.scale_param = scale_param
         self.k = k
         self.loss = loss
         self.sgd_args = sgd_args
@@ -1108,7 +1108,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
             weighting=self.weighting,
             loss=self.loss,
             burn_in=self.burn_in,
-            c=self.c,
+            scale_param=self.scale_param,
             k=self.k,
             eta0=self.eta0,
             max_iter=self.max_iter,
@@ -1318,7 +1318,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         self.weighting = weighting
         self.max_iter = max_iter
         self.eta0 = eta0
-        self.c = c
+        self.scale_param = scale_param
         self.k = k
         self.kmeans_args = kmeans_args
         self.tol = tol
@@ -1367,7 +1367,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             loss=_kmeans_loss,
             max_iter=self.max_iter,
             eta0=self.eta0,
-            c=self.c,
+            scale_param=self.scale_param,
             k=self.k,
             tol=self.tol,
             n_iter_no_change=self.n_iter_no_change,

@@ -18,7 +18,7 @@ from sklearn.utils._testing import (
 
 
 k_values = [None, 10]  # values of k for test robust
-c_values = [None, 1e-3]  # values of c for test robust
+scale_param_values = [None, 1e-3]  # values of scale_param for test robust
 
 # Classification test with outliers
 rng = np.random.RandomState(42)
@@ -74,9 +74,9 @@ def test_robust_estimator_input_validation_and_fit_check():
     with pytest.raises(ValueError, match=msg):
         RobustWeightedKMeans(max_iter=0).fit(X_cc)
 
-    msg = "c must be > 0, got 0."
+    msg = "scale_param must be > 0, got 0."
     with pytest.raises(ValueError, match=msg):
-        RobustWeightedKMeans(c=0).fit(X_cc)
+        RobustWeightedKMeans(scale_param=0).fit(X_cc)
 
     msg = "burn_in must be >= 0, got -1."
     with pytest.raises(ValueError, match=msg):
@@ -94,15 +94,15 @@ def test_robust_estimator_input_validation_and_fit_check():
 @pytest.mark.parametrize("loss", classif_losses)
 @pytest.mark.parametrize("weighting", weightings)
 @pytest.mark.parametrize("k", k_values)
-@pytest.mark.parametrize("c", c_values)
+@pytest.mark.parametrize("scale_param", scale_param_values)
 @pytest.mark.parametrize("multi_class", multi_class)
-def test_corrupted_classif(loss, weighting, k, c, multi_class):
+def test_corrupted_classif(loss, weighting, k, scale_param, multi_class):
     clf = RobustWeightedClassifier(
         loss=loss,
         max_iter=100,
         weighting=weighting,
         k=k,
-        c=c,
+        scale_param=scale_param,
         multi_class=multi_class,
         random_state=rng,
     )
@@ -137,7 +137,7 @@ def test_not_robust_classif(loss, weighting, multi_class):
         max_iter=100,
         weighting=weighting,
         k=0,
-        c=1e7,
+        scale_param=1e7,
         burn_in=0,
         multi_class=multi_class,
         random_state=rng,
@@ -164,7 +164,7 @@ def test_classif_binary(weighting):
         max_iter=100,
         weighting=weighting,
         k=0,
-        c=1e7,
+        scale_param=1e7,
         burn_in=0,
         multi_class="binary",
         random_state=rng,
@@ -195,7 +195,7 @@ def test_classif_corrupted_weights(weighting):
         max_iter=100,
         weighting=weighting,
         k=5,
-        c=1,
+        scale_param=1,
         burn_in=0,
         multi_class="binary",
         random_state=rng,
@@ -211,7 +211,7 @@ def test_predict_proba(weighting):
         max_iter=100,
         weighting=weighting,
         k=0,
-        c=1e7,
+        scale_param=1e7,
         burn_in=0,
         random_state=rng,
     )
@@ -245,14 +245,14 @@ regression_losses = ["squared_loss", "huber"]
 @pytest.mark.parametrize("loss", regression_losses)
 @pytest.mark.parametrize("weighting", weightings)
 @pytest.mark.parametrize("k", k_values)
-@pytest.mark.parametrize("c", c_values)
-def test_corrupted_regression(loss, weighting, k, c):
+@pytest.mark.parametrize("scale_param", scale_param_values)
+def test_corrupted_regression(loss, weighting, k, scale_param):
     reg = RobustWeightedRegressor(
         loss=loss,
         max_iter=50,
         weighting=weighting,
         k=k,
-        c=c,
+        scale_param=scale_param,
         random_state=rng,
         n_iter_no_change=20,
     )
@@ -268,7 +268,7 @@ def test_regression_corrupted_weights(weighting):
         max_iter=100,
         weighting=weighting,
         k=5,
-        c=1,
+        scale_param=1,
         burn_in=0,
         random_state=rng,
     )
@@ -289,7 +289,7 @@ def test_not_robust_regression(loss, weighting):
         max_iter=100,
         weighting=weighting,
         k=0,
-        c=1e7,
+        scale_param=1e7,
         burn_in=0,
         random_state=rng,
     )
@@ -317,7 +317,7 @@ def test_vs_huber():
         max_iter=100,
         weighting="huber",
         k=5,
-        c=1,
+        scale_param=1,
         burn_in=0,
         sgd_args={"learning_rate": "adaptive"},  # test sgd_args
         random_state=rng,
@@ -345,14 +345,14 @@ weightings = ["huber", "mom"]
 
 @pytest.mark.parametrize("weighting", weightings)
 @pytest.mark.parametrize("k", k_values)
-@pytest.mark.parametrize("c", c_values)
-def test_corrupted_cluster(weighting, k, c):
+@pytest.mark.parametrize("scale_param", scale_param_values)
+def test_corrupted_cluster(weighting, k, scale_param):
     km = RobustWeightedKMeans(
         n_clusters=2,
         max_iter=50,
         weighting=weighting,
         k=5,
-        c=None,
+        scale_param=None,
         random_state=rng,
     )
     km.fit(X_clusterc)
@@ -374,7 +374,7 @@ def test_not_robust_cluster(weighting):
         max_iter=100,
         weighting=weighting,
         k=0,
-        c=1e7,
+        scale_param=1e7,
         random_state=rng,
     )
     clf_not_rob = KMeans(2, random_state=rng)

@@ -54,7 +54,7 @@ estimators = [
         "RobustWeightedRegressor",
         RobustWeightedRegressor(
             weighting="huber",
-            c=0.1,
+            scale_param=0.1,
             eta0=1e-2,
             sgd_args={
                 "learning_rate": "invscaling",

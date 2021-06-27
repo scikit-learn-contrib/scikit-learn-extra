@@ -101,11 +101,11 @@ and median-of-means weights. These two types of weights both come with a
 parameter that will determine the robustness/efficiency trade-off of the
 estimation.
 
-* Huber weights : the parameter "c" is a positive real number. For small
-  values of c the estimator is more robust but less efficient than it is
-  for large values of c.
+* Huber weights : the parameter "scale_param" is a positive real number.
+  For small values of scale_param the estimator is more robust but less efficient
+  than it is for large values of scale_param.
   A good heuristic consists in choosing c as an estimate of the standard
-  deviation of the losses of the inliers. In practice, if c=None, it is
+  deviation of the losses of the inliers. In practice, if scale_param=None, it is
   estimated with the inter-quartile range.
 
 * Median-of-means weights : the parameter "k" is a non-negative integer,
@@ -125,7 +125,7 @@ estimation.
      +===========+======================+=================+===================+
      |    mom    |          k           |   Non robust    |      Robust       |
      +-----------+----------------------+-----------------+-------------------+
-     |   huber   |          c           |   Robust        |      Non robust   |
+     |   huber   |     scale_param      |   Robust        |      Non robust   |
      +-----------+----------------------+-----------------+-------------------+
 
 
