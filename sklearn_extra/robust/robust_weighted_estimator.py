@@ -437,7 +437,9 @@ class _RobustWeightedEstimator(BaseEstimator):
             raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
 
         if not (self.scale_param is None) and (self.scale_param <= 0):
-            raise ValueError("c must be > 0, got %s." % self.scale_param)
+            raise ValueError(
+                "scale_param must be > 0, got %s." % self.scale_param
+            )
 
         if self.burn_in < 0:
             raise ValueError("burn_in must be >= 0, got %s." % self.burn_in)
@@ -953,12 +955,12 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         Constant step-size used during the burn_in period. Used only if
         burn_in>0. Can have a big effect on efficiency.
 
-    c : float>0 or None, default=None
+    scale_param : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
         is 'huber'. Measure the robustness of the weighting procedure. A small
-        value of c means a more robust estimator.
+        value of scale_param means a more robust estimator.
         Can have a big effect on efficiency.
-        If None, c is estimated at each step using half the Inter-quartile
+        If None, scale_param is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
     k : int < sample_size/2, default=1
@@ -1055,7 +1057,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         max_iter=100,
         burn_in=10,
         eta0=0.01,
-        c=None,
+        scale_param=None,
         k=0,
         loss="squared_loss",
         sgd_args=None,
@@ -1200,12 +1202,12 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         Constant step-size used during the burn_in period. Used only if
         burn_in>0. Can have a big effect on efficiency.
 
-    c : float>0 or None, default=None
+    scale_param : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
         is 'huber'. Measure the robustness of the weighting procedure. A small
-        value of c means a more robust estimator.
+        value of scale_param means a more robust estimator.
         Can have a big effect on efficiency.
-        If None, c is estimated at each step using half the Inter-quartile
+        If None, scale_param is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
     k : int < sample_size/2, default=1
@@ -1306,7 +1308,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         weighting="huber",
         max_iter=100,
         eta0=0.01,
-        c=None,
+        scale_param=None,
         k=0,
         kmeans_args=None,
         tol=1e-3,
