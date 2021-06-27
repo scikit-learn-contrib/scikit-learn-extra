@@ -1,8 +1,6 @@
-import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from sklearn_extra.kernel_approximation import AdaBoostStumpsSampler
-
 
 rng = np.random.RandomState(0)
 X = rng.random_sample(size=(300, 50))
