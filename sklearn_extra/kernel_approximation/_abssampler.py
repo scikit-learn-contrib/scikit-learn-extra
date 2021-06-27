@@ -66,9 +66,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
             0, X.shape[1], size=self.n_components
         )
         # widths proportional to max abs of columns
-        a = 1.0 / (
-            np.abs(X).max(0) * self.a
-        )
+        a = 1.0 / (np.abs(X).max(0) * self.a)
         self.random_offset_ = np.asarray(
             [random_state.uniform(-a[i], a[i]) for i in self.random_columns_]
         )
