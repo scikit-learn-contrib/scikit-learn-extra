@@ -32,6 +32,7 @@ Clustering
 
    cluster.KMedoids
    cluster.CommonNNClustering
+   cluster.CLARA
 
 Robust
 ====================

@@ -1,8 +1,8 @@
 .. _cluster:
 
-=====================================================
-Clustering with KMedoids and Common-nearest-neighbors
-=====================================================
+============================================================
+Clustering with KMedoids, CLARA and Common-nearest-neighbors
+============================================================
 .. _k_medoids:
 
 K-Medoids
@@ -81,6 +81,38 @@ when speed is an issue.
   * Bhat, Aruna (2014).K-medoids clustering using partitioning around medoids
     for performing face recognition. International Journal of Soft Computing,
     Mathematics and Control, 3(3), pp 1-12.
+
+
+
+CLARA
+=====
+
+    :class:`CLARA` is related to the :class:`KMedoids` algorithm. CLARA
+    (Clustering for Large Applications) extends k-medoids to be more scalable,
+    uses a sampling approach.
+
+    .. topic:: Examples:
+
+      * :ref:`sphx_glr_auto_examples_plot_clara_digits.py`: Applying K-Medoids on digits
+        with various distance metrics.
+
+
+    **Algorithm description:**
+    CLARA uses random samples of the dataset, each of size `sampling_size`
+    The algorith is iterative, first we select one sub-sample, then CLARA applies
+    KMedoids on this sub-sample to obtain `n_clusters` medoids. At the next step,
+    CLARA sample `sampling_size`-`n_clusters` from the dataset and the next sub-sample
+    is composed of the best medoids found until now (with respect to inertia in the
+    whole dataset, not the inertia only on the sub-sample) to which we add the new
+    samples just drawn. Then, K-Medoids is applied to this new sub-sample, and loop
+    back until `sample` sub-samples have been used.
+
+
+    .. topic:: References:
+
+      * Kaufman, L. and Rousseeuw, P.J. (2008). Clustering Large Applications (Program CLARA).
+        In Finding Groups in Data (eds L. Kaufman and P.J. Rousseeuw).
+        doi:10.1002/9780470316801.ch2
 
 .. _commonnn:
 
