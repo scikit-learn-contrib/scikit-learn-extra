@@ -101,7 +101,8 @@ def huber(X, c=None, T=20, tol=1e-3):
         parameter that control the robustness of the estimator.
         c going to zero gives a  behavior close to the median.
         c going to infinity gives a behavior close to sample mean.
-        if c is None, the iqr is used as heuristic.
+        if c is None, the interquartile range (IQR) is used 
+        as heuristic.
 
     T : int, default = 20
         Number of iterations of the algorithm.
