@@ -4,6 +4,9 @@ Changelog
 Unreleased
 ----------
 
+- Add `CLARA` (Clustering for Large Applications) which extends k-medoids to
+    be more scalable using a sampling approach.
+    [`#83 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/83>`_].
 - Fix `_estimator_type` for :class:`~sklearn_extra.robust` estimators. Fix
   misbehavior of scikit-learn's :class:`~sklearn.model_selection.cross_val_score` and
   :class:`~sklearn.grid_search.GridSearchCV` for :class:`~sklearn_extra.robust.RobustWeightedClassifier`
