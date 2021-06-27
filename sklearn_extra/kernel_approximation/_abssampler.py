@@ -5,7 +5,8 @@ from sklearn.base import TransformerMixin, BaseEstimator
 
 
 class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
-    """Approximates feature map of AdaBoost Stump Kernel by Monte Carlo approximation::
+    """Approximates feature map of AdaBoost Stump Kernel
+    by Monte Carlo approximation::
 
         K(x, x') = 1 - 1/a * ||x - x'||_1
 
@@ -38,6 +39,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
     Benjamin Recht.
     (https://authors.library.caltech.edu/75528/1/04797607.pdf)
     """
+
     def __init__(self, *, a=1.0, n_components=100, random_state=None):
         self.n_components = n_components
         self.random_state = random_state
