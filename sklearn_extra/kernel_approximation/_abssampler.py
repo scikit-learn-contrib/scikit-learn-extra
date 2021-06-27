@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 from sklearn.base import TransformerMixin, BaseEstimator
