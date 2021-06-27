@@ -10,7 +10,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
 
         K(x, x') = 1 - 1/a * ||x - x'||_1
 
-    In this implementation width of kernel 'a' is defined proportional to maximum
+    In this implementation width of kernel 'a' is defined proportional to max
     absolute values of columns, so the whole kernel would be scale invariant,
     which changes formula to::
 
@@ -35,8 +35,8 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
     random_columns_ : ndarray of shape (n_components,), dtype=int
         Column indices used to create random stumps.
 
-    [1] "Uniform  Approximation  of  Functions  with  Random  Bases" by A. Rahimi and
-    Benjamin Recht.
+    [1] "Uniform  Approximation  of  Functions  with  Random  Bases"
+    by A. Rahimi and Benjamin Recht.
     (https://authors.library.caltech.edu/75528/1/04797607.pdf)
     """
 
