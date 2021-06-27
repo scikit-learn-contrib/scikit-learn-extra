@@ -8,6 +8,13 @@ scikit-learn using cross-validation.
 
 We show that a robust cross-validation scheme gives a better
 evaluation of the generalisation error in a corrupted dataset.
+
+In this example, we do robust cross-validation by using an alternative to the
+empirical mean to aggregate the errors. This alternative is a robust estimator
+of the mean (the trimmed mean is an example of such a robust estimator, but here
+we use Huber's estimator). This robust estimator of the mean is used on each
+fold of the cross-validation and then, we return the empirical mean of the
+obtained robust scores to get the final score.
 """
 print(__doc__)
 
