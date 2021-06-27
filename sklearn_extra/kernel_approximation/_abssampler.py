@@ -37,13 +37,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
     Benjamin Recht.
     (https://authors.library.caltech.edu/75528/1/04797607.pdf)
     """
-    def __init__(
-        self,
-        *,
-        a=1.0,
-        n_components=100,
-        random_state=None
-    ):
+    def __init__(self, *, a=1.0, n_components=100, random_state=None):
         self.n_components = n_components
         self.random_state = random_state
         self.a = a
@@ -65,9 +59,16 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
         """
         X = self._validate_data(X, accept_sparse=False)
         random_state = check_random_state(self.random_state)
-        self.random_columns_ = random_state.randint(0, X.shape[1], size=self.n_components)
-        a = 1. / (np.abs(X).max(0) * self.a) # widths proportional to max abs of columns
-        self.random_offset_ = np.asarray([random_state.uniform(-a[i], a[i]) for i in self.random_columns_])
+        self.random_columns_ = random_state.randint(
+            0, X.shape[1], size=self.n_components
+        )
+        # widths proportional to max abs of columns
+        a = 1.0 / (
+            np.abs(X).max(0) * self.a
+        )
+        self.random_offset_ = np.asarray(
+            [random_state.uniform(-a[i], a[i]) for i in self.random_columns_]
+        )
         return self
 
     def transform(self, X):
