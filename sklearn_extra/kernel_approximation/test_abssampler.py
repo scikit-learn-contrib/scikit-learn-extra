@@ -17,7 +17,7 @@ def test_abss_expected_output_shape():
 def test_abss_output_values():
     N_COMPONENTS = 100
     Xt_manual = np.zeros((X.shape[0], N_COMPONENTS))
-    abss = AdaBoostStumpsSampler(n_components=N_COMPONENTS,random_state=rng)
+    abss = AdaBoostStumpsSampler(n_components=N_COMPONENTS, random_state=rng)
     Xt = abss.fit_transform(X)
     for col in range(N_COMPONENTS):
         Xt_manual[:, col] = np.sign(
