@@ -30,7 +30,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
         See :term:`Glossary <random_state>`.
     Attributes
     ----------
-    random_offset_ : ndarray of shape (n_components,), dtype=float
+    random_offsets_ : ndarray of shape (n_components,), dtype=float
         Random offsets used to split features.
     random_columns_ : ndarray of shape (n_components,), dtype=int
         Column indices used to create random stumps.
@@ -67,7 +67,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
         )
         # widths proportional to max abs of columns
         a = 1.0 / (np.abs(X).max(0) * self.a)
-        self.random_offset_ = np.asarray(
+        self.random_offsets_ = np.asarray(
             [random_state.uniform(-a[i], a[i]) for i in self.random_columns_]
         )
         return self
@@ -87,5 +87,5 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse=False, reset=False)
-        Xt = np.sign(X[:, self.random_columns_] - self.random_offset_)
+        Xt = np.sign(X[:, self.random_columns_] - self.random_offsets_)
         return Xt
