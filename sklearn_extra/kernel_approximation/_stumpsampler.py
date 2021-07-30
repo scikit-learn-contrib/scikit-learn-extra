@@ -4,22 +4,20 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.base import TransformerMixin, BaseEstimator
 
 
-class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
-    """Approximates feature map of AdaBoost Stump Kernel
+class StumpSampler(TransformerMixin, BaseEstimator):
+    """Approximates feature map of Stump Kernel
     by Monte Carlo approximation::
 
         K(x, x') = 1 - 1/a * ||x - x'||_1
 
-    In this implementation width of kernel 'a' is defined proportional to max
-    absolute values of columns, so the whole kernel would be scale invariant,
-    which changes formula to::
-
-        K(x, x') = 1 - 1/(max(|x|) * a) * ||x - x'||_1
+    where a - width of the kernel.
+    This method requires scaling of the input X, since one width
+    is used for all of the features.
 
     Parameters
     ----------
     a : float, default=1.0
-        The width of the kernel proportional to maximum absolute value.
+        The width of the kernel.
     n_components : int, default=100
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
@@ -38,6 +36,9 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
     [1] "Uniform  Approximation  of  Functions  with  Random  Bases"
     by A. Rahimi and Benjamin Recht.
     (https://authors.library.caltech.edu/75528/1/04797607.pdf)
+    [2] "Infinite Ensemble Learning with Support Vector Machines"
+    by Hsuan-Tien Lin and Ling Li
+    (https://jmlr.org/papers/volume9/lin08a/lin08a.pdf)
     """
 
     def __init__(self, *, a=1.0, n_components=100, random_state=None):
@@ -66,7 +67,7 @@ class AdaBoostStumpsSampler(TransformerMixin, BaseEstimator):
             0, X.shape[1], size=self.n_components
         )
         # widths proportional to max abs of columns
-        a = 1.0 / (np.abs(X).max(0) * self.a)
+        a = 1.0 / self.a
         self.random_offsets_ = np.asarray(
             [random_state.uniform(-a[i], a[i]) for i in self.random_columns_]
         )
