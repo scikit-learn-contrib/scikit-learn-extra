@@ -1,5 +1,5 @@
 from ._fastfood import Fastfood
-from ._abssampler import AdaBoostStumpsSampler
+from ._stumpsampler import StumpsSampler
 
 
-__all__ = ["Fastfood", "AdaBoostStumpsSampler"]
+__all__ = ["Fastfood", "StumpsSampler"]
