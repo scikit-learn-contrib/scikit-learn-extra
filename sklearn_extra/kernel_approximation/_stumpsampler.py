@@ -68,8 +68,8 @@ class StumpSampler(TransformerMixin, BaseEstimator):
         )
         # widths proportional to max abs of columns
         a = 1.0 / self.a
-        self.random_offsets_ = np.asarray(
-            [random_state.uniform(-a[i], a[i]) for i in self.random_columns_]
+        self.random_offsets_ = random_state.uniform(
+            -a, a, size=self.n_components
         )
         return self
 
