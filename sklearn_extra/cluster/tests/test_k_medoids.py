@@ -390,3 +390,22 @@ def test_seuclidean():
         km.predict(np.array([0, 0, 0, 1]).reshape((4, 1)))
         km.transform(np.array([0, 0, 0, 1]).reshape((4, 1)))
     assert len(record) == 0
+
+
+def test_medoids_indices():
+    rng = np.random.RandomState(seed)
+    X_iris = load_iris()["data"]
+
+    clara = CLARA(
+        n_clusters=3,
+        n_sampling_iter=1,
+        n_sampling=len(X_iris),
+        random_state=rng,
+    )
+
+    model = KMedoids(n_clusters=3, init="build", random_state=rng)
+
+    model.fit(X_iris)
+    clara.fit(X_iris)
+    assert_array_equal(X_iris[model.medoid_indices_], model.cluster_centers_)
+    assert_array_equal(X_iris[clara.medoid_indices_], clara.cluster_centers_)
