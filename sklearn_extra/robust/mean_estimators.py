@@ -101,7 +101,7 @@ def huber(X, c=None, T=20, tol=1e-3):
         parameter that control the robustness of the estimator.
         c going to zero gives a  behavior close to the median.
         c going to infinity gives a behavior close to sample mean.
-        if c is None, the interquartile range (IQR) is used 
+        if c is None, the interquartile range (IQR) is used
         as heuristic.
 
     T : int, default = 20
@@ -122,16 +122,16 @@ def huber(X, c=None, T=20, tol=1e-3):
     mu = np.median(x)
 
     if c is None:
-        c_ = iqr(x)
+        c_numeric = iqr(x)
     else:
-        c_ = c
+        c_numeric = c
 
     def psisx(x, c):
         # Huber weight function.
         res = np.zeros(len(x))
-        mask = np.abs(x) <= c_
+        mask = np.abs(x) <= c_numeric
         res[mask] = 1
-        res[~mask] = c_ / np.abs(x[~mask])
+        res[~mask] = c_numeric / np.abs(x[~mask])
         return res
 
     # Create a list to keep the ten last values of mu
@@ -140,7 +140,7 @@ def huber(X, c=None, T=20, tol=1e-3):
     # Run the iterative reweighting algorithm to compute M-estimator.
     for t in range(T):
         # Compute the weights
-        w = psisx(x - mu, c_)
+        w = psisx(x - mu, c_numeric)
 
         # Infinite coordinates in x gives zero weight, we take them out.
         ind_pos = w > 0
