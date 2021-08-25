@@ -35,8 +35,16 @@ X = RobustScaler().fit_transform(X)
 clf_not_rob = SGDClassifier(average=10, learning_rate="optimal", loss="hinge")
 
 # Then, we use this estimator as base_estimator of RobustWeightedEstimator.
-# Using GridSearchCV, we tuned the parameters scale_param and eta0, with the
+# Using GridSearchCV, we tuned the parameters c and eta0, with the
 # choice of "huber" weighting because the sample_size is not very large.
+
+clf_rob = RobustWeightedClassifier(
+    weighting="huber",
+    loss="hinge",
+    c=1.35,
+    eta0=1e-3,
+    max_iter=300,
+)
 
 # We compute M times the cross validations in order to also have an estimate
 # of the variance of the loss of the estimators.
@@ -51,7 +59,7 @@ for f in range(M):
     clf_rob = RobustWeightedClassifier(
         weighting="huber",
         loss="hinge",
-        scale_param=1.35,
+        c=1.35,
         eta0=1e-3,
         max_iter=300,
         random_state=rng,
