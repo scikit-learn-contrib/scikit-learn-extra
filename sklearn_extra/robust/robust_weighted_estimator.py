@@ -460,7 +460,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         if self.weighting == "huber":
             if self.c is None:
                 # If no c parameter given, estimate using inter quartile range.
-                c = iqr(np.abs(loss_values - np.median(loss_values))) / 2
+                c = iqr(loss_values) / 2
                 if c == 0:
                     warnings.warn(
                         "Too many samples are parfectly predicted "

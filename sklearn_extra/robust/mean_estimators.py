@@ -88,7 +88,7 @@ def median_of_means(X, k, random_state=np.random.RandomState(42)):
     return median_of_means_blocked(x, blocks)[0]
 
 
-def huber(X, c=1.35, T=20):
+def huber(X, c=None, T=20, tol=1e-3):
     """Compute the Huber estimator of location of X with parameter c
 
     Parameters
@@ -97,13 +97,18 @@ def huber(X, c=1.35, T=20):
     X : array like, length = n_sample
         sample from which we want an estimator of the mean
 
-    c : float >0, default = 1.35
+    c : float >0, default = None
         parameter that control the robustness of the estimator.
         c going to zero gives a  behavior close to the median.
         c going to infinity gives a behavior close to sample mean.
+        if c is None, the interquartile range (IQR) is used
+        as heuristic.
 
     T : int, default = 20
         Number of iterations of the algorithm.
+
+    tol : float, default=1e-3
+        Tolerance on stopping criterion.
 
     Return
     ------
@@ -116,18 +121,26 @@ def huber(X, c=1.35, T=20):
     # Initialize the algorithm with a robust first-guess : the median.
     mu = np.median(x)
 
+    if c is None:
+        c_numeric = iqr(x)
+    else:
+        c_numeric = c
+
     def psisx(x, c):
         # Huber weight function.
         res = np.zeros(len(x))
-        mask = np.abs(x) <= c
+        mask = np.abs(x) <= c_numeric
         res[mask] = 1
-        res[~mask] = c / np.abs(x[~mask])
+        res[~mask] = c_numeric / np.abs(x[~mask])
         return res
+
+    # Create a list to keep the ten last values of mu
+    last_mu = mu
 
     # Run the iterative reweighting algorithm to compute M-estimator.
     for t in range(T):
         # Compute the weights
-        w = psisx(x - mu, c)
+        w = psisx(x - mu, c_numeric)
 
         # Infinite coordinates in x gives zero weight, we take them out.
         ind_pos = w > 0
@@ -135,4 +148,11 @@ def huber(X, c=1.35, T=20):
         # Update the value of the estimate with the new estimate using the
         # new weights.
         mu = np.sum(np.array(w[ind_pos]) * x[ind_pos]) / np.sum(w[ind_pos])
+
+        # Stopping criterion. The error is decreasing at each iteration
+        if np.abs(mu - last_mu) < tol:
+            break
+        else:
+            last_mu = mu
+
     return mu

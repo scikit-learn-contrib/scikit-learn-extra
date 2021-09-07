@@ -27,5 +27,6 @@ def test_mom():
 def test_huber():
     X = np.hstack([np.zeros(90), np.ones(10)])
     with pytest.warns(None) as record:
-        huber(X)
+        mu = huber(X, c=0.5)
     assert len(record) == 0
+    assert np.abs(mu) < 0.1
