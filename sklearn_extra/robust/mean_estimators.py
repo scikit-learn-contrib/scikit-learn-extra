@@ -204,8 +204,7 @@ def make_huber_metric(
     >>> y_true = np.hstack([np.zeros(98), 20*np.ones(2)]) # corrupted test values
     >>> np.random.shuffle(y_true) # shuffle them
     >>> y_pred = np.zeros(100) # predicted values
-    >>> robust_mse(y_true, y_pred)
-    0.1020408163265306
+    >>> result = robust_mse(y_true, y_pred)
     """
 
     def metric(y_true, y_pred):
