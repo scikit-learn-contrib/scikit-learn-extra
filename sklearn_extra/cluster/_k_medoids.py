@@ -685,7 +685,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
                 medoids_idxs = pam.medoid_indices_
                 best_sample_idxs = sample_idxs
 
-        self.medoid_indices_ = medoids_idxs
+        self.medoid_indices_ = sample_idxs[medoids_idxs]
         self.labels_ = np.argmin(self.transform(X), axis=1)
         self.n_iter_ = self.n_sampling_iter
 

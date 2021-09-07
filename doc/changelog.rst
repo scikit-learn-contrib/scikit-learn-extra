@@ -6,7 +6,8 @@ Unreleased
 
 - Add `make_huber_metric` which transform a non-robust to a robust metric using
     Huber estimator.
-
+- Add a stopping criterion and parameter tuning heuristic for Huber robust mean
+    estimator.
 - Add `CLARA` (Clustering for Large Applications) which extends k-medoids to
     be more scalable using a sampling approach.
     [`#83 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/83>`_].
