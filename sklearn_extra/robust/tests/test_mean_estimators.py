@@ -37,6 +37,7 @@ def test_huber():
     assert len(record) == 0
     assert np.abs(mu) < 0.1
 
+
 def test_robust_metric():
     robust_mse = make_huber_metric(mean_squared_error, c=5)
     y_true = np.hstack([np.zeros(95), 20 * np.ones(5)])
@@ -61,4 +62,3 @@ def test_check_robust_cv():
         cross_val_score(huber_reg, X, y, scoring=make_scorer(robust_mse))
     )
     assert error_Hub_reg < 1
-
