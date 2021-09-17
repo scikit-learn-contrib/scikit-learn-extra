@@ -48,6 +48,24 @@ def test_kmedoid_results(method, init, dtype):
     assert dtype is np.dtype(km.transform(X_cc.astype(dtype)).dtype).type
 
 
+@pytest.mark.parametrize("method", ["alternate", "pam"])
+@pytest.mark.parametrize(
+    "init", ["random", "heuristic", "build", "k-medoids++"]
+)
+def test_kmedoid_nclusters(method, init):
+    n_clusters = 50
+
+    km = KMedoids(
+        n_clusters=n_clusters,
+        init=init,
+        method=method,
+        max_iter=1,
+        random_state=rng,
+    )
+    km.fit(X_cc)
+    assert len(np.unique(km.medoid_indices_)) == n_clusters
+
+
 def test_clara_results():
     expected = np.hstack([np.zeros(50), np.ones(50)])
     km = CLARA(n_clusters=2)
