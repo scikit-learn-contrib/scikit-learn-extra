@@ -131,7 +131,7 @@ def test_random_deterministic():
     D = euclidean_distances(X)
 
     medoids = KMedoids(init="random")._initialize_medoids(D, 4, rng)
-    assert_array_equal(medoids, [47, 117, 67, 103])
+    assert_array_equal(medoids, [114, 62, 33, 107])
 
 
 def test_heuristic_deterministic():
