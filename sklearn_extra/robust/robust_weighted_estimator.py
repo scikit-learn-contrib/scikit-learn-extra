@@ -50,6 +50,7 @@ LOSS_FUNCTIONS = {
     "hinge": (Hinge,),
     "log": (Log,),
     "squared_error": (SquaredLoss,),
+    "squared_loss": (SquaredLoss,),
     "squared_hinge": (SquaredHinge,),
     "modified_huber": (ModifiedHuber,),
     "huber": (Huber, 1.35),  # 1.35 is default value. TODO : set as parameter
@@ -270,7 +271,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         if "warm_start" in parameters:
             base_estimator.set_params(warm_start=True)
 
-        if "loss" in parameters:
+        if ("loss" in parameters) and (loss_param != "squared_error"):
             base_estimator.set_params(loss=loss_param)
 
         if "eta0" in parameters:
