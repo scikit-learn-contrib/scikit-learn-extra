@@ -19,7 +19,7 @@ from sklearn.utils._testing import (
 # Test version of sklearn, in version older than v1.0 squared_loss must be used
 import sklearn
 
-if sklearn.__version__[0] == 0:
+if sklearn.__version__[0] == "0":
     SQ_LOSS = "squared_loss"
 else:
     SQ_LOSS = "squared_error"
