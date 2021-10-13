@@ -49,7 +49,7 @@ from ._robust_weighted_estimator_helper import (
 LOSS_FUNCTIONS = {
     "hinge": (Hinge,),
     "log": (Log,),
-    "squared_loss": (SquaredLoss,),
+    "squared_error": (SquaredLoss,),
     "squared_hinge": (SquaredHinge,),
     "modified_huber": (ModifiedHuber,),
     "huber": (Huber, 1.35),  # 1.35 is default value. TODO : set as parameter
@@ -107,7 +107,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         base_estimator.
         Classification losses supported : 'log', 'hinge', 'squared_hinge',
         'modified_huber'. If 'log', then the base_estimator must support
-        predict_proba. Regression losses supported : 'squared_loss', 'huber'.
+        predict_proba. Regression losses supported : 'squared_error', 'huber'.
         If callable, the function is used as loss function ro construct
         the weights.
 
@@ -971,8 +971,8 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         (using the inter-quartile range), this tends to be conservative
         (robust).
 
-    loss : string, None or callable, default="squared_loss"
-        For now, only "squared_loss" and "huber" are implemented.
+    loss : string, None or callable, default="squared_error"
+        For now, only "squared_error" and "huber" are implemented.
 
     sgd_args : dict, default={}
         arguments of the SGDClassifier base estimator.
@@ -1057,7 +1057,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         eta0=0.01,
         c=None,
         k=0,
-        loss="squared_loss",
+        loss="squared_error",
         sgd_args=None,
         tol=1e-3,
         n_iter_no_change=10,

@@ -239,7 +239,7 @@ X_rc[0] = 10
 X_rc = X_rc.reshape(-1, 1)
 y_rc[0] = -1
 
-regression_losses = ["squared_loss", "huber"]
+regression_losses = ["squared_error", "huber"]
 
 
 @pytest.mark.parametrize("loss", regression_losses)
