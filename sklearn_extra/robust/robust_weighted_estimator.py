@@ -140,7 +140,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         If None, c is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
-    k : int < sample_size/2, default=1
+    k : int < sample_size/2, default=None
         Parameter used for mom weighting procedure, used only if weightings
         is 'mom'. 2k+1 is the number of blocks used for median-of-means
         estimation, higher value of k means a more robust estimator.
@@ -218,7 +218,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         burn_in=10,
         eta0=0.1,
         c=None,
-        k=1,
+        k=None,
         tol=1e-5,
         n_iter_no_change=10,
         verbose=0,
@@ -647,7 +647,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         If None, c is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
-    k : int < sample_size/2, default=1
+    k : int < sample_size/2, default=None
         Parameter used for mom weighting procedure, used only if weightings
         is 'mom'. 2k+1 is the number of blocks used for median-of-means
         estimation, higher value of k means a more robust estimator.
@@ -759,7 +759,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         burn_in=10,
         eta0=0.01,
         c=None,
-        k=1,
+        k=None,
         loss="log",
         sgd_args=None,
         multi_class="ovr",
@@ -983,7 +983,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         If None, c is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
-    k : int < sample_size/2, default=1
+    k : int < sample_size/2 or None, default=None
         Parameter used for mom weighting procedure, used only if weightings
         is 'mom'. 2k+1 is the number of blocks used for median-of-means
         estimation, higher value of k means a more robust estimator.
@@ -1079,7 +1079,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         burn_in=10,
         eta0=0.01,
         c=None,
-        k=0,
+        k=None,
         loss="squared_loss",
         sgd_args=None,
         tol=1e-3,
@@ -1251,7 +1251,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         If None, c is estimated at each step using half the Inter-quartile
         range, this tends to be conservative (robust).
 
-    k : int < sample_size/2, default=1
+    k : int < sample_size/2 or None, default=None
         Parameter used for mom weighting procedure, used only if weightings
         is 'mom'. 2k+1 is the number of blocks used for median-of-means
         estimation, higher value of k means a more robust estimator.
@@ -1349,7 +1349,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         max_iter=100,
         eta0=0.01,
         c=None,
-        k=1,
+        k=None,
         kmeans_args=None,
         tol=1e-3,
         n_iter_no_change=10,
