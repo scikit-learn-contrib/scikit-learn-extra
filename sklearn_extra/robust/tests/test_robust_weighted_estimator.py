@@ -34,7 +34,7 @@ for f in range(3):
 classif_losses = ["log", "hinge"]
 weightings = ["huber", "mom"]
 multi_class = ["ovr", "ovo"]
-solvers = ['SGD', 'IRLS']
+solvers = ["SGD", "IRLS"]
 
 
 def test_robust_estimator_max_iter():

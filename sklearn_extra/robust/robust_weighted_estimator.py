@@ -226,7 +226,7 @@ class _RobustWeightedEstimator(BaseEstimator):
     ):
         self.base_estimator = base_estimator
         self.weighting = weighting
-        self.solver=solver
+        self.solver = solver
         self.eta0 = eta0
         self.burn_in = burn_in
         self.c = c
@@ -285,7 +285,7 @@ class _RobustWeightedEstimator(BaseEstimator):
             base_estimator.set_params(n_iter_no_change=self.n_iter_no_change)
         if "random_state" in parameters:
             base_estimator.set_params(random_state=random_state)
-        if (self.burn_in > 0) and self.solver != 'IRLS':
+        if (self.burn_in > 0) and self.solver != "IRLS":
             learning_rate = base_estimator.learning_rate
             base_estimator.set_params(learning_rate="constant", eta0=self.eta0)
 
@@ -310,7 +310,7 @@ class _RobustWeightedEstimator(BaseEstimator):
             if self.solver == "SGD":
                 base_estimator.partial_fit(X, y)
             else:
-                base_estimator.fit(X,y)
+                base_estimator.fit(X, y)
             # As the fit is here non-robust, override the
             # learned coefs.
             base_estimator.coef_ = np.zeros([len(X[0])])
@@ -328,7 +328,11 @@ class _RobustWeightedEstimator(BaseEstimator):
         # Optimization algorithm
         for epoch in range(self.max_iter):
 
-            if (epoch > self.burn_in) and (self.burn_in > 0) and (self.solver == "SGD"):
+            if (
+                (epoch > self.burn_in)
+                and (self.burn_in > 0)
+                and (self.solver == "SGD")
+            ):
                 # If not in the burn_in phase anymore, change the learning_rate
                 # calibration to the one edicted by self.base_estimator.
                 base_estimator.set_params(learning_rate=learning_rate)
@@ -381,9 +385,13 @@ class _RobustWeightedEstimator(BaseEstimator):
                 )
             else:
                 if self.solver == "SGD":
-                    base_estimator.partial_fit(X[perm], y[perm], sample_weight=weights[perm])
+                    base_estimator.partial_fit(
+                        X[perm], y[perm], sample_weight=weights[perm]
+                    )
                 else:
-                    base_estimator.fit(X[perm], y[perm], sample_weight=weights[perm])
+                    base_estimator.fit(
+                        X[perm], y[perm], sample_weight=weights[perm]
+                    )
 
             if (self.tol is not None) and (
                 current_loss > best_loss - self.tol
@@ -1151,7 +1159,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
                 random_state=self.random_state,
             )
         else:
-            raise ValueError('No such solver.')
+            raise ValueError("No such solver.")
         self.base_estimator_.fit(X, y)
 
         self.weights_ = self.base_estimator_.weights_
