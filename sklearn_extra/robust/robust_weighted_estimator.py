@@ -56,6 +56,14 @@ LOSS_FUNCTIONS = {
     "huber": (Huber, 1.35),  # 1.35 is default value. TODO : set as parameter
 }
 
+# Test version of sklearn, in version older than v1.0 squared_loss must be used
+import sklearn
+
+if sklearn.__version__[0] == 0:
+    SQ_LOSS = "squared_loss"
+else:
+    SQ_LOSS = "squared_error"
+
 
 def _huber_psisx(x, c):
     """Huber-loss weight for RobustWeightedEstimator algorithm"""
@@ -1058,7 +1066,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         eta0=0.01,
         c=None,
         k=0,
-        loss="squared_error",
+        loss=SQ_LOSS,
         sgd_args=None,
         tol=1e-3,
         n_iter_no_change=10,
