@@ -21,7 +21,7 @@ from sklearn.utils import (
     check_consistent_length,
 )
 from sklearn.utils.validation import check_is_fitted
-from sklearn.linear_model import SGDRegressor, SGDClassifier
+from sklearn.linear_model import SGDRegressor, SGDClassifier, LinearRegression
 from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import euclidean_distances
@@ -111,6 +111,9 @@ class _RobustWeightedEstimator(BaseEstimator):
         If callable, the function is used as loss function ro construct
         the weights.
 
+    solver : {"IRLS", "SGD"}, default="SGD"
+        Algorithm used for the optimization. For now only for regression.
+
     weighting : string, default="huber"
         Weighting scheme used to make the estimator robust.
         Can be 'huber' for huber-type weights or  'mom' for median-of-means
@@ -144,8 +147,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         Can have a big effect on efficiency.
         If None, k is estimated using the number of points distant from the
         median of means of more than 2 times a robust estimate of the scale
-        (using the inter-quartile range), this tends to be conservative
-        (robust).
+        (using the inter-quartile range), this can be unstable.
 
     tol : float or None, (default = 1e-3)
         The stopping criterion. If it is not None, training will stop when
@@ -210,12 +212,13 @@ class _RobustWeightedEstimator(BaseEstimator):
         self,
         base_estimator,
         loss,
+        solver="SGD",
         weighting="huber",
         max_iter=100,
         burn_in=10,
         eta0=0.1,
         c=None,
-        k=0,
+        k=1,
         tol=1e-5,
         n_iter_no_change=10,
         verbose=0,
@@ -223,11 +226,13 @@ class _RobustWeightedEstimator(BaseEstimator):
     ):
         self.base_estimator = base_estimator
         self.weighting = weighting
+        self.solver=solver
         self.eta0 = eta0
         self.burn_in = burn_in
         self.c = c
         self.k = k
         self.loss = loss
+        self.solver = solver
         self.max_iter = max_iter
         self.tol = tol
         self.n_iter_no_change = n_iter_no_change
@@ -278,9 +283,9 @@ class _RobustWeightedEstimator(BaseEstimator):
 
         if "n_iter_no_change" in parameters:
             base_estimator.set_params(n_iter_no_change=self.n_iter_no_change)
-
-        base_estimator.set_params(random_state=random_state)
-        if self.burn_in > 0:
+        if "random_state" in parameters:
+            base_estimator.set_params(random_state=random_state)
+        if (self.burn_in > 0) and self.solver != 'IRLS':
             learning_rate = base_estimator.learning_rate
             base_estimator.set_params(learning_rate="constant", eta0=self.eta0)
 
@@ -302,8 +307,11 @@ class _RobustWeightedEstimator(BaseEstimator):
             # Initialization of the estimator
             # Partial fit for the estimator to be set to "fitted" to be able
             # to predict.
-            base_estimator.partial_fit(X, y)
-            # As the partial fit is here non-robust, override the
+            if self.solver == "SGD":
+                base_estimator.partial_fit(X, y)
+            else:
+                base_estimator.fit(X,y)
+            # As the fit is here non-robust, override the
             # learned coefs.
             base_estimator.coef_ = np.zeros([len(X[0])])
             base_estimator.intercept_ = np.array([0])
@@ -320,7 +328,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         # Optimization algorithm
         for epoch in range(self.max_iter):
 
-            if epoch > self.burn_in and self.burn_in > 0:
+            if (epoch > self.burn_in) and (self.burn_in > 0) and (self.solver == "SGD"):
                 # If not in the burn_in phase anymore, change the learning_rate
                 # calibration to the one edicted by self.base_estimator.
                 base_estimator.set_params(learning_rate=learning_rate)
@@ -352,8 +360,6 @@ class _RobustWeightedEstimator(BaseEstimator):
             # epoch using the previously computed weights. Also shuffle the data.
             perm = random_state.permutation(len(X))
 
-            base_estimator.partial_fit(X, y, sample_weight=weights)
-
             if (self.tol is not None) and (
                 current_loss > best_loss - self.tol
             ):
@@ -374,9 +380,11 @@ class _RobustWeightedEstimator(BaseEstimator):
                     X[perm], y, sample_weight=weights[perm]
                 )
             else:
-                base_estimator.partial_fit(
-                    X[perm], y[perm], sample_weight=weights[perm]
-                )
+                if self.solver == "SGD":
+                    base_estimator.partial_fit(X[perm], y[perm], sample_weight=weights[perm])
+                else:
+                    base_estimator.fit(X[perm], y[perm], sample_weight=weights[perm])
+
             if (self.tol is not None) and (
                 current_loss > best_loss - self.tol
             ):
@@ -483,10 +491,12 @@ class _RobustWeightedEstimator(BaseEstimator):
         elif self.weighting == "mom":
             if self.k is None:
                 med = np.median(loss_values)
-                # scale estimator using iqr, rescaled by what would be if the
-                # loss was Gaussian.
-                scale = iqr(np.abs(loss_values - med)) / 1.37
+                # scale estimator using iqr
+                scale = iqr(np.abs(loss_values - med))
                 k = np.sum(np.abs(loss_values - med) > 2 * scale)
+                if k < 2:
+                    # For safety
+                    k = 2
             else:
                 k = self.k
             # Choose (randomly) 2k+1 (almost-)equal blocks of data.
@@ -636,8 +646,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         Can have a big effect on efficiency.
         If None, k is estimated using the number of points distant from the
         median of means of more than 2 times a robust estimate of the scale
-        (using the inter-quartile range), this tends to be conservative
-        (robust).
+        (using the inter-quartile range), this can be unstable.
 
     loss : string, None or callable, default="log"
         Classification losses supported : 'log', 'hinge', 'modified_huber'.
@@ -742,7 +751,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         burn_in=10,
         eta0=0.01,
         c=None,
-        k=0,
+        k=1,
         loss="log",
         sgd_args=None,
         multi_class="ovr",
@@ -940,6 +949,11 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         Can be 'huber' for huber-type weights or  'mom' for median-of-means
         type weights.
 
+    solver : {"SGD", "IRLS"}
+        Algorithm used for optimization. If "SGD" then, use SGDRegressor as
+        base estimator and reweight at each optimization step. If "IRLS" then
+        use multiple fit of reweighted LinearRegression with robust weights.
+
     max_iter : int, default=100
         Maximum number of iterations.
         For more information, see the optimization scheme of base_estimator
@@ -1052,6 +1066,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         weighting="huber",
+        solver="SGD",
         max_iter=100,
         burn_in=10,
         eta0=0.01,
@@ -1066,6 +1081,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
     ):
 
         self.weighting = weighting
+        self.solver = solver
         self.max_iter = max_iter
         self.burn_in = burn_in
         self.eta0 = eta0
@@ -1102,21 +1118,40 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         # Define the base estimator
 
         X, y = self._validate_data(X, y, y_numeric=True)
-
-        self.base_estimator_ = _RobustWeightedEstimator(
-            SGDRegressor(**sgd_args, eta0=self.eta0),
-            weighting=self.weighting,
-            loss=self.loss,
-            burn_in=self.burn_in,
-            c=self.c,
-            k=self.k,
-            eta0=self.eta0,
-            max_iter=self.max_iter,
-            tol=self.tol,
-            n_iter_no_change=self.n_iter_no_change,
-            verbose=self.verbose,
-            random_state=self.random_state,
-        )
+        if self.solver == "SGD":
+            self.base_estimator_ = _RobustWeightedEstimator(
+                SGDRegressor(**sgd_args, eta0=self.eta0),
+                weighting=self.weighting,
+                solver="SGD",
+                loss=self.loss,
+                burn_in=self.burn_in,
+                c=self.c,
+                k=self.k,
+                eta0=self.eta0,
+                max_iter=self.max_iter,
+                tol=self.tol,
+                n_iter_no_change=self.n_iter_no_change,
+                verbose=self.verbose,
+                random_state=self.random_state,
+            )
+        elif self.solver == "IRLS":
+            self.base_estimator_ = _RobustWeightedEstimator(
+                LinearRegression(),
+                weighting=self.weighting,
+                solver="IRLS",
+                loss=self.loss,
+                burn_in=self.burn_in,
+                c=self.c,
+                k=self.k,
+                eta0=self.eta0,
+                max_iter=self.max_iter,
+                tol=self.tol,
+                n_iter_no_change=self.n_iter_no_change,
+                verbose=self.verbose,
+                random_state=self.random_state,
+            )
+        else:
+            raise ValueError('No such solver.')
         self.base_estimator_.fit(X, y)
 
         self.weights_ = self.base_estimator_.weights_
@@ -1215,8 +1250,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         Can have a big effect on efficiency.
         If None, k is estimated using the number of points distant from the
         median of means of more than 2 times a robust estimate of the scale
-        (using the inter-quartile range), this tends to be conservative
-        (robust).
+        (using the inter-quartile range), this can be unstable.
 
     kmeans_args : dict, default={}
         arguments of the MiniBatchKMeans base estimator. Must not contain
@@ -1307,7 +1341,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         max_iter=100,
         eta0=0.01,
         c=None,
-        k=0,
+        k=1,
         kmeans_args=None,
         tol=1e-3,
         n_iter_no_change=10,
