@@ -502,9 +502,8 @@ class _RobustWeightedEstimator(BaseEstimator):
                 # scale estimator using iqr
                 scale = iqr(np.abs(loss_values - med))
                 k = np.sum(np.abs(loss_values - med) > 2 * scale)
-                if k < 2:
-                    # For safety
-                    k = 2
+                # For safety
+                k = min(k, 2)
             else:
                 k = self.k
             # Choose (randomly) 2k+1 (almost-)equal blocks of data.
