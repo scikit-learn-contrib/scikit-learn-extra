@@ -405,7 +405,7 @@ def test_not_robust_cluster(weighting):
     difference = [
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
-    assert np.mean(difference) < 1
+    assert np.mean(difference) < 2
 
 
 def test_transform():
