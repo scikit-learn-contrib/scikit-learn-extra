@@ -389,9 +389,8 @@ class _RobustWeightedEstimator(BaseEstimator):
                         X[perm], y[perm], sample_weight=weights[perm]
                     )
                 else:
-                    base_estimator.fit(
-                        X[perm], y[perm], sample_weight=weights[perm]
-                    )
+                    # Do one IRLS step.
+                    base_estimator.fit(X, y, sample_weight=weights)
 
             if (self.tol is not None) and (
                 current_loss > best_loss - self.tol
@@ -503,7 +502,7 @@ class _RobustWeightedEstimator(BaseEstimator):
                 scale = iqr(np.abs(loss_values - med))
                 k = np.sum(np.abs(loss_values - med) > 2 * scale)
                 # For safety
-                k = min(k, 2)
+                k = min(k, 3)
             else:
                 k = self.k
             # Choose (randomly) 2k+1 (almost-)equal blocks of data.
@@ -811,6 +810,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         base_robust_estimator_ = _RobustWeightedEstimator(
             SGDClassifier(**sgd_args, eta0=self.eta0),
             weighting=self.weighting,
+            solver="SGD",
             loss=self.loss,
             burn_in=self.burn_in,
             c=self.c,
@@ -1125,37 +1125,30 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         # Define the base estimator
 
         X, y = self._validate_data(X, y, y_numeric=True)
+        kwargs = {
+            "weighting": self.weighting,
+            "loss": self.loss,
+            "burn_in": self.burn_in,
+            "c": self.c,
+            "k": self.k,
+            "eta0": self.eta0,
+            "max_iter": self.max_iter,
+            "tol": self.tol,
+            "n_iter_no_change": self.n_iter_no_change,
+            "verbose": self.verbose,
+            "random_state": self.random_state,
+        }
         if self.solver == "SGD":
             self.base_estimator_ = _RobustWeightedEstimator(
                 SGDRegressor(**sgd_args, eta0=self.eta0),
-                weighting=self.weighting,
                 solver="SGD",
-                loss=self.loss,
-                burn_in=self.burn_in,
-                c=self.c,
-                k=self.k,
-                eta0=self.eta0,
-                max_iter=self.max_iter,
-                tol=self.tol,
-                n_iter_no_change=self.n_iter_no_change,
-                verbose=self.verbose,
-                random_state=self.random_state,
+                **kwargs,
             )
         elif self.solver == "IRLS":
             self.base_estimator_ = _RobustWeightedEstimator(
                 LinearRegression(),
-                weighting=self.weighting,
                 solver="IRLS",
-                loss=self.loss,
-                burn_in=self.burn_in,
-                c=self.c,
-                k=self.k,
-                eta0=self.eta0,
-                max_iter=self.max_iter,
-                tol=self.tol,
-                n_iter_no_change=self.n_iter_no_change,
-                verbose=self.verbose,
-                random_state=self.random_state,
+                **kwargs,
             )
         else:
             raise ValueError("No such solver.")
@@ -1399,7 +1392,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
                 self.n_clusters,
                 batch_size=X.shape[0],
                 random_state=self.random_state,
-                **kmeans_args
+                **kmeans_args,
             ),
             burn_in=0,  # Important because it does not mean anything to
             # have burn-in

@@ -79,6 +79,13 @@ def test_robust_estimator_input_validation_and_fit_check():
     with pytest.raises(ValueError, match=msg):
         RobustWeightedKMeans(c=0).fit(X_cc)
 
+
+def test_robust_estimator_unsupported_loss():
+    """Test that warning message is thrown when unsupported loss."""
+    model = RobustWeightedClassifier(loss="invalid")
+    msg = "No such solver."
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X_cc, y_cc)
     msg = "burn_in must be >= 0, got -1."
     with pytest.raises(ValueError, match=msg):
         RobustWeightedClassifier(burn_in=-1).fit(X_cc, y_cc)
@@ -277,6 +284,14 @@ def test_regression_corrupted_weights(weighting):
     )
     reg.fit(X_rc, y_rc)
     assert reg.weights_[0] < np.mean(reg.weights_[1:])
+
+
+def test_robust_regressor_unsupported_solver():
+    """Test that warning message is thrown when unsupported loss."""
+    model = RobustWeightedRegressor(solver="invalid")
+    msg = "No such solver."
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X_rc, y_rc)
 
 
 X_r = rng.uniform(-1, 1, size=[1000])
