@@ -201,6 +201,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         )
 
         self._U = self._uniform_vector(rng)
+        self.is_fitted_ = True
 
         return self
 

@@ -16,6 +16,13 @@ from sklearn.utils._testing import (
     assert_almost_equal,
 )
 
+# Test version of sklearn, in version older than v1.0 squared_loss must be used
+import sklearn
+
+if sklearn.__version__[0] == "0":
+    SQ_LOSS = "squared_loss"
+else:
+    SQ_LOSS = "squared_error"
 
 k_values = [None, 10]  # values of k for test robust
 c_values = [None, 1e-3]  # values of c for test robust
@@ -239,7 +246,7 @@ X_rc[0] = 10
 X_rc = X_rc.reshape(-1, 1)
 y_rc[0] = -1
 
-regression_losses = ["squared_loss", "huber"]
+regression_losses = [SQ_LOSS, "huber"]
 
 
 @pytest.mark.parametrize("loss", regression_losses)
