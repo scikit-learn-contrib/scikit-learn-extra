@@ -76,7 +76,7 @@ for n_samples in [300, 600]:
         k=int(n_samples / 20),
         random_state=rng,
     )
-    bandwidth = cluster.estimate_bandwidth(X, 0.2)
+    bandwidth = cluster.estimate_bandwidth(X, quantile=0.2)
 
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
 
