@@ -412,7 +412,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         if self.init == "random":  # Random initialization
             # Pick random k medoids as the initial ones.
-            medoids = random_state_.choice(len(D), n_clusters)
+            medoids = random_state_.choice(len(D), n_clusters, replace=False)
         elif self.init == "k-medoids++":
             medoids = self._kpp_init(D, n_clusters, random_state_)
         elif self.init == "heuristic":  # Initialization by heuristic
