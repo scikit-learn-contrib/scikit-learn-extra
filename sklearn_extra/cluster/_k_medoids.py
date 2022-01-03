@@ -64,7 +64,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     method : {'alternate', 'pam'}, default: 'alternate'
         Which algorithm to use. 'alternate' is faster while 'pam' is more accurate.
 
-    init : {'random', 'heuristic', 'k-medoids++', 'build'}, optional, default: 'heuristic'
+    init : {'random', 'heuristic', 'k-medoids++', 'build'}, or array-like of shape 
+        (n_clusters, n_features), optional, default: 'heuristic'
         Specify medoid initialization method. 'random' selects n_clusters
         elements from the dataset. 'heuristic' picks the n_clusters points
         with the smallest sum distance to every other point. 'k-medoids++'
@@ -74,6 +75,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         algorithm. Often 'build' is more efficient but slower than other
         initializations on big datasets and it is also very non-robust,
         if there are outliers in the dataset, use another initialization.
+        If an array is passed, it should be of shape (n_clusters, n_features) and 
+        gives the initial centers.
 
         .. _k-means++: https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf
 
@@ -181,12 +184,24 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Check init
         init_methods = ["random", "heuristic", "k-medoids++", "build"]
-        if self.init not in init_methods:
+        if not (
+            hasattr(self.init, "__array__") 
+            or (isinstance(self.init, str) and self.init in init_methods)
+        ):
             raise ValueError(
                 "init needs to be one of "
                 + "the following: "
-                + "%s" % init_methods
+                + "%s" % (init_methods + ['array-like'])
             )
+
+        # Check n_clusters
+        if hasattr(self.init, "__array__") \
+            and self.n_clusters != self.init.shape[0]:
+            warnings.warn(
+                "n_clusters should be equal to size of array-like if init is array-like"
+                "setting n_clusters to {}.".format(self.init.shape[0])
+            )
+            self.n_clusters = self.init.shape[0]
 
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
@@ -219,7 +234,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         D = pairwise_distances(X, metric=self.metric)
 
         medoid_idxs = self._initialize_medoids(
-            D, self.n_clusters, random_state_
+            D, self.n_clusters, random_state_, X
         )
         labels = None
 
@@ -407,10 +422,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             return pd_argmin
 
-    def _initialize_medoids(self, D, n_clusters, random_state_):
+    def _initialize_medoids(self, D, n_clusters, random_state_, X):
         """Select initial mediods when beginning clustering."""
 
-        if self.init == "random":  # Random initialization
+        if hasattr(self.init, "__array__"): # Pre assign cluster
+            medoids = np.hstack([
+                np.where((X == c).all(axis=1)) for c in self.init
+            ]).ravel()
+        elif self.init == "random":  # Random initialization
             # Pick random k medoids as the initial ones.
             medoids = random_state_.choice(len(D), n_clusters, replace=False)
         elif self.init == "k-medoids++":

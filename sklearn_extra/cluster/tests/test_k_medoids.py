@@ -427,3 +427,18 @@ def test_medoids_indices():
     clara.fit(X_iris)
     assert_array_equal(X_iris[model.medoid_indices_], model.cluster_centers_)
     assert_array_equal(X_iris[clara.medoid_indices_], clara.cluster_centers_)
+
+
+def test_array_like_init():
+    centroids = np.array([X_cc[0], X_cc[50]])
+
+    expected = np.hstack([np.zeros(50), np.ones(50)])
+    km = KMedoids(n_clusters=len(centroids), init=centroids)
+    km.fit(X_cc)
+    # # This test use data that are not perfectly separable so the
+    # # accuracy is not 1. Accuracy around 0.85
+    assert (np.mean(km.labels_ == expected) > 0.8) or (
+        1 - np.mean(km.labels_ == expected) > 0.8
+    )
+    assert dtype is np.dtype(km.cluster_centers_.dtype).type
+    assert dtype is np.dtype(km.transform(X_cc.astype(dtype)).dtype).type
