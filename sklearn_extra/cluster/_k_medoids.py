@@ -422,7 +422,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             return pd_argmin
 
-    def _initialize_medoids(self, D, n_clusters, random_state_, X):
+    def _initialize_medoids(self, D, n_clusters, random_state_, X=None):
         """Select initial mediods when beginning clustering."""
 
         if hasattr(self.init, "__array__"): # Pre assign cluster
