@@ -440,5 +440,3 @@ def test_array_like_init():
     assert (np.mean(km.labels_ == expected) > 0.8) or (
         1 - np.mean(km.labels_ == expected) > 0.8
     )
-    assert dtype is np.dtype(km.cluster_centers_.dtype).type
-    assert dtype is np.dtype(km.transform(X_cc.astype(dtype)).dtype).type
