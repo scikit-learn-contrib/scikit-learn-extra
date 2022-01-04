@@ -447,3 +447,9 @@ def test_array_like_init():
     assert (np.mean(km.labels_ == expected) > 0.8) or (
         1 - np.mean(km.labels_ == expected) > 0.8
     )
+
+    # Override n_clusters if array-like init method is used
+    km = KMedoids(n_clusters=len(centroids)+2, init=centroids)
+    km.fit(X_cc)
+
+    assert len(km.cluster_centers_) == len(centroids)
