@@ -449,7 +449,7 @@ def test_array_like_init():
     )
 
     # Override n_clusters if array-like init method is used
-    km = KMedoids(n_clusters=len(centroids)+2, init=centroids)
+    km = KMedoids(n_clusters=len(centroids) + 2, init=centroids)
     km.fit(X_cc)
 
     assert len(km.cluster_centers_) == len(centroids)
