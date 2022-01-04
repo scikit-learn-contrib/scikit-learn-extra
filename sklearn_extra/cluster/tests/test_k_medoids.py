@@ -423,10 +423,17 @@ def test_medoids_indices():
 
     model = KMedoids(n_clusters=3, init="build", random_state=rng)
 
+    centroids = np.array([X_iris[0], X_iris[50]])
+    array_like_model = KMedoids(
+        n_clusters=len(centroids), init=centroids, max_iter=0
+    )
+
     model.fit(X_iris)
     clara.fit(X_iris)
+    array_like_model.fit(X_iris)
     assert_array_equal(X_iris[model.medoid_indices_], model.cluster_centers_)
     assert_array_equal(X_iris[clara.medoid_indices_], clara.cluster_centers_)
+    assert_array_equal(centroids, array_like_model.cluster_centers_)
 
 
 def test_array_like_init():
