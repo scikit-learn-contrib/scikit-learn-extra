@@ -41,6 +41,7 @@ for f in range(3):
 classif_losses = ["log", "hinge"]
 weightings = ["huber", "mom"]
 multi_class = ["ovr", "ovo"]
+solvers = ["SGD", "IRLS"]
 
 
 def test_robust_estimator_max_iter():
@@ -240,8 +241,8 @@ def test_robust_no_proba():
 
 
 # Regression test with outliers
-X_rc = rng.uniform(-1, 1, size=[200])
-y_rc = X_rc + 0.1 * rng.normal(size=200)
+X_rc = rng.uniform(-1, 1, size=[300])
+y_rc = X_rc + 0.1 * rng.normal(size=300)
 X_rc[0] = 10
 X_rc = X_rc.reshape(-1, 1)
 y_rc[0] = -1
@@ -253,10 +254,12 @@ regression_losses = [SQ_LOSS, "huber"]
 @pytest.mark.parametrize("weighting", weightings)
 @pytest.mark.parametrize("k", k_values)
 @pytest.mark.parametrize("c", c_values)
-def test_corrupted_regression(loss, weighting, k, c):
+@pytest.mark.parametrize("solver", solvers)
+def test_corrupted_regression(loss, weighting, k, c, solver):
     reg = RobustWeightedRegressor(
         loss=loss,
-        max_iter=50,
+        max_iter=100,
+        solver=solver,
         weighting=weighting,
         k=k,
         c=c,
@@ -264,8 +267,8 @@ def test_corrupted_regression(loss, weighting, k, c):
         n_iter_no_change=20,
     )
     reg.fit(X_rc, y_rc)
-    assert np.abs(reg.coef_[0] - 1) < 0.1
-    assert np.abs(reg.intercept_[0]) < 0.1
+    assert np.abs(reg.coef_[0] - 1) < 0.2
+    assert np.abs(reg.intercept_) < 0.2
 
 
 # Check that weights_ parameter can be used as outlier score.
@@ -281,6 +284,14 @@ def test_regression_corrupted_weights(weighting):
     )
     reg.fit(X_rc, y_rc)
     assert reg.weights_[0] < np.mean(reg.weights_[1:])
+
+
+def test_robust_regression_estimator_unsupported_solver():
+    """Test that warning message is thrown when unsupported loss."""
+    model = RobustWeightedRegressor(solver="invalid")
+    msg = "No such solver."
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X_rc, y_rc)
 
 
 X_r = rng.uniform(-1, 1, size=[1000])
@@ -394,7 +405,7 @@ def test_not_robust_cluster(weighting):
     difference = [
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
-    assert np.mean(difference) < 1
+    assert np.mean(difference) < 2
 
 
 def test_transform():
