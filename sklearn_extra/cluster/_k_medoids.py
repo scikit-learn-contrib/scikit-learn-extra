@@ -49,6 +49,104 @@ def _compute_inertia(distances):
     return inertia
 
 
+class _BaseMethod:
+    def converged(self, current_iter, max_iter):
+        if np.all(self.old_medoid_idxs == self.medoid_idxs):
+            return True
+        elif current_iter == max_iter - 1:
+            warnings.warn(
+                "Maximum number of iteration reached before "
+                "convergence. Consider increasing max_iter to "
+                "improve the fit.",
+                ConvergenceWarning,
+            )
+            return True
+        return False
+
+    def next(self):
+        self.old_medoid_idxs = np.copy(self.medoid_idxs)
+        self._next()
+class _PAM(_BaseMethod):
+    def __init__(self, D, medoid_idxs, n_clusters, max_iter):
+        self.D = D
+        self.medoid_idxs = medoid_idxs
+        self.n_clusters = n_clusters
+        self.max_iter = max_iter
+
+        # Compute the distance to the first and second closest points
+        # among medoids.
+
+        if n_clusters == 1 and max_iter > 0:
+            # PAM SWAP step can only be used for n_clusters > 1
+            warnings.warn(
+                "n_clusters should be larger than 2 if max_iter != 0 "
+                "setting max_iter to 0."
+            )
+            max_iter = 0
+        elif max_iter > 0:
+            self.Djs, self.Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+        else:
+            self.Djs = None
+            self.Ejs = None
+        
+    
+    def _next(self):
+        not_medoid_idxs = np.delete(np.arange(len(self.D)), self.medoid_idxs)
+        optimal_swap = _compute_optimal_swap(
+            self.D,
+            self.medoid_idxs.astype(np.intc),
+            not_medoid_idxs.astype(np.intc),
+            self.Djs,
+            self.Ejs,
+            self.n_clusters,
+        )
+        if optimal_swap is not None:
+            i, j, _ = optimal_swap
+            self.medoid_idxs[self.medoid_idxs == i] = j
+
+            # update Djs and Ejs with new medoids
+            self.Djs, self.Ejs = np.sort(self.D[self.medoid_idxs], axis=0)[[0, 1]]
+
+
+class _Alternate(_BaseMethod):
+    def __init__(self, D, medoid_idxs, n_clusters, *args):
+        self.D = D
+        self.medoid_idxs = medoid_idxs
+        self.n_clusters = n_clusters
+
+    def _next(self):
+        labels = np.argmin(self.D[self.medoid_idxs, :], axis=0)
+        # Update the medoids for each cluster
+        for k in range(self.n_clusters):
+            # Extract the distance matrix between the data points
+            # inside the cluster k
+            cluster_k_idxs = np.where(labels == k)[0]
+
+            if len(cluster_k_idxs) == 0:
+                warnings.warn(
+                    "Cluster {k} is empty! "
+                    "self.labels_[self.medoid_indices_[{k}]] "
+                    "may not be labeled with "
+                    "its corresponding cluster ({k}).".format(k=k)
+                )
+                continue
+
+            in_cluster_distances = self.D[
+                cluster_k_idxs, cluster_k_idxs[:, np.newaxis]
+            ]
+
+            # Calculate all costs from each point to all others in the cluster
+            in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
+
+            min_cost_idx = np.argmin(in_cluster_all_costs)
+            min_cost = in_cluster_all_costs[min_cost_idx]
+            curr_cost = in_cluster_all_costs[
+                np.argmax(cluster_k_idxs == self.medoid_idxs[k])
+            ]
+
+            # Adopt a new medoid if its distance is smaller then the current
+            if min_cost < curr_cost:
+                self.medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     """k-medoids clustering.
 
@@ -215,6 +313,11 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 f"are 'pam' and 'alternate'."
             )
 
+    def _check_X(self, X):
+        return check_array(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
+
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
 
@@ -230,125 +333,33 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         -------
         self
         """
-        random_state_ = check_random_state(self.random_state)
+        random_state= check_random_state(self.random_state)
         self._check_method()
         self._init = self._check_init()
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
-        )
-        self._n_clusters = self._check_n_clusters(X, self._init)
-        self._max_iter = self._check_max_iter()
-
-
+        X = self._check_X(X)
+        n_clusters = self._check_n_clusters(X, self._init)
+        max_iter = self._check_max_iter()
 
         D = pairwise_distances(X, metric=self.metric)
 
-        medoid_idxs = self._initialize_medoids(
-            D, self._n_clusters, random_state_, X
-        )
-        labels = None
+        initial_medoid_idxs = self._initialize_medoids(D, n_clusters, random_state, X)
 
-        if self.method == "pam":
-            # Compute the distance to the first and second closest points
-            # among medoids.
+        algorithm_class = _PAM if self.method=="pam" else _Alternate
+        algorithm = algorithm_class(D, initial_medoid_idxs, n_clusters, max_iter)
 
-            if self._n_clusters == 1 and self._max_iter > 0:
-                # PAM SWAP step can only be used for n_clusters > 1
-                warnings.warn(
-                    "n_clusters should be larger than 2 if max_iter != 0 "
-                    "setting max_iter to 0."
-                )
-                self._max_iter = 0
-            elif self._max_iter > 0:
-                Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-
-        # Continue the algorithm as long as
-        # the medoids keep changing and the maximum number
-        # of iterations is not exceeded
-
-
-        for self.n_iter_ in range(0, self._max_iter):
-            old_medoid_idxs = np.copy(medoid_idxs)
-
-            if self.method == "alternate":
-                # Update medoids with the new cluster indices
-                labels = np.argmin(D[medoid_idxs, :], axis=0)
-                self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
-
-            elif self.method == "pam":
-                not_medoid_idxs = np.delete(np.arange(len(D)), medoid_idxs)
-                optimal_swap = _compute_optimal_swap(
-                    D,
-                    medoid_idxs.astype(np.intc),
-                    not_medoid_idxs.astype(np.intc),
-                    Djs,
-                    Ejs,
-                    self._n_clusters,
-                )
-                if optimal_swap is not None:
-                    i, j, _ = optimal_swap
-                    medoid_idxs[medoid_idxs == i] = j
-
-                    # update Djs and Ejs with new medoids
-                    Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-
-
-            if np.all(old_medoid_idxs == medoid_idxs):
+        for self.n_iter_ in range(0, max_iter):
+            algorithm.next()
+            if algorithm.converged(self.n_iter_, max_iter):
                 break
-            elif self.n_iter_ == self._max_iter - 1:
-                warnings.warn(
-                    "Maximum number of iteration reached before "
-                    "convergence. Consider increasing max_iter to "
-                    "improve the fit.",
-                    ConvergenceWarning,
-                )
 
-        self.cluster_centers_ = X[medoid_idxs] if self.metric != "precomputed" else None
+        self.cluster_centers_ = X[algorithm.medoid_idxs] if self.metric != "precomputed" else None
 
-        self.labels_ = np.argmin(D[medoid_idxs, :], axis=0)
-        self.medoid_indices_ = medoid_idxs
+        self.labels_ = np.argmin(D[algorithm.medoid_idxs, :], axis=0)
+        self.medoid_indices_ = algorithm.medoid_idxs
         self.inertia_ = _compute_inertia(self.transform(X))
 
         return self
 
-    def _update_medoid_idxs_in_place(self, D, labels, medoid_idxs):
-        """In-place update of the medoid indices"""
-
-        # Update the medoids for each cluster
-        for k in range(self._n_clusters):
-            # Extract the distance matrix between the data points
-            # inside the cluster k
-            cluster_k_idxs = np.where(labels == k)[0]
-
-            if len(cluster_k_idxs) == 0:
-                warnings.warn(
-                    "Cluster {k} is empty! "
-                    "self.labels_[self.medoid_indices_[{k}]] "
-                    "may not be labeled with "
-                    "its corresponding cluster ({k}).".format(k=k)
-                )
-                continue
-
-            in_cluster_distances = D[
-                cluster_k_idxs, cluster_k_idxs[:, np.newaxis]
-            ]
-
-            # Calculate all costs from each point to all others in the cluster
-            in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
-
-            min_cost_idx = np.argmin(in_cluster_all_costs)
-            min_cost = in_cluster_all_costs[min_cost_idx]
-            curr_cost = in_cluster_all_costs[
-                np.argmax(cluster_k_idxs == medoid_idxs[k])
-            ]
-
-            # Adopt a new medoid if its distance is smaller then the current
-            if min_cost < curr_cost:
-                medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
-
-    def _compute_cost(self, D, medoid_idxs):
-        """Compute the cose for a given configuration of the medoids"""
-        return _compute_inertia(D[:, medoid_idxs])
 
     def transform(self, X):
         """Transforms X to cluster-distance space.

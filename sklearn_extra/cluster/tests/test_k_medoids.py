@@ -145,14 +145,13 @@ def test_heuristic_deterministic():
 def test_update_medoid_idxs_empty_cluster():
     """Label is unchanged for an empty cluster."""
     D = np.zeros((3, 3))
-    labels = np.array([0, 0, 0])
     medoid_idxs = np.array([0, 1])
     kmedoids = KMedoids(n_clusters=2)
 
     # Swallow empty cluster warning
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        kmedoids._update_medoid_idxs_in_place(D, labels, medoid_idxs)
+        kmedoids._update_medoid_idxs_in_place(D, medoid_idxs)
 
     assert_array_equal(medoid_idxs, [0, 1])
 
