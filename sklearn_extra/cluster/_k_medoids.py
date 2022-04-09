@@ -335,6 +335,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 f"are 'pam' and 'alternate'."
             )
 
+    def _check_is_fitted(self):
+        if self.metric == "precomputed":
+            check_is_fitted(self, "medoid_indices_")
+        else:
+            check_is_fitted(self, "cluster_centers_")
+
     def _check_X(self, X):
         return check_array(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
@@ -402,16 +408,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
-        )
+        self._check_is_fitted()
+        X = self._check_X(X)
 
         if self.metric == "precomputed":
-            check_is_fitted(self, "medoid_indices_")
             return X[:, self.medoid_indices_]
         else:
-            check_is_fitted(self, "cluster_centers_")
-
             Y = self.cluster_centers_
             kwargs = {}
             if self.metric == "seuclidean":
@@ -434,15 +436,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
-        )
+        self._check_is_fitted()
+        X = self._check_X(X)
 
         if self.metric == "precomputed":
-            check_is_fitted(self, "medoid_indices_")
             return np.argmin(X[:, self.medoid_indices_], axis=1)
         else:
-            check_is_fitted(self, "cluster_centers_")
 
             # Return data points to clusters based on which cluster assignment
             # yields the smallest distance

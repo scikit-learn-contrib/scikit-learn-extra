@@ -12,6 +12,7 @@ from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
 from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn_extra.cluster import KMedoids, CLARA
+from sklearn.utils.estimator_checks import check_estimator
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 
@@ -29,6 +30,9 @@ X_cc, y_cc = make_blobs(
     cluster_std=0.2,
 )
 
+
+def test_check_estimator():
+    check_estimator(KMedoids())
 
 @pytest.mark.parametrize("method", ["alternate", "pam"])
 @pytest.mark.parametrize(
