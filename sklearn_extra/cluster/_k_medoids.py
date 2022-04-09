@@ -167,10 +167,13 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.max_iter = max_iter
         self.random_state = random_state
 
-    def _check_non_negative(self, v, param):
-        if not (isinstance(v, numbers.Integral) and v > 0):
-            msg = f"{param} should be a nonnegative integer, got {v}."
-            raise ValueError(msg)
+    def _check_non_negative(self, v, param, zero_included):
+        error = ValueError(f"{param} should be a nonnegative integer, got {v}.")
+        if v is None:
+            raise error
+        greater_than_zero = v>=0 if zero_included else v>0
+        if not (isinstance(v, numbers.Integral) and greater_than_zero):
+            raise error
 
     def _check_n_clusters(self, X, init):
 
@@ -183,7 +186,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             )
             return init.shape[0]
 
-        self._check_non_negative(self.n_clusters, "n_clusters")
+        self._check_non_negative(self.n_clusters, "n_clusters", zero_included=False)
+
         if self.n_clusters > X.shape[0]:
             raise ValueError(
                 f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
@@ -191,7 +195,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return self.n_clusters
 
     def _check_max_iter(self):
-        self._check_non_negative(self.max_iter, "max_iter")
+        self._check_non_negative(self.max_iter, "max_iter", zero_included=True)
         return self.max_iter
 
     def _check_init(self):
@@ -204,6 +208,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return self.init
 
+    def _check_method(self):
+        if self.method not in ["pam", "alternate"]:
+            raise ValueError(
+                f"method={self.method} is not supported. Supported methods "
+                f"are 'pam' and 'alternate'."
+            )
 
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
@@ -221,7 +231,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self
         """
         random_state_ = check_random_state(self.random_state)
-        
+        self._check_method()
         self._init = self._check_init()
         X = check_array(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
@@ -282,11 +292,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     # update Djs and Ejs with new medoids
                     Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
-            else:
-                raise ValueError(
-                    f"method={self.method} is not supported. Supported methods "
-                    f"are 'pam' and 'alternate'."
-                )
 
             if np.all(old_medoid_idxs == medoid_idxs):
                 break
@@ -298,10 +303,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     ConvergenceWarning,
                 )
 
-        self.cluster_centers_ = None
-        if self.metric == "precomputed":
-            self.cluster_centers_ = X[medoid_idxs]
-
+        self.cluster_centers_ = X[medoid_idxs] if self.metric != "precomputed" else None
 
         self.labels_ = np.argmin(D[medoid_idxs, :], axis=0)
         self.medoid_indices_ = medoid_idxs
