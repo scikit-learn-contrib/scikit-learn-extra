@@ -6,6 +6,7 @@
 #          Zane Dufour <zane.dufour@gmail.com>
 # License: BSD 3 clause
 
+import numbers
 import warnings
 
 import numpy as np
@@ -23,6 +24,9 @@ from sklearn.exceptions import ConvergenceWarning
 # cython implementation of steps in PAM algorithm.
 from ._k_medoids_helper import _compute_optimal_swap, _build
 
+
+def _is_array(v):
+    return hasattr(v, "__array__")
 
 def _compute_inertia(distances):
     """Compute inertia of new samples. Inertia is defined as the sum of the
@@ -163,49 +167,43 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.max_iter = max_iter
         self.random_state = random_state
 
-    def _check_nonnegative_int(self, value, desc, strict=True):
-        """Validates if value is a valid integer > 0"""
-        if strict:
-            negative = (value is None) or (value <= 0)
-        else:
-            negative = (value is None) or (value < 0)
-        if negative or not isinstance(value, (int, np.integer)):
-            raise ValueError(
-                "%s should be a nonnegative integer. "
-                "%s was given" % (desc, value)
-            )
+    def _check_non_negative(self, v, param):
+        if not (isinstance(v, numbers.Integral) and v > 0):
+            msg = f"{param} should be a nonnegative integer, got {v}."
+            raise ValueError(msg)
 
-    def _check_init_args(self):
-        """Validates the input arguments."""
+    def _check_n_clusters(self, X, init):
 
-        # Check n_clusters and max_iter
-        self._check_nonnegative_int(self.n_clusters, "n_clusters")
-        self._check_nonnegative_int(self.max_iter, "max_iter", False)
-
-        # Check init
-        init_methods = ["random", "heuristic", "k-medoids++", "build"]
-        if not (
-            hasattr(self.init, "__array__")
-            or (isinstance(self.init, str) and self.init in init_methods)
-        ):
-            raise ValueError(
-                "init needs to be one of "
-                + "the following: "
-                + "%s" % (init_methods + ["array-like"])
-            )
-
-        # Check n_clusters
-        if (
-            hasattr(self.init, "__array__")
-            and self.n_clusters != self.init.shape[0]
-        ):
+        if _is_array(init):
             warnings.warn(
                 "n_clusters should be equal to size of array-like if init "
                 "is array-like setting n_clusters to {}.".format(
-                    self.init.shape[0]
+                    init.shape[0]
                 )
             )
-            self.n_clusters = self.init.shape[0]
+            return init.shape[0]
+
+        self._check_non_negative(self.n_clusters, "n_clusters")
+        if self.n_clusters > X.shape[0]:
+            raise ValueError(
+                f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
+            )
+        return self.n_clusters
+
+    def _check_max_iter(self):
+        self._check_non_negative(self.max_iter, "max_iter")
+        return self.max_iter
+
+    def _check_init(self):
+        methods = ["random", "heuristic", "k-medoids++", "build"]
+        is_not_valid_method = not (isinstance(self.init, str) and self.init in methods)
+        is_not_array_like = not _is_array(self.init)
+        if is_not_array_like and is_not_valid_method:
+            msg = f"init should be one of: {methods + ['array-like']}, got {self.init}."
+            raise ValueError(msg)
+
+        return self.init
+
 
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
@@ -223,22 +221,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self
         """
         random_state_ = check_random_state(self.random_state)
-
-        self._check_init_args()
+        
+        self._init = self._check_init()
         X = check_array(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
-        if self.n_clusters > X.shape[0]:
-            raise ValueError(
-                "The number of medoids (%d) must be less "
-                "than the number of samples %d."
-                % (self.n_clusters, X.shape[0])
-            )
+        self._n_clusters = self._check_n_clusters(X, self._init)
+        self._max_iter = self._check_max_iter()
+
+
 
         D = pairwise_distances(X, metric=self.metric)
 
         medoid_idxs = self._initialize_medoids(
-            D, self.n_clusters, random_state_, X
+            D, self._n_clusters, random_state_, X
         )
         labels = None
 
@@ -246,27 +242,29 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Compute the distance to the first and second closest points
             # among medoids.
 
-            if self.n_clusters == 1 and self.max_iter > 0:
+            if self._n_clusters == 1 and self._max_iter > 0:
                 # PAM SWAP step can only be used for n_clusters > 1
                 warnings.warn(
                     "n_clusters should be larger than 2 if max_iter != 0 "
                     "setting max_iter to 0."
                 )
-                self.max_iter = 0
-            elif self.max_iter > 0:
+                self._max_iter = 0
+            elif self._max_iter > 0:
                 Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
 
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
         # of iterations is not exceeded
 
-        for self.n_iter_ in range(0, self.max_iter):
+
+        for self.n_iter_ in range(0, self._max_iter):
             old_medoid_idxs = np.copy(medoid_idxs)
-            labels = np.argmin(D[medoid_idxs, :], axis=0)
 
             if self.method == "alternate":
                 # Update medoids with the new cluster indices
+                labels = np.argmin(D[medoid_idxs, :], axis=0)
                 self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
+
             elif self.method == "pam":
                 not_medoid_idxs = np.delete(np.arange(len(D)), medoid_idxs)
                 optimal_swap = _compute_optimal_swap(
@@ -275,7 +273,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     not_medoid_idxs.astype(np.intc),
                     Djs,
                     Ejs,
-                    self.n_clusters,
+                    self._n_clusters,
                 )
                 if optimal_swap is not None:
                     i, j, _ = optimal_swap
@@ -292,7 +290,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             if np.all(old_medoid_idxs == medoid_idxs):
                 break
-            elif self.n_iter_ == self.max_iter - 1:
+            elif self.n_iter_ == self._max_iter - 1:
                 warnings.warn(
                     "Maximum number of iteration reached before "
                     "convergence. Consider increasing max_iter to "
@@ -300,26 +298,22 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     ConvergenceWarning,
                 )
 
-        # Set the resulting instance variables.
+        self.cluster_centers_ = None
         if self.metric == "precomputed":
-            self.cluster_centers_ = None
-        else:
             self.cluster_centers_ = X[medoid_idxs]
 
-        # Expose labels_ which are the assignments of
-        # the training data to clusters
+
         self.labels_ = np.argmin(D[medoid_idxs, :], axis=0)
         self.medoid_indices_ = medoid_idxs
         self.inertia_ = _compute_inertia(self.transform(X))
 
-        # Return self to enable method chaining
         return self
 
     def _update_medoid_idxs_in_place(self, D, labels, medoid_idxs):
         """In-place update of the medoid indices"""
 
         # Update the medoids for each cluster
-        for k in range(self.n_clusters):
+        for k in range(self._n_clusters):
             # Extract the distance matrix between the data points
             # inside the cluster k
             cluster_k_idxs = np.where(labels == k)[0]
@@ -426,28 +420,28 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             return pd_argmin
 
-    def _initialize_medoids(self, D, n_clusters, random_state_, X=None):
+    def _initialize_medoids(self, D, n_clusters,random_state_, X=None, ):
         """Select initial mediods when beginning clustering."""
 
-        if hasattr(self.init, "__array__"):  # Pre assign cluster
+        if hasattr(self._init, "__array__"):  # Pre assign cluster
             medoids = np.hstack(
-                [np.where((X == c).all(axis=1)) for c in self.init]
+                [np.where((X == c).all(axis=1)) for c in self._init]
             ).ravel()
-        elif self.init == "random":  # Random initialization
+        elif self._init == "random":  # Random initialization
             # Pick random k medoids as the initial ones.
             medoids = random_state_.choice(len(D), n_clusters, replace=False)
-        elif self.init == "k-medoids++":
+        elif self._init == "k-medoids++":
             medoids = self._kpp_init(D, n_clusters, random_state_)
-        elif self.init == "heuristic":  # Initialization by heuristic
+        elif self._init == "heuristic":  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
             medoids = np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
                 :n_clusters
             ]
-        elif self.init == "build":  # Build initialization
+        elif self._init == "build":  # Build initialization
             medoids = _build(D, n_clusters).astype(np.int64)
         else:
-            raise ValueError(f"init value '{self.init}' not recognized")
+            raise ValueError(f"init value '{self._init}' not recognized")
 
         return medoids
 
@@ -706,7 +700,6 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
             if pam.inertia_ < best_score:
                 best_score = self.inertia_
                 medoids_idxs = pam.medoid_indices_
-                best_sample_idxs = sample_idxs
 
         self.medoid_indices_ = sample_idxs[medoids_idxs]
         self.labels_ = np.argmin(self.transform(X), axis=1)

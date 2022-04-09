@@ -83,41 +83,35 @@ def test_medoids_invalid_method():
 
 
 def test_medoids_invalid_init():
-    with pytest.raises(ValueError, match="init needs to be one of"):
+    with pytest.raises(ValueError, match="init should be one of:"):
         KMedoids(n_clusters=1, init="invalid").fit([[0, 1], [1, 1]])
 
 
 def test_kmedoids_input_validation_and_fit_check():
     rng = np.random.RandomState(seed)
     # Invalid parameters
-    msg = "n_clusters should be a nonnegative integer. 0 was given"
+    msg = "n_clusters should be a nonnegative integer, got 0"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=0).fit(X)
 
-    msg = "n_clusters should be a nonnegative integer. None was given"
+    msg = "n_clusters should be a nonnegative integer, got None"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=None).fit(X)
 
-    msg = "max_iter should be a nonnegative integer. -1 was given"
+    msg = "max_iter should be a nonnegative integer, got -1"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=1, max_iter=-1).fit(X)
 
-    msg = "max_iter should be a nonnegative integer. None was given"
+    msg = "max_iter should be a nonnegative integer, got None"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=1, max_iter=None).fit(X)
 
-    msg = (
-        r"init needs to be one of the following: "
-        r".*random.*heuristic.*k-medoids\+\+"
-    )
+    msg = r"init should be one of: " r".*random.*heuristic.*k-medoids\+\+"
     with pytest.raises(ValueError, match=msg):
         KMedoids(init=None).fit(X)
 
     # Trying to fit 3 samples to 8 clusters
-    msg = (
-        "The number of medoids \(8\) must be less "
-        "than the number of samples 5."
-    )
+    msg = "n_samples=5 should be >= n_clusters=8."
     Xsmall = rng.rand(5, 2)
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=8).fit(Xsmall)
