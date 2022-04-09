@@ -452,32 +452,30 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self,
         D,
         n_clusters,
-        random_state_,
+        random_state,
         X=None,
     ):
         """Select initial mediods when beginning clustering."""
-
         if hasattr(self._init, "__array__"):  # Pre assign cluster
-            medoids = np.hstack(
+            return np.hstack(
                 [np.where((X == c).all(axis=1)) for c in self._init]
             ).ravel()
-        elif self._init == "random":  # Random initialization
-            # Pick random k medoids as the initial ones.
-            medoids = random_state_.choice(len(D), n_clusters, replace=False)
-        elif self._init == "k-medoids++":
-            medoids = self._kpp_init(D, n_clusters, random_state_)
-        elif self._init == "heuristic":  # Initialization by heuristic
+
+        if self._init == "random":
+            return random_state.choice(len(D), n_clusters, replace=False)
+
+        if self._init == "k-medoids++":
+            return self._kpp_init(D, n_clusters, random_state)
+
+        if self._init == "heuristic":  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
-            medoids = np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
+            return np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
                 :n_clusters
             ]
-        elif self._init == "build":  # Build initialization
-            medoids = _build(D, n_clusters).astype(np.int64)
-        else:
-            raise ValueError(f"init value '{self._init}' not recognized")
 
-        return medoids
+        if self._init == "build":  # Build initialization
+            return _build(D, n_clusters).astype(np.int64)
 
     # Copied from sklearn.cluster.k_means_._k_init
     def _kpp_init(self, D, n_clusters, random_state_, n_local_trials=None):
