@@ -6,12 +6,14 @@
 #          Zane Dufour <zane.dufour@gmail.com>
 # License: BSD 3 clause
 
+import abc
 import numbers
 import warnings
+from enum import Enum
 
 import numpy as np
-
 from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import (
     pairwise_distances,
     pairwise_distances_argmin,
@@ -19,10 +21,16 @@ from sklearn.metrics.pairwise import (
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
-from sklearn.exceptions import ConvergenceWarning
 
 # cython implementation of steps in PAM algorithm.
-from ._k_medoids_helper import _compute_optimal_swap, _build
+from ._k_medoids_helper import _build, _compute_optimal_swap
+
+
+class InitMethod(str, Enum):
+    RANDOM = "random"
+    HEURISTIC = "heuristic"
+    KMEDOIDSPP = "k-medoids++"
+    BUILD = "build"
 
 
 def _is_array(v):
@@ -50,7 +58,7 @@ def _compute_inertia(distances):
     return inertia
 
 
-class _BaseMethod:
+class _BaseMethod(abc.ABC):
     def converged(self, current_iter, max_iter):
         if np.all(self.old_medoid_idxs == self.medoid_idxs):
             return True
@@ -67,6 +75,10 @@ class _BaseMethod:
     def next(self):
         self.old_medoid_idxs = np.copy(self.medoid_idxs)
         self._next()
+
+    @abc.abstractmethod
+    def _next(self):
+        ...
 
 
 class _PAM(_BaseMethod):
@@ -305,7 +317,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return self.max_iter
 
     def _check_init(self):
-        methods = ["random", "heuristic", "k-medoids++", "build"]
+        methods = [x.value for x in InitMethod]
         is_not_valid_method = not (
             isinstance(self.init, str) and self.init in methods
         )
@@ -456,25 +468,25 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X=None,
     ):
         """Select initial mediods when beginning clustering."""
-        if hasattr(self._init, "__array__"):  # Pre assign cluster
+        if _is_array(self._init):  # Pre assign cluster
             return np.hstack(
                 [np.where((X == c).all(axis=1)) for c in self._init]
             ).ravel()
 
-        if self._init == "random":
+        if self._init == InitMethod.RANDOM:
             return random_state.choice(len(D), n_clusters, replace=False)
 
-        if self._init == "k-medoids++":
+        if self._init == InitMethod.KMEDOIDSPP:
             return self._kpp_init(D, n_clusters, random_state)
 
-        if self._init == "heuristic":  # Initialization by heuristic
+        if self._init == InitMethod.HEURISTIC:  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
             return np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
                 :n_clusters
             ]
 
-        if self._init == "build":  # Build initialization
+        if self._init == InitMethod.BUILD:  # Build initialization
             return _build(D, n_clusters).astype(np.int64)
 
     # Copied from sklearn.cluster.k_means_._k_init
