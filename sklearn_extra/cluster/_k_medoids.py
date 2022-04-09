@@ -26,7 +26,7 @@ from sklearn.utils.validation import check_is_fitted
 from ._k_medoids_helper import _build, _compute_optimal_swap
 
 
-class InitMethod(str, Enum):
+class _InitMethod(str, Enum):
     RANDOM = "random"
     HEURISTIC = "heuristic"
     KMEDOIDSPP = "k-medoids++"
@@ -317,7 +317,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return self.max_iter
 
     def _check_init(self):
-        methods = [x.value for x in InitMethod]
+        methods = [x.value for x in _InitMethod]
         is_not_valid_method = not (
             isinstance(self.init, str) and self.init in methods
         )
@@ -473,20 +473,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 [np.where((X == c).all(axis=1)) for c in self._init]
             ).ravel()
 
-        if self._init == InitMethod.RANDOM:
+        if self._init == _InitMethod.RANDOM:
             return random_state.choice(len(D), n_clusters, replace=False)
 
-        if self._init == InitMethod.KMEDOIDSPP:
+        if self._init == _InitMethod.KMEDOIDSPP:
             return self._kpp_init(D, n_clusters, random_state)
 
-        if self._init == InitMethod.HEURISTIC:  # Initialization by heuristic
+        if self._init == _InitMethod.HEURISTIC:  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
             return np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
                 :n_clusters
             ]
 
-        if self._init == InitMethod.BUILD:  # Build initialization
+        if self._init == _InitMethod.BUILD:  # Build initialization
             return _build(D, n_clusters).astype(np.int64)
 
     # Copied from sklearn.cluster.k_means_._k_init
