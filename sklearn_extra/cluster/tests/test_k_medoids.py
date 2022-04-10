@@ -34,6 +34,7 @@ X_cc, y_cc = make_blobs(
 def test_check_estimator():
     check_estimator(KMedoids())
 
+
 @pytest.mark.parametrize("method", ["alternate", "pam"])
 @pytest.mark.parametrize(
     "init", ["random", "heuristic", "build", "k-medoids++"]

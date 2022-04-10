@@ -8,12 +8,11 @@ jobs:
       - checkout
       - run:
           command: |
-              sudo python3 -m pip install black flake8
+              sudo python3 -m pip install pre-commit
       - run:
           command: |
-              black --check examples sklearn_extra *py
-              # ensure there is no unused imports with flake8
-              flake8
+              pre-commit install
+              pre-commit run --all-files
 
 workflows:
   version: 2
