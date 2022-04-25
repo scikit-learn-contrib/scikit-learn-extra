@@ -1,5 +1,5 @@
 import sys
-from distutils.version import LooseVersion
+from packaging.version import Version
 import sklearn
 
 import pytest
@@ -13,9 +13,9 @@ def pytest_collection_modifyitems(config, items):
     try:
         import numpy as np
 
-        if LooseVersion(np.__version__) < LooseVersion("1.14") or LooseVersion(
+        if Version(np.__version__) < Version("1.14") or Version(
             sklearn.__version__
-        ) < LooseVersion("0.23.0"):
+        ) < Version("0.23.0"):
             reason = (
                 "doctests are only run for numpy >= 1.14 "
                 "and scikit-learn >=0.23.0"
