@@ -6,7 +6,7 @@
 #
 # License: BSD 3 clause
 
-from distutils.version import LooseVersion
+from packaging.version import Version
 import warnings
 
 import numpy as np
@@ -15,7 +15,7 @@ from scipy import sparse
 import sklearn
 from sklearn.base import BaseEstimator, ClusterMixin
 
-if LooseVersion(sklearn.__version__) < LooseVersion("0.23.0"):
+if Version(sklearn.__version__) < Version("0.23.0"):
     from sklearn.utils import check_array, check_consistent_length
 
     # In scikit-learn version 0.23.x use
