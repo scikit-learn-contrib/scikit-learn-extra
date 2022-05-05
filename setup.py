@@ -21,7 +21,12 @@ URL = "https://github.com/scikit-learn-contrib/scikit-learn-extra"
 LICENSE = "new BSD"
 DOWNLOAD_URL = "https://github.com/scikit-learn-contrib/scikit-learn-extra"
 VERSION = __version__  # noqa
-INSTALL_REQUIRES = ["numpy>=1.13.3", "scipy>=0.19.1", "scikit-learn>=0.23.0", "packaging"]
+INSTALL_REQUIRES = [
+    "numpy>=1.13.3",
+    "scipy>=0.19.1",
+    "scikit-learn>=0.23.0",
+    "packaging",
+]
 CLASSIFIERS = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
