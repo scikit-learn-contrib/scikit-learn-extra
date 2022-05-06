@@ -180,7 +180,7 @@ class BaseEigenPro(BaseEstimator):
         ]
 
         max_S = E[0].astype(np.float32)
-        kxx = 1 - np.sum(Lambda ** 2, axis=1) * n_subsamples
+        kxx = 1 - np.sum(Lambda**2, axis=1) * n_subsamples
         return max_S / scale, np.max(kxx), D, Lambda
 
     def _initialize_params(self, X, Y, random_state):
@@ -234,7 +234,7 @@ class BaseEigenPro(BaseEstimator):
         n_components = max(1, n_components)
 
         # Approximate amount of memory that we want to use
-        mem_bytes = 0.1 * 1024 ** 3
+        mem_bytes = 0.1 * 1024**3
         # Memory used with a certain sample size
         mem_usages = (d + n_label + 2 * np.arange(sample_size)) * n * 4
         mG = np.int32(np.sum(mem_usages < mem_bytes))
