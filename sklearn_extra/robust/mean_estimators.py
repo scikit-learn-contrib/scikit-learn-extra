@@ -4,6 +4,8 @@
 # License: BSD 3 clause
 
 import numpy as np
+from scipy.stats import iqr
+from sklearn.metrics import mean_squared_error
 
 
 def block_mom(X, k, random_state):
@@ -88,7 +90,7 @@ def median_of_means(X, k, random_state=np.random.RandomState(42)):
     return median_of_means_blocked(x, blocks)[0]
 
 
-def huber(X, c=None, T=20, tol=1e-3):
+def huber(X, c=None, n_iter=20, tol=1e-3):
     """Compute the Huber estimator of location of X with parameter c
 
     Parameters
@@ -104,7 +106,7 @@ def huber(X, c=None, T=20, tol=1e-3):
         if c is None, the interquartile range (IQR) is used
         as heuristic.
 
-    T : int, default = 20
+    n_iter : int, default = 20
         Number of iterations of the algorithm.
 
     tol : float, default=1e-3
@@ -138,7 +140,7 @@ def huber(X, c=None, T=20, tol=1e-3):
     last_mu = mu
 
     # Run the iterative reweighting algorithm to compute M-estimator.
-    for t in range(T):
+    for t in range(n_iter):
         # Compute the weights
         w = psisx(x - mu, c_numeric)
 
@@ -156,3 +158,70 @@ def huber(X, c=None, T=20, tol=1e-3):
             last_mu = mu
 
     return mu
+
+
+def make_huber_metric(
+    score_func=mean_squared_error, sample_weight=None, c=None, n_iter=20
+):
+    """
+    Make a robust metric using Huber estimator.
+
+    Read more in the :ref:`User Guide <make_huber_metric>`.
+
+    Parameters
+    ----------
+
+    score_func :  callable
+        Score function (or loss function) with signature
+        ``score_func(y, y_pred, **kwargs)``.
+
+    sample_weight: array-like of shape (n_samples,), default=None
+        Sample weights.
+
+
+    c : float >0, default = None
+        parameter that control the robustness of the estimator.
+        c going to zero gives a  behavior close to the median.
+        c going to infinity gives a behavior close to sample mean.
+        if c is None, the iqr (inter quartile range) is used as heuristic.
+
+    n_iter : int, default = 20
+        Number of iterations of the algorithm.
+
+    Return
+    ------
+
+    Robust metric function, a callable  with signature
+    ``score_func(y, y_pred, **kwargs).
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import mean_squared_error
+    >>> from sklearn_extra.robust import make_huber_metric
+    >>> robust_mse = make_huber_metric(mean_squared_error, c=5)
+    >>> y_true = np.hstack([np.zeros(98), 20*np.ones(2)]) # corrupted test values
+    >>> np.random.shuffle(y_true) # shuffle them
+    >>> y_pred = np.zeros(100) # predicted values
+    >>> result = robust_mse(y_true, y_pred)
+    """
+
+    def metric(y_true, y_pred):
+        # change size in order to use the raw multisample
+        # to have individual values
+        y1 = [y_true]
+        y2 = [y_pred]
+        values = score_func(
+            y1, y2, sample_weight=sample_weight, multioutput="raw_values"
+        )
+        if c is None:
+            c_ = iqr(values)
+        else:
+            c_ = c
+        if c_ == 0:
+            return np.median(values)
+        else:
+            return huber(values, c_, n_iter)
+
+    return metric

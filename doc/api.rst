@@ -44,3 +44,9 @@ Robust
    robust.RobustWeightedClassifier
    robust.RobustWeightedRegressor
    robust.RobustWeightedKMeans
+
+.. autosummary::
+  :toctree: generated/
+  :template: function.rst
+
+   robust.make_huber_metric
