@@ -44,3 +44,12 @@ Robust
    robust.RobustWeightedClassifier
    robust.RobustWeightedRegressor
    robust.RobustWeightedKMeans
+
+Neighbors
+====================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   neighbors.NSWGraph

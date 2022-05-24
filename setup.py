@@ -79,6 +79,12 @@ args = {
                 include_dirs=[np.get_include()],
                 language="c++",
             ),
+            Extension(
+                "sklearn_extra.neighbors._navigable_small_world_graph",
+                ["sklearn_extra/neighbors/_navigable_small_world_graph.pyx"],
+                include_dirs=[np.get_include()],
+                language="c++",
+            ),
         ]
     ),
     "cmdclass": dict(build_ext=build_ext),
