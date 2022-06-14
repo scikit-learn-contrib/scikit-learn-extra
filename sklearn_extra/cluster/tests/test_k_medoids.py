@@ -12,6 +12,7 @@ from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
 from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn_extra.cluster import KMedoids, CLARA
+from sklearn.utils.estimator_checks import check_estimator
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 
@@ -28,6 +29,10 @@ X_cc, y_cc = make_blobs(
     shuffle=False,
     cluster_std=0.2,
 )
+
+
+def test_check_estimator():
+    check_estimator(KMedoids())
 
 
 @pytest.mark.parametrize("method", ["alternate", "pam"])
@@ -83,41 +88,35 @@ def test_medoids_invalid_method():
 
 
 def test_medoids_invalid_init():
-    with pytest.raises(ValueError, match="init needs to be one of"):
+    with pytest.raises(ValueError, match="init should be one of:"):
         KMedoids(n_clusters=1, init="invalid").fit([[0, 1], [1, 1]])
 
 
 def test_kmedoids_input_validation_and_fit_check():
     rng = np.random.RandomState(seed)
     # Invalid parameters
-    msg = "n_clusters should be a nonnegative integer. 0 was given"
+    msg = "n_clusters should be a nonnegative integer, got 0"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=0).fit(X)
 
-    msg = "n_clusters should be a nonnegative integer. None was given"
+    msg = "n_clusters should be a nonnegative integer, got None"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=None).fit(X)
 
-    msg = "max_iter should be a nonnegative integer. -1 was given"
+    msg = "max_iter should be a nonnegative integer, got -1"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=1, max_iter=-1).fit(X)
 
-    msg = "max_iter should be a nonnegative integer. None was given"
+    msg = "max_iter should be a nonnegative integer, got None"
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=1, max_iter=None).fit(X)
 
-    msg = (
-        r"init needs to be one of the following: "
-        r".*random.*heuristic.*k-medoids\+\+"
-    )
+    msg = r"init should be one of: " r".*random.*heuristic.*k-medoids\+\+"
     with pytest.raises(ValueError, match=msg):
         KMedoids(init=None).fit(X)
 
     # Trying to fit 3 samples to 8 clusters
-    msg = (
-        "The number of medoids \(8\) must be less "
-        "than the number of samples 5."
-    )
+    msg = "n_samples=5 should be >= n_clusters=8."
     Xsmall = rng.rand(5, 2)
     with pytest.raises(ValueError, match=msg):
         KMedoids(n_clusters=8).fit(Xsmall)
@@ -151,14 +150,13 @@ def test_heuristic_deterministic():
 def test_update_medoid_idxs_empty_cluster():
     """Label is unchanged for an empty cluster."""
     D = np.zeros((3, 3))
-    labels = np.array([0, 0, 0])
     medoid_idxs = np.array([0, 1])
     kmedoids = KMedoids(n_clusters=2)
 
     # Swallow empty cluster warning
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        kmedoids._update_medoid_idxs_in_place(D, labels, medoid_idxs)
+        kmedoids._update_medoid_idxs_in_place(D, medoid_idxs)
 
     assert_array_equal(medoid_idxs, [0, 1])
 

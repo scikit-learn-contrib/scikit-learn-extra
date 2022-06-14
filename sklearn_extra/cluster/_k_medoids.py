@@ -6,11 +6,14 @@
 #          Zane Dufour <zane.dufour@gmail.com>
 # License: BSD 3 clause
 
+import abc
+import numbers
 import warnings
+from enum import Enum
 
 import numpy as np
-
 from sklearn.base import BaseEstimator, ClusterMixin, TransformerMixin
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import (
     pairwise_distances,
     pairwise_distances_argmin,
@@ -18,10 +21,20 @@ from sklearn.metrics.pairwise import (
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
-from sklearn.exceptions import ConvergenceWarning
 
 # cython implementation of steps in PAM algorithm.
-from ._k_medoids_helper import _compute_optimal_swap, _build
+from ._k_medoids_helper import _build, _compute_optimal_swap
+
+
+class _InitMethod(str, Enum):
+    RANDOM = "random"
+    HEURISTIC = "heuristic"
+    KMEDOIDSPP = "k-medoids++"
+    BUILD = "build"
+
+
+def _is_array(v):
+    return hasattr(v, "__array__")
 
 
 def _compute_inertia(distances):
@@ -43,6 +56,113 @@ def _compute_inertia(distances):
     inertia = np.sum(np.min(distances, axis=1))
 
     return inertia
+
+
+class _BaseMethod(abc.ABC):
+    def converged(self, current_iter, max_iter):
+        if np.all(self.old_medoid_idxs == self.medoid_idxs):
+            return True
+        elif current_iter == max_iter - 1:
+            warnings.warn(
+                "Maximum number of iteration reached before "
+                "convergence. Consider increasing max_iter to "
+                "improve the fit.",
+                ConvergenceWarning,
+            )
+            return True
+        return False
+
+    def next(self):
+        self.old_medoid_idxs = np.copy(self.medoid_idxs)
+        self._next()
+
+    @abc.abstractmethod
+    def _next(self):
+        ...
+
+
+class _PAM(_BaseMethod):
+    def __init__(self, D, medoid_idxs, n_clusters, max_iter):
+        self.D = D
+        self.medoid_idxs = medoid_idxs
+        self.n_clusters = n_clusters
+        self.max_iter = max_iter
+
+        # Compute the distance to the first and second closest points
+        # among medoids.
+
+        if n_clusters == 1 and max_iter > 0:
+            # PAM SWAP step can only be used for n_clusters > 1
+            warnings.warn(
+                "n_clusters should be larger than 2 if max_iter != 0 "
+                "setting max_iter to 0."
+            )
+            max_iter = 0
+        elif max_iter > 0:
+            self.Djs, self.Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
+        else:
+            self.Djs = None
+            self.Ejs = None
+
+    def _next(self):
+        not_medoid_idxs = np.delete(np.arange(len(self.D)), self.medoid_idxs)
+        optimal_swap = _compute_optimal_swap(
+            self.D,
+            self.medoid_idxs.astype(np.intc),
+            not_medoid_idxs.astype(np.intc),
+            self.Djs,
+            self.Ejs,
+            self.n_clusters,
+        )
+        if optimal_swap is not None:
+            i, j, _ = optimal_swap
+            self.medoid_idxs[self.medoid_idxs == i] = j
+
+            # update Djs and Ejs with new medoids
+            self.Djs, self.Ejs = np.sort(self.D[self.medoid_idxs], axis=0)[
+                [0, 1]
+            ]
+
+
+class _Alternate(_BaseMethod):
+    def __init__(self, D, medoid_idxs, n_clusters, *args):
+        self.D = D
+        self.medoid_idxs = medoid_idxs
+        self.n_clusters = n_clusters
+
+    def _next(self):
+        labels = np.argmin(self.D[self.medoid_idxs, :], axis=0)
+        # Update the medoids for each cluster
+        for k in range(self.n_clusters):
+            # Extract the distance matrix between the data points
+            # inside the cluster k
+            cluster_k_idxs = np.where(labels == k)[0]
+
+            if len(cluster_k_idxs) == 0:
+                warnings.warn(
+                    "Cluster {k} is empty! "
+                    "self.labels_[self.medoid_indices_[{k}]] "
+                    "may not be labeled with "
+                    "its corresponding cluster ({k}).".format(k=k)
+                )
+                continue
+
+            in_cluster_distances = self.D[
+                cluster_k_idxs, cluster_k_idxs[:, np.newaxis]
+            ]
+
+            # Calculate all costs from each point to all others in the cluster
+            in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
+
+            min_cost_idx = np.argmin(in_cluster_all_costs)
+            min_cost = in_cluster_all_costs[min_cost_idx]
+            curr_cost = in_cluster_all_costs[
+                np.argmax(cluster_k_idxs == self.medoid_idxs[k])
+            ]
+
+            # Adopt a new medoid if its distance is smaller then the current
+            if min_cost < curr_cost:
+                self.medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
 
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
@@ -163,49 +283,68 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.max_iter = max_iter
         self.random_state = random_state
 
-    def _check_nonnegative_int(self, value, desc, strict=True):
-        """Validates if value is a valid integer > 0"""
-        if strict:
-            negative = (value is None) or (value <= 0)
-        else:
-            negative = (value is None) or (value < 0)
-        if negative or not isinstance(value, (int, np.integer)):
-            raise ValueError(
-                "%s should be a nonnegative integer. "
-                "%s was given" % (desc, value)
-            )
+    def _check_non_negative(self, v, param, zero_included):
+        error = ValueError(
+            f"{param} should be a nonnegative integer, got {v}."
+        )
+        if v is None:
+            raise error
+        greater_than_zero = v >= 0 if zero_included else v > 0
+        if not (isinstance(v, numbers.Integral) and greater_than_zero):
+            raise error
 
-    def _check_init_args(self):
-        """Validates the input arguments."""
+    def _check_n_clusters(self, X, init):
 
-        # Check n_clusters and max_iter
-        self._check_nonnegative_int(self.n_clusters, "n_clusters")
-        self._check_nonnegative_int(self.max_iter, "max_iter", False)
-
-        # Check init
-        init_methods = ["random", "heuristic", "k-medoids++", "build"]
-        if not (
-            hasattr(self.init, "__array__")
-            or (isinstance(self.init, str) and self.init in init_methods)
-        ):
-            raise ValueError(
-                "init needs to be one of "
-                + "the following: "
-                + "%s" % (init_methods + ["array-like"])
-            )
-
-        # Check n_clusters
-        if (
-            hasattr(self.init, "__array__")
-            and self.n_clusters != self.init.shape[0]
-        ):
+        if _is_array(init):
             warnings.warn(
                 "n_clusters should be equal to size of array-like if init "
-                "is array-like setting n_clusters to {}.".format(
-                    self.init.shape[0]
-                )
+                "is array-like setting n_clusters to {}.".format(init.shape[0])
             )
-            self.n_clusters = self.init.shape[0]
+            return init.shape[0]
+
+        self._check_non_negative(
+            self.n_clusters, "n_clusters", zero_included=False
+        )
+
+        if self.n_clusters > X.shape[0]:
+            raise ValueError(
+                f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
+            )
+        return self.n_clusters
+
+    def _check_max_iter(self):
+        self._check_non_negative(self.max_iter, "max_iter", zero_included=True)
+        return self.max_iter
+
+    def _check_init(self):
+        methods = [x.value for x in _InitMethod]
+        is_not_valid_method = not (
+            isinstance(self.init, str) and self.init in methods
+        )
+        is_not_array_like = not _is_array(self.init)
+        if is_not_array_like and is_not_valid_method:
+            msg = f"init should be one of: {methods + ['array-like']}, got {self.init}."
+            raise ValueError(msg)
+
+        return self.init
+
+    def _check_method(self):
+        if self.method not in ["pam", "alternate"]:
+            raise ValueError(
+                f"method={self.method} is not supported. Supported methods "
+                f"are 'pam' and 'alternate'."
+            )
+
+    def _check_is_fitted(self):
+        if self.metric == "precomputed":
+            check_is_fitted(self, "medoid_indices_")
+        else:
+            check_is_fitted(self, "cluster_centers_")
+
+    def _check_X(self, X):
+        return check_array(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
 
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
@@ -222,137 +361,38 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         -------
         self
         """
-        random_state_ = check_random_state(self.random_state)
-
-        self._check_init_args()
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
-        )
-        if self.n_clusters > X.shape[0]:
-            raise ValueError(
-                "The number of medoids (%d) must be less "
-                "than the number of samples %d."
-                % (self.n_clusters, X.shape[0])
-            )
+        random_state = check_random_state(self.random_state)
+        self._check_method()
+        self._init = self._check_init()
+        X = self._check_X(X)
+        n_clusters = self._check_n_clusters(X, self._init)
+        max_iter = self._check_max_iter()
 
         D = pairwise_distances(X, metric=self.metric)
 
-        medoid_idxs = self._initialize_medoids(
-            D, self.n_clusters, random_state_, X
+        initial_medoid_idxs = self._initialize_medoids(
+            D, n_clusters, random_state, X
         )
-        labels = None
 
-        if self.method == "pam":
-            # Compute the distance to the first and second closest points
-            # among medoids.
+        algorithm_class = _PAM if self.method == "pam" else _Alternate
+        algorithm = algorithm_class(
+            D, initial_medoid_idxs, n_clusters, max_iter
+        )
 
-            if self.n_clusters == 1 and self.max_iter > 0:
-                # PAM SWAP step can only be used for n_clusters > 1
-                warnings.warn(
-                    "n_clusters should be larger than 2 if max_iter != 0 "
-                    "setting max_iter to 0."
-                )
-                self.max_iter = 0
-            elif self.max_iter > 0:
-                Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-
-        # Continue the algorithm as long as
-        # the medoids keep changing and the maximum number
-        # of iterations is not exceeded
-
-        for self.n_iter_ in range(0, self.max_iter):
-            old_medoid_idxs = np.copy(medoid_idxs)
-            labels = np.argmin(D[medoid_idxs, :], axis=0)
-
-            if self.method == "alternate":
-                # Update medoids with the new cluster indices
-                self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
-            elif self.method == "pam":
-                not_medoid_idxs = np.delete(np.arange(len(D)), medoid_idxs)
-                optimal_swap = _compute_optimal_swap(
-                    D,
-                    medoid_idxs.astype(np.intc),
-                    not_medoid_idxs.astype(np.intc),
-                    Djs,
-                    Ejs,
-                    self.n_clusters,
-                )
-                if optimal_swap is not None:
-                    i, j, _ = optimal_swap
-                    medoid_idxs[medoid_idxs == i] = j
-
-                    # update Djs and Ejs with new medoids
-                    Djs, Ejs = np.sort(D[medoid_idxs], axis=0)[[0, 1]]
-
-            else:
-                raise ValueError(
-                    f"method={self.method} is not supported. Supported methods "
-                    f"are 'pam' and 'alternate'."
-                )
-
-            if np.all(old_medoid_idxs == medoid_idxs):
+        for self.n_iter_ in range(0, max_iter):
+            algorithm.next()
+            if algorithm.converged(self.n_iter_, max_iter):
                 break
-            elif self.n_iter_ == self.max_iter - 1:
-                warnings.warn(
-                    "Maximum number of iteration reached before "
-                    "convergence. Consider increasing max_iter to "
-                    "improve the fit.",
-                    ConvergenceWarning,
-                )
 
-        # Set the resulting instance variables.
-        if self.metric == "precomputed":
-            self.cluster_centers_ = None
-        else:
-            self.cluster_centers_ = X[medoid_idxs]
+        self.cluster_centers_ = (
+            X[algorithm.medoid_idxs] if self.metric != "precomputed" else None
+        )
 
-        # Expose labels_ which are the assignments of
-        # the training data to clusters
-        self.labels_ = np.argmin(D[medoid_idxs, :], axis=0)
-        self.medoid_indices_ = medoid_idxs
+        self.labels_ = np.argmin(D[algorithm.medoid_idxs, :], axis=0)
+        self.medoid_indices_ = algorithm.medoid_idxs
         self.inertia_ = _compute_inertia(self.transform(X))
 
-        # Return self to enable method chaining
         return self
-
-    def _update_medoid_idxs_in_place(self, D, labels, medoid_idxs):
-        """In-place update of the medoid indices"""
-
-        # Update the medoids for each cluster
-        for k in range(self.n_clusters):
-            # Extract the distance matrix between the data points
-            # inside the cluster k
-            cluster_k_idxs = np.where(labels == k)[0]
-
-            if len(cluster_k_idxs) == 0:
-                warnings.warn(
-                    "Cluster {k} is empty! "
-                    "self.labels_[self.medoid_indices_[{k}]] "
-                    "may not be labeled with "
-                    "its corresponding cluster ({k}).".format(k=k)
-                )
-                continue
-
-            in_cluster_distances = D[
-                cluster_k_idxs, cluster_k_idxs[:, np.newaxis]
-            ]
-
-            # Calculate all costs from each point to all others in the cluster
-            in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
-
-            min_cost_idx = np.argmin(in_cluster_all_costs)
-            min_cost = in_cluster_all_costs[min_cost_idx]
-            curr_cost = in_cluster_all_costs[
-                np.argmax(cluster_k_idxs == medoid_idxs[k])
-            ]
-
-            # Adopt a new medoid if its distance is smaller then the current
-            if min_cost < curr_cost:
-                medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
-
-    def _compute_cost(self, D, medoid_idxs):
-        """Compute the cose for a given configuration of the medoids"""
-        return _compute_inertia(D[:, medoid_idxs])
 
     def transform(self, X):
         """Transforms X to cluster-distance space.
@@ -368,16 +408,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
-        )
+        self._check_is_fitted()
+        X = self._check_X(X)
 
         if self.metric == "precomputed":
-            check_is_fitted(self, "medoid_indices_")
             return X[:, self.medoid_indices_]
         else:
-            check_is_fitted(self, "cluster_centers_")
-
             Y = self.cluster_centers_
             kwargs = {}
             if self.metric == "seuclidean":
@@ -400,15 +436,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
-        )
+        self._check_is_fitted()
+        X = self._check_X(X)
 
         if self.metric == "precomputed":
-            check_is_fitted(self, "medoid_indices_")
             return np.argmin(X[:, self.medoid_indices_], axis=1)
         else:
-            check_is_fitted(self, "cluster_centers_")
 
             # Return data points to clusters based on which cluster assignment
             # yields the smallest distance
@@ -426,30 +459,34 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             return pd_argmin
 
-    def _initialize_medoids(self, D, n_clusters, random_state_, X=None):
+    def _initialize_medoids(
+        self,
+        D,
+        n_clusters,
+        random_state,
+        X=None,
+    ):
         """Select initial mediods when beginning clustering."""
-
-        if hasattr(self.init, "__array__"):  # Pre assign cluster
-            medoids = np.hstack(
-                [np.where((X == c).all(axis=1)) for c in self.init]
+        if _is_array(self._init):  # Pre assign cluster
+            return np.hstack(
+                [np.where((X == c).all(axis=1)) for c in self._init]
             ).ravel()
-        elif self.init == "random":  # Random initialization
-            # Pick random k medoids as the initial ones.
-            medoids = random_state_.choice(len(D), n_clusters, replace=False)
-        elif self.init == "k-medoids++":
-            medoids = self._kpp_init(D, n_clusters, random_state_)
-        elif self.init == "heuristic":  # Initialization by heuristic
+
+        if self._init == _InitMethod.RANDOM:
+            return random_state.choice(len(D), n_clusters, replace=False)
+
+        if self._init == _InitMethod.KMEDOIDSPP:
+            return self._kpp_init(D, n_clusters, random_state)
+
+        if self._init == _InitMethod.HEURISTIC:  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
-            medoids = np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
+            return np.argpartition(np.sum(D, axis=1), n_clusters - 1)[
                 :n_clusters
             ]
-        elif self.init == "build":  # Build initialization
-            medoids = _build(D, n_clusters).astype(np.int64)
-        else:
-            raise ValueError(f"init value '{self.init}' not recognized")
 
-        return medoids
+        if self._init == _InitMethod.BUILD:  # Build initialization
+            return _build(D, n_clusters).astype(np.int64)
 
     # Copied from sklearn.cluster.k_means_._k_init
     def _kpp_init(self, D, n_clusters, random_state_, n_local_trials=None):
@@ -706,7 +743,6 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
             if pam.inertia_ < best_score:
                 best_score = self.inertia_
                 medoids_idxs = pam.medoid_indices_
-                best_sample_idxs = sample_idxs
 
         self.medoid_indices_ = sample_idxs[medoids_idxs]
         self.labels_ = np.argmin(self.transform(X), axis=1)

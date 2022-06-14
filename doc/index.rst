@@ -28,4 +28,3 @@ scikit-learn-extra is a Python module for machine learning that extends scikit-l
 
    contributing
    changelog
-
