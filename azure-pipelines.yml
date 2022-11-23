@@ -66,7 +66,7 @@ jobs:
     env:
       CODECOV_TOKEN: $(CODECOV_TOKEN)
 
-- job: 'macOS-latest'
+- job: 'macOS'
   pool:
     vmImage: 'macOS-latest'
   strategy:
