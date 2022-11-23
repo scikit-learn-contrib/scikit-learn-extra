@@ -260,13 +260,13 @@ def test_corrupted_regression(loss, weighting, k, c):
 @pytest.mark.parametrize("weighting", weightings)
 def test_corrupted_regression_multidim(loss, weighting):
 
-    n=1000
-    d=10
+    n = 1000
+    d = 10
 
-    coef = np.zeros((d,1))
-    coef[0,0]=1
-    X = np.array(np.random.randn(n,d))
-    y = X@coef+np.array(np.random.randn(n,1))
+    coef = np.zeros((d, 1))
+    coef[0, 0] = 1
+    X = np.array(np.random.randn(n, d))
+    y = X @ coef + np.array(np.random.randn(n, 1))
 
     reg = RobustWeightedRegressor(
         loss=loss,
@@ -278,10 +278,8 @@ def test_corrupted_regression_multidim(loss, weighting):
         n_iter_no_change=20,
     )
     reg.fit(X, y)
-    assert np.linalg.norm(reg.coef_ - coef) < 2*np.sqrt(d)
+    assert np.linalg.norm(reg.coef_ - coef) < 2 * np.sqrt(d)
 
-
-    
 
 # Check that weights_ parameter can be used as outlier score.
 @pytest.mark.parametrize("weighting", weightings)
