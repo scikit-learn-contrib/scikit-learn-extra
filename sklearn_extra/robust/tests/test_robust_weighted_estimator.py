@@ -264,8 +264,8 @@ def test_corrupted_regression(loss, weighting, k, c):
         n_iter_no_change=20,
     )
     reg.fit(X_rc, y_rc)
-    assert np.abs(reg.coef_[0] - 1) < 0.1
-    assert np.abs(reg.intercept_[0]) < 0.1
+    assert np.abs(reg.coef_[0] - 1) < 0.3
+    assert np.abs(reg.intercept_[0]) < 0.3
 
 
 # Check that weights_ parameter can be used as outlier score.
