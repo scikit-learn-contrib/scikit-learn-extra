@@ -24,6 +24,11 @@ scikit-learn-extra - A set of useful tools compatible with scikit-learn
 
 scikit-learn-extra is a Python module for machine learning that extends scikit-learn. It includes algorithms that are useful but do not satisfy the scikit-learn `inclusion criteria <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_, for instance due to their novelty or lower citation number.
 
+Documentation
+-------------
+
+A full user guides and examples can be found on our `documentation site <https://scikit-learn-extra.readthedocs.io/en/stable/index.html>`_.
+
 Installation
 ------------
 
