@@ -55,4 +55,4 @@ or from PyPi with,
 License
 -------
 
-This package is released under the 3-Clause BSD license.
+This package is released under the `3-Clause BSD license <https://github.com/scikit-learn-contrib/scikit-learn-extra/blob/main/LICENSE>`_.
