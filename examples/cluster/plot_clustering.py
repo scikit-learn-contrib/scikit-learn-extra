@@ -70,7 +70,6 @@ for n_samples in [300, 600]:
     # Define two other clustering algorithms
     kmeans_rob = RobustWeightedKMeans(
         n_clusters,
-        eta0=0.01,
         weighting="mom",
         max_iter=100,
         k=int(n_samples / 20),

@@ -127,16 +127,7 @@ class _RobustWeightedEstimator(BaseEstimator):
 
     max_iter : int, default=100
         Maximum number of iterations.
-        For more information, see the optimization scheme of base_estimator
-        and the eta0 and burn_in parameter.
-
-    burn_in : int, default=10
-        Number of steps used without changing the learning rate.
-        Can be useful to make the weight estimation better at the beginning.
-
-    eta0 : float, default=0.01
-        Constant step-size used during the burn_in period. Used only if
-        burn_in>0. Can have a big effect on efficiency.
+        For more information, see the optimization scheme of base_estimator.
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
@@ -189,8 +180,7 @@ class _RobustWeightedEstimator(BaseEstimator):
     For now only scikit-learn SGDRegressor and SGDClassifier are officially
     supported but one can use any estimator compatible with scikit-learn,
     as long as this estimator support partial_fit, warm_start and sample_weight
-    . It must have the parameters max_iter and support "constant" learning rate
-    with learning rate called "eta0".
+    . It must have the parameters max_iter.
 
     For now, only binary classification is implemented. See sklearn.multiclass
     if you want to use this algorithm in multiclass classification.
@@ -221,8 +211,6 @@ class _RobustWeightedEstimator(BaseEstimator):
         loss,
         weighting="huber",
         max_iter=100,
-        burn_in=10,
-        eta0=0.1,
         c=None,
         k=0,
         tol=1e-5,
@@ -232,8 +220,6 @@ class _RobustWeightedEstimator(BaseEstimator):
     ):
         self.base_estimator = base_estimator
         self.weighting = weighting
-        self.eta0 = eta0
-        self.burn_in = burn_in
         self.c = c
         self.k = k
         self.loss = loss
@@ -282,16 +268,10 @@ class _RobustWeightedEstimator(BaseEstimator):
         if ("loss" in parameters) and (loss_param != "squared_error"):
             base_estimator.set_params(loss=loss_param)
 
-        if "eta0" in parameters:
-            base_estimator.set_params(eta0=self.eta0)
-
         if "n_iter_no_change" in parameters:
             base_estimator.set_params(n_iter_no_change=self.n_iter_no_change)
 
         base_estimator.set_params(random_state=random_state)
-        if self.burn_in > 0:
-            learning_rate = base_estimator.learning_rate
-            base_estimator.set_params(learning_rate="constant", eta0=self.eta0)
 
         # Initialization
         if self._estimator_type == "classifier":
@@ -328,11 +308,6 @@ class _RobustWeightedEstimator(BaseEstimator):
 
         # Optimization algorithm
         for epoch in range(self.max_iter):
-
-            if epoch > self.burn_in and self.burn_in > 0:
-                # If not in the burn_in phase anymore, change the learning_rate
-                # calibration to the one edicted by self.base_estimator.
-                base_estimator.set_params(learning_rate=learning_rate)
 
             if self._estimator_type == "classifier":
                 # If in classification, use decision_function
@@ -447,12 +422,6 @@ class _RobustWeightedEstimator(BaseEstimator):
 
         if not (self.c is None) and (self.c <= 0):
             raise ValueError("c must be > 0, got %s." % self.c)
-
-        if self.burn_in < 0:
-            raise ValueError("burn_in must be >= 0, got %s." % self.burn_in)
-
-        if (self.burn_in > 0) and (self.eta0 <= 0):
-            raise ValueError("eta0 must be > 0, got %s." % self.eta0)
 
         if not (self.k is None) and (
             not isinstance(self.k, int)
@@ -619,16 +588,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
 
     max_iter : int, default=100
         Maximum number of iterations.
-        For more information, see the optimization scheme of base_estimator
-        and the eta0 and burn_in parameter.
-
-    burn_in : int, default=10
-        Number of steps used without changing the learning rate.
-        Can be useful to make the weight estimation better at the beginning.
-
-    eta0 : float, default=0.01
-        Constant step-size used during the burn_in period. Used only if
-        burn_in>0. Can have a big effect on efficiency.
+        For more information, see the optimization scheme of base_estimator.
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
@@ -748,8 +708,6 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         self,
         weighting="huber",
         max_iter=100,
-        burn_in=10,
-        eta0=0.01,
         c=None,
         k=0,
         loss="log",
@@ -763,8 +721,6 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
     ):
         self.weighting = weighting
         self.max_iter = max_iter
-        self.burn_in = burn_in
-        self.eta0 = eta0
         self.c = c
         self.k = k
         self.loss = loss
@@ -802,13 +758,11 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         X, y = self._validate_data(X, y, y_numeric=False)
 
         base_robust_estimator_ = _RobustWeightedEstimator(
-            SGDClassifier(**sgd_args, eta0=self.eta0),
+            SGDClassifier(**sgd_args),
             weighting=self.weighting,
             loss=self.loss,
-            burn_in=self.burn_in,
             c=self.c,
             k=self.k,
-            eta0=self.eta0,
             max_iter=self.max_iter,
             tol=self.tol,
             n_iter_no_change=self.n_iter_no_change,
@@ -951,16 +905,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
     max_iter : int, default=100
         Maximum number of iterations.
-        For more information, see the optimization scheme of base_estimator
-        and the eta0 and burn_in parameter.
-
-    burn_in : int, default=10
-        Number of steps used without changing the learning rate.
-        Can be useful to make the weight estimation better at the beginning.
-
-    eta0 : float, default=0.01
-        Constant step-size used during the burn_in period. Used only if
-        burn_in>0. Can have a big effect on efficiency.
+        For more information, see the optimization scheme of base_estimator.
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
@@ -1062,8 +1007,6 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         self,
         weighting="huber",
         max_iter=100,
-        burn_in=10,
-        eta0=0.01,
         c=None,
         k=0,
         loss=SQ_LOSS,
@@ -1076,8 +1019,6 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
         self.weighting = weighting
         self.max_iter = max_iter
-        self.burn_in = burn_in
-        self.eta0 = eta0
         self.c = c
         self.k = k
         self.loss = loss
@@ -1113,13 +1054,11 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         X, y = self._validate_data(X, y, y_numeric=True)
 
         self.base_estimator_ = _RobustWeightedEstimator(
-            SGDRegressor(**sgd_args, eta0=self.eta0),
+            SGDRegressor(**sgd_args),
             weighting=self.weighting,
             loss=self.loss,
-            burn_in=self.burn_in,
             c=self.c,
             k=self.k,
-            eta0=self.eta0,
             max_iter=self.max_iter,
             tol=self.tol,
             n_iter_no_change=self.n_iter_no_change,
@@ -1202,12 +1141,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
 
     max_iter : int, default=100
         Maximum number of iterations.
-        For more information, see the optimization scheme of base_estimator
-        and the eta0 and burn_in parameter.
-
-    eta0 : float, default=0.01
-        Constant step-size used during the burn_in period. Used only if
-        burn_in>0. Can have a big effect on efficiency.
+        For more information, see the optimization scheme of base_estimator.
 
     c : float>0 or None, default=None
         Parameter used for Huber weighting procedure, used only if weightings
@@ -1314,7 +1248,6 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         n_clusters=8,
         weighting="huber",
         max_iter=100,
-        eta0=0.01,
         c=None,
         k=0,
         kmeans_args=None,
@@ -1326,7 +1259,6 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
         self.n_clusters = n_clusters
         self.weighting = weighting
         self.max_iter = max_iter
-        self.eta0 = eta0
         self.c = c
         self.k = k
         self.kmeans_args = kmeans_args
@@ -1369,13 +1301,9 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
                 random_state=self.random_state,
                 **kmeans_args
             ),
-            burn_in=0,  # Important because it does not mean anything to
-            # have burn-in
-            # steps for kmeans. It must be 0.
             weighting=self.weighting,
             loss=_kmeans_loss,
             max_iter=self.max_iter,
-            eta0=self.eta0,
             c=self.c,
             k=self.k,
             tol=self.tol,

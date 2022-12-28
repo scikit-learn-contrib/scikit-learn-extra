@@ -85,14 +85,6 @@ def test_robust_estimator_input_validation_and_fit_check():
     with pytest.raises(ValueError, match=msg):
         RobustWeightedKMeans(c=0).fit(X_cc)
 
-    msg = "burn_in must be >= 0, got -1."
-    with pytest.raises(ValueError, match=msg):
-        RobustWeightedClassifier(burn_in=-1).fit(X_cc, y_cc)
-
-    msg = "eta0 must be > 0, got 0."
-    with pytest.raises(ValueError, match=msg):
-        RobustWeightedClassifier(burn_in=1, eta0=0).fit(X_cc, y_cc)
-
     msg = "k must be integer >= 0, and smaller than floor"
     with pytest.raises(ValueError, match=msg):
         RobustWeightedKMeans(k=-1).fit(X_cc)
@@ -145,7 +137,6 @@ def test_not_robust_classif(loss, weighting, multi_class):
         weighting=weighting,
         k=0,
         c=1e7,
-        burn_in=0,
         multi_class=multi_class,
         random_state=rng,
     )
@@ -172,7 +163,6 @@ def test_classif_binary(weighting):
         weighting=weighting,
         k=0,
         c=1e7,
-        burn_in=0,
         multi_class="binary",
         random_state=rng,
     )
@@ -203,7 +193,6 @@ def test_classif_corrupted_weights(weighting):
         weighting=weighting,
         k=5,
         c=1,
-        burn_in=0,
         multi_class="binary",
         random_state=rng,
     )
@@ -219,7 +208,6 @@ def test_predict_proba(weighting):
         weighting=weighting,
         k=0,
         c=1e7,
-        burn_in=0,
         random_state=rng,
     )
     clf_not_rob = SGDClassifier(loss="log", random_state=rng)
@@ -268,6 +256,31 @@ def test_corrupted_regression(loss, weighting, k, c):
     assert np.abs(reg.intercept_[0]) < 0.3
 
 
+@pytest.mark.parametrize("loss", regression_losses)
+@pytest.mark.parametrize("weighting", weightings)
+def test_corrupted_regression_multidim(loss, weighting):
+
+    n = 1000
+    d = 10
+
+    coef = np.zeros((d, 1))
+    coef[0, 0] = 1
+    X = np.array(np.random.randn(n, d))
+    y = X @ coef + np.array(np.random.randn(n, 1))
+
+    reg = RobustWeightedRegressor(
+        loss=loss,
+        max_iter=100,
+        weighting=weighting,
+        k=1,
+        c=1,
+        random_state=rng,
+        n_iter_no_change=20,
+    )
+    reg.fit(X, y)
+    assert np.linalg.norm(reg.coef_ - coef) < 2 * np.sqrt(d)
+
+
 # Check that weights_ parameter can be used as outlier score.
 @pytest.mark.parametrize("weighting", weightings)
 def test_regression_corrupted_weights(weighting):
@@ -276,7 +289,6 @@ def test_regression_corrupted_weights(weighting):
         weighting=weighting,
         k=5,
         c=1,
-        burn_in=0,
         random_state=rng,
     )
     reg.fit(X_rc, y_rc)
@@ -297,7 +309,6 @@ def test_not_robust_regression(loss, weighting):
         weighting=weighting,
         k=0,
         c=1e7,
-        burn_in=0,
         random_state=rng,
     )
     reg_not_rob = SGDRegressor(loss=loss, random_state=rng)
@@ -308,7 +319,7 @@ def test_not_robust_regression(loss, weighting):
     difference = [
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
-    assert np.mean(difference) < 1
+    assert np.mean(difference) < 2
     assert_almost_equal(reg.score(X_r, y_r), r2_score(y_r, reg.predict(X_r)))
 
 
@@ -325,7 +336,6 @@ def test_vs_huber():
         weighting="huber",
         k=5,
         c=1,
-        burn_in=0,
         sgd_args={"learning_rate": "adaptive"},  # test sgd_args
         random_state=rng,
     )
@@ -394,7 +404,7 @@ def test_not_robust_cluster(weighting):
     difference = [
         np.linalg.norm(pred1[i] - pred2[i]) for i in range(len(pred1))
     ]
-    assert np.mean(difference) < 1
+    assert np.mean(difference) < 2
 
 
 def test_transform():
