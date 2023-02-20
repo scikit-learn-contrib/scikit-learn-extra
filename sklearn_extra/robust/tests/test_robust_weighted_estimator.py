@@ -118,6 +118,7 @@ X_c, y_c = make_blobs(
     random_state=rng,
 )
 
+
 # check binary throw an error
 def test_robust_estimator_unsupported_loss():
     model = RobustWeightedClassifier(multi_class="binary")
@@ -259,7 +260,6 @@ def test_corrupted_regression(loss, weighting, k, c):
 @pytest.mark.parametrize("loss", regression_losses)
 @pytest.mark.parametrize("weighting", weightings)
 def test_corrupted_regression_multidim(loss, weighting):
-
     n = 1000
     d = 10
 
@@ -298,6 +298,7 @@ def test_regression_corrupted_weights(weighting):
 X_r = rng.uniform(-1, 1, size=[1000])
 y_r = X_r + 0.1 * rng.normal(size=1000)
 X_r = X_r.reshape(-1, 1)
+
 
 # Check that the fit is close to SGD when in extremal parameter cases
 @pytest.mark.parametrize("loss", regression_losses)
@@ -382,6 +383,7 @@ rng = np.random.RandomState(42)
 X_cluster, y_cluster = make_blobs(
     n_samples=100, centers=np.array([[-1, -1], [1, 1]]), random_state=rng
 )
+
 
 # Check that the fit is close to KMeans when in extremal parameter cases
 @pytest.mark.parametrize("weighting", weightings)
