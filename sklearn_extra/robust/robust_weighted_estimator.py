@@ -308,7 +308,6 @@ class _RobustWeightedEstimator(BaseEstimator):
 
         # Optimization algorithm
         for epoch in range(self.max_iter):
-
             if self._estimator_type == "classifier":
                 # If in classification, use decision_function
                 pred = base_estimator.decision_function(X)
@@ -1016,7 +1015,6 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         verbose=0,
         random_state=None,
     ):
-
         self.weighting = weighting
         self.max_iter = max_iter
         self.c = c
