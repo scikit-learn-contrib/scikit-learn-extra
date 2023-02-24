@@ -224,8 +224,11 @@ def test_precomputed():
     kmedoids.fit(D_1)
 
     assert_allclose(kmedoids.inertia_, 0.2)
-    assert_array_equal(kmedoids.medoid_indices_, [2, 0])
-    assert_array_equal(kmedoids.labels_, [1, 1, 0, 0])
+    assert_array_equal(
+        np.sort(kmedoids.medoid_indices_), np.sort([2, 0])
+    )  # the order may change
+    assert kmedoids.labels_[0] == kmedoids.labels_[1]
+    assert kmedoids.labels_[2] == kmedoids.labels_[3]
     assert kmedoids.cluster_centers_ is None
 
     med_1, med_2 = tuple(kmedoids.medoid_indices_)
