@@ -1,16 +1,18 @@
 version: 2.1
 
+orbs:
+  python: circleci/python@2.1.1
+
 jobs:
   lint:
-    docker:
-      - image: cimg/python:3.8.4
+    executor: python/default
     steps:
       - checkout
       - python/install-packages:
           pkg-manager: pip
       - run:
           command: |
-              python3 -m pip install black flake8
+              sudo python3 -m pip install black flake8
       - run:
           command: |
               black --check examples sklearn_extra *py
@@ -18,7 +20,6 @@ jobs:
               flake8
 
 workflows:
-  version: 2
   build-doc-and-deploy:
     jobs:
       - lint
