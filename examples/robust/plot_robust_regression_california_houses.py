@@ -48,14 +48,13 @@ X = RobustScaler().fit_transform(X)
 estimators = [
     (
         "SGD",
-        SGDRegressor(learning_rate="adaptive", eta0=1e-2),
+        SGDRegressor(learning_rate="adaptive"),
     ),
     (
         "RobustWeightedRegressor",
         RobustWeightedRegressor(
             weighting="huber",
             c=0.1,
-            eta0=1e-2,
             sgd_args={
                 "learning_rate": "invscaling",
             },
