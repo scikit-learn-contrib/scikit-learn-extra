@@ -1,15 +1,12 @@
 version: 2.1
 
-orbs:
-  python: circleci/python@2.1.1
-
 jobs:
   lint:
-    executor: python/default
+    machine:
+      image: ubuntu-2204:2023.02.1
     steps:
       - checkout
-      - python/install-packages:
-          pkg-manager: pip
+      - run: sudo apt-get install pip
       - run:
           command: |
               sudo python3 -m pip install black flake8
