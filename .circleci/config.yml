@@ -1,11 +1,12 @@
-version: 2
+version: 2.1
 
 jobs:
   lint:
-    docker:
-      - image: circleci/python:3.7.6
+    machine:
+      image: ubuntu-2204:2023.02.1
     steps:
       - checkout
+      - run: sudo apt-get install pip
       - run:
           command: |
               sudo python3 -m pip install black flake8
@@ -16,7 +17,6 @@ jobs:
               flake8
 
 workflows:
-  version: 2
   build-doc-and-deploy:
     jobs:
       - lint
