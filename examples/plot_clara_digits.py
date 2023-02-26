@@ -79,7 +79,6 @@ plot_rows = int(np.ceil(len(selected_models) / 2.0))
 plot_cols = 2
 
 for i, (model, description) in enumerate(selected_models):
-
     # Obtain labels for each point in mesh. Use last trained model.
     init_time = time.time()
     model.fit(reduced_data)

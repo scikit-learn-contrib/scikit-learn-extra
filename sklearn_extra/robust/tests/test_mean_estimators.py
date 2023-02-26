@@ -8,6 +8,7 @@ rng = np.random.RandomState(42)
 
 sample = rng.normal(size=100)
 
+
 # Check good in normal case
 def test_normal():
     assert np.abs(median_of_means(sample, 3, rng)) < 1e-1
