@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Unreleased
+Version 0.3.0
 ----------
 
 - Fix bug with random initialization of KMedoids [`#129 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/129>`_].
