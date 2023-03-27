@@ -129,13 +129,13 @@ class _RobustWeightedEstimator(BaseEstimator):
         Maximum number of iterations.
         For more information, see the optimization scheme of base_estimator.
 
-    c : float>0 or None, default=None
+    c : float>0 or None, default=1
         Parameter used for Huber weighting procedure, used only if weightings
         is 'huber'. Measure the robustness of the weighting procedure. A small
         value of c means a more robust estimator.
         Can have a big effect on efficiency.
         If None, c is estimated at each step using half the Inter-quartile
-        range, this tends to be conservative (robust).
+        range, this tends to be unstable.
 
     k : int < sample_size/2, default=1
         Parameter used for mom weighting procedure, used only if weightings
@@ -211,7 +211,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         loss,
         weighting="huber",
         max_iter=100,
-        c=None,
+        c=1,
         k=0,
         tol=1e-5,
         n_iter_no_change=10,
