@@ -14,3 +14,7 @@ requires = [
 
 [tool.black]
 line-length = 79
+
+[tool.cibuildwheel]
+manylinux-i686-image = "manylinux2010"
+
