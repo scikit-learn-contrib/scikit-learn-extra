@@ -33,9 +33,8 @@ jobs:
         env:
           # We only build for Python 3.6+. On Linux manylinux2010 is used.
           # Skipping pypy wheels for now since scipy & scikit-learn haven't build them yet.
-          CIBW_SKIP: "pp* *p27* *p35* *p36*"
-          # Skip python3.11 for 32bit
-          CIBW_SKIP: "*p311*-manylinux_i686 *p311*-win32"
+          # Skip python3.11 for 32bit.
+          CIBW_SKIP: "pp* *p27* *p35* *p36* *p311*-manylinux_i686 *p311*-win32"
           CIBW_TEST_REQUIRES: "pytest pandas scikit-learn"
           CIBW_TEST_COMMAND: "pytest --pyargs sklearn_extra"
         run: |
