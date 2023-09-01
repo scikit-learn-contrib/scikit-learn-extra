@@ -322,6 +322,7 @@ class BaseEigenPro(BaseEstimator):
             ensure_min_samples=3,
             y_numeric=True,
         )
+        self.n_features_in_ = X.shape[1]
         Y = Y.astype(np.float32)
         random_state = check_random_state(self.random_state)
 

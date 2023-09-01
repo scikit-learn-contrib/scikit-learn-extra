@@ -66,9 +66,9 @@ jobs:
     env:
       CODECOV_TOKEN: $(CODECOV_TOKEN)
 
-- job: 'macOS1014'
+- job: 'macOS'
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: 'macOS-latest'
   strategy:
     matrix:
       Python37:
@@ -122,9 +122,9 @@ jobs:
       CODECOV_TOKEN: $(CODECOV_TOKEN)
 
 
-- job: 'win2016'
+- job: 'win'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-latest'
   strategy:
     matrix:
       Python38:

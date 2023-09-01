@@ -37,7 +37,6 @@ colors = [
     plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))
 ]
 for k, col in zip(unique_labels, colors):
-
     class_member_mask = labels == k
 
     xy = X[class_member_mask]

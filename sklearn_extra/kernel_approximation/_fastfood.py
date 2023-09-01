@@ -168,6 +168,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
         X = check_array(X, order="C", dtype=np.float64)
+        self.n_features_in_ = X.shape[1]
 
         d_orig = X.shape[1]
         rng = check_random_state(self.random_state)

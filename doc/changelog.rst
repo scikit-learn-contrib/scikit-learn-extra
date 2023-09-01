@@ -1,9 +1,11 @@
 Changelog
 =========
 
-Unreleased
+Version 0.3.0
 ----------
 
+- Fix bug with random initialization of KMedoids [`#129 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/129>`_].
+- `KMedoids` supports array-like init method [`#137 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/137>`_].
 - Add a stopping criterion and parameter tuning heuristic for Huber robust mean
     estimator.
 - Add `CLARA` (Clustering for Large Applications) which extends k-medoids to
@@ -11,7 +13,7 @@ Unreleased
     [`#83 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/83>`_].
 - Fix `_estimator_type` for :class:`~sklearn_extra.robust` estimators. Fix
   misbehavior of scikit-learn's :class:`~sklearn.model_selection.cross_val_score` and
-  :class:`~sklearn.grid_search.GridSearchCV` for :class:`~sklearn_extra.robust.RobustWeightedClassifier`
+  :class:`~sklearn.grid_search.GridSearchCV` for :class:`~sklearn_extra.robust.RobustWeightedClassifier`.
 
 Version 0.2.0
 -------------

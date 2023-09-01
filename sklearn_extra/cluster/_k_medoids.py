@@ -228,6 +228,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X = check_array(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
+        self.n_features_in_ = X.shape[1]
         if self.n_clusters > X.shape[0]:
             raise ValueError(
                 "The number of medoids (%d) must be less "
@@ -650,6 +651,8 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         self
         """
         X = check_array(X, dtype=[np.float64, np.float32])
+        self.n_features_in_ = X.shape[1]
+
         n = len(X)
 
         random_state_ = check_random_state(self.random_state)

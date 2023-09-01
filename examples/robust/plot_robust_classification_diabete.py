@@ -42,7 +42,6 @@ clf_rob = RobustWeightedClassifier(
     weighting="huber",
     loss="hinge",
     c=1.35,
-    eta0=1e-3,
     max_iter=300,
 )
 
@@ -60,7 +59,6 @@ for f in range(M):
         weighting="huber",
         loss="hinge",
         c=1.35,
-        eta0=1e-3,
         max_iter=300,
         random_state=rng,
     )
