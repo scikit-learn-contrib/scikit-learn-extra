@@ -34,7 +34,10 @@ estimators = [
         "SGDClassifier, Hinge loss",
         SGDClassifier(loss="hinge", random_state=rng),
     ),
-    ("SGDClassifier, log loss", SGDClassifier(loss="log_loss", random_state=rng)),
+    (
+        "SGDClassifier, log loss",
+        SGDClassifier(loss="log_loss", random_state=rng),
+    ),
     (
         "SGDClassifier, modified_huber loss",
         SGDClassifier(loss="modified_huber", random_state=rng),
