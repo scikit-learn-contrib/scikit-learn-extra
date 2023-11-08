@@ -26,7 +26,7 @@ from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
@@ -48,7 +48,7 @@ from ._robust_weighted_estimator_helper import (
 
 LOSS_FUNCTIONS = {
     "hinge": (Hinge,),
-    "log": (Log,),
+    "log_loss": (Log,),
     "squared_error": (SquaredLoss,),
     "squared_loss": (SquaredLoss,),
     "squared_hinge": (SquaredHinge,),
@@ -114,8 +114,8 @@ class _RobustWeightedEstimator(BaseEstimator):
     loss : string or callable, mandatory
         Name of the loss used, must be the same loss as the one optimized in
         base_estimator.
-        Classification losses supported : 'log', 'hinge', 'squared_hinge',
-        'modified_huber'. If 'log', then the base_estimator must support
+        Classification losses supported : 'log_loss', 'hinge', 'squared_hinge',
+        'modified_huber'. If 'log_loss', then the base_estimator must support
         predict_proba. Regression losses supported : 'squared_error', 'huber'.
         If callable, the function is used as loss function ro construct
         the weights.
@@ -501,7 +501,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         return self.base_estimator_.predict(X)
 
     def _check_proba(self):
-        if self.loss != "log":
+        if self.loss != "log_loss":
             raise AttributeError(
                 "Probability estimates are not available for"
                 " loss=%r" % self.loss
@@ -538,7 +538,14 @@ class _RobustWeightedEstimator(BaseEstimator):
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.score(X, y)
 
-    @if_delegate_has_method(delegate="base_estimator")
+
+    def _estimator_has(attr):
+        def check(self):
+            return hasattr(self.base_estimator_, attr)
+
+        return check
+        
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Predict using the linear model. For classifiers only.
 
@@ -607,7 +614,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         (using the inter-quartile range), this tends to be conservative
         (robust).
 
-    loss : string, None or callable, default="log"
+    loss : string, None or callable, default="log_loss"
         Classification losses supported : 'log', 'hinge', 'modified_huber'.
         If 'log', then the base_estimator must support predict_proba.
 
@@ -709,7 +716,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         max_iter=100,
         c=None,
         k=0,
-        loss="log",
+        loss="log_loss",
         sgd_args=None,
         multi_class="ovr",
         n_jobs=1,
@@ -809,7 +816,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         return self.base_estimator_.predict(X)
 
     def _check_proba(self):
-        if self.loss != "log":
+        if self.loss != "log_loss":
             raise AttributeError(
                 "Probability estimates are not available for"
                 " loss=%r" % self.loss
