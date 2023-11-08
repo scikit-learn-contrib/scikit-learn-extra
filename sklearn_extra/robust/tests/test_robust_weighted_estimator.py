@@ -38,7 +38,7 @@ for f in range(3):
     X_cc[f] = [10, 5] + rng.normal(size=2) * 0.1
     y_cc[f] = 0
 
-classif_losses = ["log", "hinge"]
+classif_losses = ["log_loss", "hinge"]
 weightings = ["huber", "mom"]
 multi_class = ["ovr", "ovo"]
 
@@ -167,7 +167,7 @@ def test_classif_binary(weighting):
         multi_class="binary",
         random_state=rng,
     )
-    clf_not_rob = SGDClassifier(loss="log", random_state=rng)
+    clf_not_rob = SGDClassifier(loss="log_loss", random_state=rng)
     clf.fit(X_cb, y_cb)
     clf_not_rob.fit(X_cb, y_cb)
     norm_coef1 = np.linalg.norm(np.hstack([clf.coef_.ravel(), clf.intercept_]))
@@ -201,7 +201,7 @@ def test_classif_corrupted_weights(weighting):
     assert np.mean(clf.weights_[:3]) < np.mean(clf.weights_[3:])
 
 
-# Case "log" loss, test predict_proba
+# Case "log_loss" loss, test predict_proba
 @pytest.mark.parametrize("weighting", weightings)
 def test_predict_proba(weighting):
     clf = RobustWeightedClassifier(
@@ -211,7 +211,7 @@ def test_predict_proba(weighting):
         c=1e7,
         random_state=rng,
     )
-    clf_not_rob = SGDClassifier(loss="log", random_state=rng)
+    clf_not_rob = SGDClassifier(loss="log_loss", random_state=rng)
     clf.fit(X_c, y_c)
     clf_not_rob.fit(X_c, y_c)
     pred1 = clf.base_estimator_.predict_proba(X_c)[:, 1]
