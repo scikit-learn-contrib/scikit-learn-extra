@@ -104,7 +104,7 @@ for n_samples in [300, 600]:
         t1 = time.time()
 
         if hasattr(algorithm, "labels_"):
-            y_pred = algorithm.labels_.astype(np.int)
+            y_pred = algorithm.labels_.astype(int)
         else:
             y_pred = algorithm.predict(X)
 
