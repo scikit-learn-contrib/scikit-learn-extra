@@ -34,9 +34,9 @@ jobs:
       set -xe
       python --version
       python -m pip install --upgrade pip
-      if [[ "$SKLEARN_VERSION" == "nightly" ]]; then
-          # This also installs latest numpy, scipy and joblib.
-          pip install --pre scikit-learn
+      if [[ "$SKLEARN_VERSION" == "*" ]]; then
+          # Install latest versions of dependencies.
+          python -m pip install scikit-learn
       else
           python -m pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION
       fi
@@ -123,12 +123,12 @@ jobs:
         python.version: '3.10'
         NUMPY_VERSION: "1.26.1"
         SCIPY_VERSION: "1.11.3"
-        SKLEARN_VERSION: "*"
+        SKLEARN_VERSION: "1.3.2"
       Python311:
         python.version: '3.10'
         NUMPY_VERSION: "1.26.1"
         SCIPY_VERSION: "1.11.3"
-        SKLEARN_VERSION: "*"
+        SKLEARN_VERSION: "1.3.2"
 
   variables:
     OMP_NUM_THREADS: '2'
