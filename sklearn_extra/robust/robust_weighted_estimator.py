@@ -538,13 +538,12 @@ class _RobustWeightedEstimator(BaseEstimator):
         check_is_fitted(self, attributes=["base_estimator_"])
         return self.base_estimator_.score(X, y)
 
-
     def _estimator_has(attr):
         def check(self):
             return hasattr(self.base_estimator_, attr)
 
         return check
-        
+
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Predict using the linear model. For classifiers only.
