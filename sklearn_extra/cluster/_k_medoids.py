@@ -315,11 +315,11 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Extra Addition
         distances = self.transform(X)
         self.distances_ = distances
-        
+
         # Modification
-        self.inertia_ = _compute_inertia(distances) ## Prebiously this line was _compute_inertia(self.transform(X))
-        
-   
+        self.inertia_ = _compute_inertia(
+            distances
+        )  ## Prebiously this line was _compute_inertia(self.transform(X))
 
         # Return self to enable method chaining
         return self
