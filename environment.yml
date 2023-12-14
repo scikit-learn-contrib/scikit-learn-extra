@@ -3,3 +3,4 @@ dependencies:
   - numpy
   - scipy
   - scikit-learn
+  - packaging
