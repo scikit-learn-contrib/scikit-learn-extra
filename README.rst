@@ -52,6 +52,11 @@ or from PyPi with,
    pip install scikit-learn-extra
 
 
+Contributing
+------------
+
+We welcome and in fact would love some help, see the `Contributing <https://scikit-learn-extra.readthedocs.io/en/stable/contributing.html>`_ section of our documentation.
+
 License
 -------
 
