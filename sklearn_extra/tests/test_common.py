@@ -4,6 +4,7 @@ from sklearn.utils import estimator_checks
 from sklearn_extra.kernel_approximation import Fastfood
 from sklearn_extra.kernel_methods import EigenProClassifier, EigenProRegressor
 from sklearn_extra.cluster import KMedoids, CommonNNClustering, CLARA
+from sklearn_extra.neighbors import NSWGraph
 from sklearn_extra.robust import (
     RobustWeightedClassifier,
     RobustWeightedRegressor,
@@ -21,6 +22,7 @@ ALL_ESTIMATORS = [
     RobustWeightedKMeans,
     RobustWeightedRegressor,
     RobustWeightedClassifier,
+    NSWGraph,
 ]
 
 

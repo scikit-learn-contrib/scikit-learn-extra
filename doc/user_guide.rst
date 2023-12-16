@@ -14,3 +14,5 @@ User guide
   modules/cluster.rst
   modules/robust.rst
   modules/kernel_approximation.rst
+  modules/nswgraph.rst
+
