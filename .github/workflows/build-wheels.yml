@@ -1,6 +1,6 @@
 name: build_wheels
 
-on: #[push, pull_request]
+on: [push, pull_request]
    release:
      types:
        - created
