@@ -48,6 +48,7 @@ EXTRAS_REQUIRE = {
     "tests": ["pytest", "pytest-cov"],
     "docs": [
         "pillow",
+        "pandas",
         "sphinx",
         "sphinx-gallery",
         "sphinx_rtd_theme",

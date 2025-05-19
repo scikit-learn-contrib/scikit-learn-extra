@@ -3,4 +3,4 @@
 Robust
 ======
 
-Examples concerning the :mod:`sklearn_extra.kernel_methods.robust` module.
+Examples concerning the :mod:`sklearn_extra.robust` module.

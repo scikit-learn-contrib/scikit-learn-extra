@@ -121,7 +121,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     array([[1., 2.],
            [4., 2.]])
     >>> kmedoids.inertia_
-    8.0
+    np.float64(8.0)
 
     See scikit-learn-extra/examples/plot_kmedoids_digits.py for examples
     of KMedoids with various distance metrics.
@@ -595,7 +595,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> clara.predict([[0,0], [4,4]])
     array([0, 1])
     >>> clara.inertia_
-    122.44919397611667
+    np.float64(122.44919397611667)
 
     References
     ----------

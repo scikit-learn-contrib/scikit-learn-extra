@@ -1,4 +1,4 @@
-from . import kernel_approximation, kernel_methods  # noqa
+from . import kernel_approximation  # noqa
 
 from ._version import __version__
 

@@ -3,4 +3,4 @@
 Cluster
 =======
 
-Examples concerning the :mod:`sklearn_extra.kernel_methods.cluster` module.
+Examples concerning the :mod:`sklearn_extra.cluster` module.

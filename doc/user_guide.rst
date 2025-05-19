@@ -10,7 +10,6 @@ User guide
 .. toctree::
   :numbered:
 
-  modules/eigenpro.rst
   modules/cluster.rst
   modules/robust.rst
   modules/kernel_approximation.rst
