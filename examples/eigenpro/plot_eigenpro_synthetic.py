@@ -11,6 +11,7 @@ While EigenPro is slower on low dimensional datasets, as
 the number of features exceeds 500, it begins to outperform
 SVM and shows more stability.
 """
+
 print(__doc__)
 
 import matplotlib

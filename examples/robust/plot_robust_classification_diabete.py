@@ -8,6 +8,7 @@ for classification on the real dataset "diabetes".
 We only compare the estimator with SGDClassifier as there is no robust
 classification estimator in scikit-learn.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn_extra.robust import RobustWeightedClassifier
