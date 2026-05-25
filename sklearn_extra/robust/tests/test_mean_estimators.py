@@ -3,7 +3,6 @@ import pytest
 
 from sklearn_extra.robust.mean_estimators import median_of_means, huber
 
-
 rng = np.random.RandomState(42)
 
 sample = rng.normal(size=100)

@@ -6,13 +6,13 @@ A demo of Robust Classification on Simulated corrupted dataset
 In this example we compare the RobustWeightedClassifier using SGDClassifier
 for classification with the vanilla SGDClassifier with various losses.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn_extra.robust import RobustWeightedClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
-
 
 rng = np.random.RandomState(42)
 

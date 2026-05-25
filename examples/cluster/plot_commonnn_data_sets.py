@@ -19,7 +19,6 @@ from sklearn_extra.cluster import CommonNNClustering
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 
-
 print(__doc__)
 
 
