@@ -6,12 +6,13 @@ from scipy.stats import chi
 
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
-from sklearn.utils import check_array, check_random_state
+from sklearn.utils import check_random_state
 
+from .._compat import validate_data
 from ..utils._cyfht import fht2 as cyfht
 
 
-class Fastfood(BaseEstimator, TransformerMixin):
+class Fastfood(TransformerMixin, BaseEstimator):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 
@@ -167,8 +168,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        X = check_array(X, order="C", dtype=np.float64)
-        self.n_features_in_ = X.shape[1]
+        X = validate_data(self, X, order="C", dtype=np.float64)
 
         d_orig = X.shape[1]
         rng = check_random_state(self.random_state)
@@ -219,7 +219,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = check_array(X, order="C", dtype=np.float64)
+        X = validate_data(self, X, order="C", dtype=np.float64, reset=False)
         X_padded = self._pad_with_zeros(X)
         HGPHBX = self._apply_approximate_gaussian_matrix(
             self._B, self._G, self._P, X_padded

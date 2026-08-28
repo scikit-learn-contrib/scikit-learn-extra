@@ -28,6 +28,7 @@ else:
 
 from sklearn.neighbors import NearestNeighbors
 
+from .._compat import validate_data
 from ._commonnn_inner import commonnn_inner
 
 
@@ -269,6 +270,14 @@ class CommonNNClustering(ClusterMixin, BaseEstimator):
     # TODO Use
     # @_deprecate_positional_args
     #     not in scikit-learn version 0.21.3
+    def _more_tags(self):
+        return {"X_types": ["2darray", "sparse"]}
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
     def __init__(
         self,
         eps=0.5,
@@ -320,7 +329,7 @@ class CommonNNClustering(ClusterMixin, BaseEstimator):
         if Version(sklearn.__version__) < Version("0.23.0"):
             X = check_array(X, accept_sparse="csr")
         else:
-            X = self._validate_data(X, accept_sparse="csr")
+            X = validate_data(self, X, accept_sparse="csr")
 
         if not self.eps > 0.0:
             raise ValueError("eps must be positive.")

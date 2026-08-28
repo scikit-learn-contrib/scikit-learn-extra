@@ -14,6 +14,7 @@ from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     ClusterMixin,
+    TransformerMixin,
 )
 from sklearn.utils import (
     check_random_state,
@@ -27,6 +28,8 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.metaestimators import available_if
+
+from .._compat import estimator_type, validate_data
 
 # Tool library in which we get robust mean estimators.
 from .mean_estimators import median_of_means_blocked, block_mom, huber
@@ -518,7 +521,7 @@ class _RobustWeightedEstimator(BaseEstimator):
 
     @property
     def _estimator_type(self):
-        return self.base_estimator._estimator_type
+        return estimator_type(self.base_estimator)
 
     def score(self, X, y=None):
         """Returns the score on the given data, using
@@ -561,7 +564,7 @@ class _RobustWeightedEstimator(BaseEstimator):
         return self.base_estimator_.decision_function(X)
 
 
-class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
+class RobustWeightedClassifier(ClassifierMixin, BaseEstimator):
     """Algorithm for robust classification using reweighting algorithm.
 
     This model uses iterative reweighting of samples to make a regression or
@@ -760,7 +763,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
             sgd_args = self.sgd_args
 
         # Define the base estimator
-        X, y = self._validate_data(X, y, y_numeric=False)
+        X, y = validate_data(self, X, y, y_numeric=False)
 
         base_robust_estimator_ = _RobustWeightedEstimator(
             SGDClassifier(**sgd_args),
@@ -878,7 +881,7 @@ class RobustWeightedClassifier(BaseEstimator, ClassifierMixin):
         return self.base_estimator_.decision_function(X)
 
 
-class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
+class RobustWeightedRegressor(RegressorMixin, BaseEstimator):
     """Algorithm for robust regression using reweighting algorithm.
 
     This model uses iterative reweighting of samples to make a regression or
@@ -1055,7 +1058,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
 
         # Define the base estimator
 
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, y_numeric=True)
 
         self.base_estimator_ = _RobustWeightedEstimator(
             SGDRegressor(**sgd_args),
@@ -1113,7 +1116,7 @@ class RobustWeightedRegressor(BaseEstimator, RegressorMixin):
         return self.base_estimator_.score(X, y)
 
 
-class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
+class RobustWeightedKMeans(ClusterMixin, TransformerMixin, BaseEstimator):
     """Algorithm for robust kmeans clustering using reweighting algorithm.
 
     This model uses iterative reweighting of samples to make a regression or
@@ -1291,7 +1294,8 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             kmeans_args = {}
         else:
             kmeans_args = self.kmeans_args
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -1376,7 +1380,7 @@ class RobustWeightedKMeans(BaseEstimator, ClusterMixin):
             X transformed in the new space.
         """
         check_is_fitted(self)
-
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         return self._transform(X)
 
     def _transform(self, X):

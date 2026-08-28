@@ -7,7 +7,9 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_is_fitted, check_X_y
+from sklearn.utils.validation import check_is_fitted
+
+from .._compat import validate_data
 
 
 class BaseEigenPro(BaseEstimator):
@@ -110,11 +112,11 @@ class BaseEigenPro(BaseEstimator):
 
         W = K / m
         try:
-            E, Lambda = eigh(W, eigvals=(m - n_components, m - 1))
+            E, Lambda = eigh(W, subset_by_index=(m - n_components, m - 1))
         except LinAlgError:
             # Use float64 when eigh fails due to precision
             W = np.float64(W)
-            E, Lambda = eigh(W, eigvals=(m - n_components, m - 1))
+            E, Lambda = eigh(W, subset_by_index=(m - n_components, m - 1))
             E, Lambda = np.float32(E), np.float32(Lambda)
         # Flip so eigenvalues are in descending order.
         E = np.maximum(np.float32(1e-7), np.flipud(E))
@@ -314,7 +316,8 @@ class BaseEigenPro(BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        X, Y = check_X_y(
+        X, Y = validate_data(
+            self,
             X,
             Y,
             dtype=np.float32,
@@ -322,7 +325,6 @@ class BaseEigenPro(BaseEstimator):
             ensure_min_samples=3,
             y_numeric=True,
         )
-        self.n_features_in_ = X.shape[1]
         Y = Y.astype(np.float32)
         random_state = check_random_state(self.random_state)
 
@@ -373,13 +375,7 @@ class BaseEigenPro(BaseEstimator):
         check_is_fitted(
             self, ["bs_", "centers_", "coef_", "was_1D_", "gamma_"]
         )
-        X = np.asarray(X, dtype=np.float64)
-
-        if len(X.shape) == 1:
-            raise ValueError(
-                "Reshape your data. X should be a matrix of shape"
-                " (n_samples, n_features)."
-            )
+        X = validate_data(self, X, dtype=np.float64, reset=False)
         n = X.shape[0]
 
         Ys = []
@@ -394,9 +390,12 @@ class BaseEigenPro(BaseEstimator):
             Y = np.reshape(Y, Y.shape[0])
         return Y
 
-    def _get_tags(self):
-        tags = super()._get_tags()
-        tags["multioutput"] = True
+    def _more_tags(self):
+        return {"multioutput": True}
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
         return tags
 
 
@@ -631,11 +630,11 @@ class EigenProClassifier(ClassifierMixin, BaseEigenPro):
         -------
         self : returns an instance of self.
         """
-        X, Y = check_X_y(
+        X, Y = validate_data(
+            self,
             X,
             Y,
             dtype=np.float32,
-            force_all_finite=True,
             multi_output=False,
             ensure_min_samples=3,
         )
