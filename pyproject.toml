@@ -3,13 +3,11 @@
 requires = [
     "setuptools",
     "wheel",
-    "Cython>=0.28.5",
+    # 3.0.10 is the first Cython release that supports the numpy 2 C API
+    "Cython>=3.0.10",
 
-    # use oldest-supported-numpy which provides the oldest numpy version with
-    # wheels on PyPI
-    #
-    # see: https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
-    "oldest-supported-numpy"
+    # Build against numpy 2.0 for ABI compatibility with both numpy 1.x and 2.x
+    "numpy>=2.0,<3",
 ]
 
 [tool.black]

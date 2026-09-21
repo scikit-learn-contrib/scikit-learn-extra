@@ -21,7 +21,9 @@ import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-X, y = fetch_openml(name="diabetes", as_frame=False, return_X_y=True)
+X, y = fetch_openml(
+    name="diabetes", as_frame=False, return_X_y=True, parser="liac-arff"
+)
 
 # replace the label names with 0 or 1
 y = (y == "tested_positive").astype(int)

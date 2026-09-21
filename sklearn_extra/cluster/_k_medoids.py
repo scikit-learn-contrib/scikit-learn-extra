@@ -15,10 +15,12 @@ from sklearn.metrics.pairwise import (
     pairwise_distances,
     pairwise_distances_argmin,
 )
-from sklearn.utils import check_array, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import ConvergenceWarning
+
+from .._compat import validate_data
 
 # cython implementation of steps in PAM algorithm.
 from ._k_medoids_helper import _compute_optimal_swap, _build
@@ -45,7 +47,7 @@ def _compute_inertia(distances):
     return inertia
 
 
-class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
+class KMedoids(ClusterMixin, TransformerMixin, BaseEstimator):
     """k-medoids clustering.
 
     Read more in the :ref:`User Guide <k_medoids>`.
@@ -120,7 +122,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> kmedoids.cluster_centers_
     array([[1., 2.],
            [4., 2.]])
-    >>> kmedoids.inertia_
+    >>> float(kmedoids.inertia_)
     8.0
 
     See scikit-learn-extra/examples/plot_kmedoids_digits.py for examples
@@ -146,6 +148,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     the duration of fit, the space complexity is O(n_samples ** 2).
 
     """
+
+    def _more_tags(self):
+        return {"X_types": ["2darray", "sparse"]}
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
     def __init__(
         self,
@@ -225,10 +235,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state_ = check_random_state(self.random_state)
 
         self._check_init_args()
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=[np.float64, np.float32],
         )
-        self.n_features_in_ = X.shape[1]
         if self.n_clusters > X.shape[0]:
             raise ValueError(
                 "The number of medoids (%d) must be less "
@@ -369,8 +381,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         if self.metric == "precomputed":
@@ -401,8 +417,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         if self.metric == "precomputed":
@@ -537,7 +557,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return centers
 
 
-class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
+class CLARA(ClusterMixin, TransformerMixin, BaseEstimator):
     """CLARA clustering.
 
     Read more in the :ref:`User Guide <CLARA>`.
@@ -594,7 +614,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> clara = CLARA(n_clusters=2, random_state=0).fit(X)
     >>> clara.predict([[0,0], [4,4]])
     array([0, 1])
-    >>> clara.inertia_
+    >>> float(clara.inertia_)
     122.44919397611667
 
     References
@@ -650,8 +670,7 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, dtype=[np.float64, np.float32])
-        self.n_features_in_ = X.shape[1]
+        X = validate_data(self, X, dtype=[np.float64, np.float32])
 
         n = len(X)
 
@@ -731,8 +750,12 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         if self.metric == "precomputed":
@@ -758,8 +781,12 @@ class CLARA(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         if self.metric == "precomputed":

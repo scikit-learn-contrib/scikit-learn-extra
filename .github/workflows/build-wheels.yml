@@ -25,15 +25,14 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Install cibuildwheel
         run: |
-          python -m pip install cibuildwheel==2.12.1
+          python -m pip install cibuildwheel==2.16.5
       - name: Build wheels
         env:
-          # We only build for Python 3.6+. On Linux manylinux2010 is used.
           # Skipping pypy wheels for now since scipy & scikit-learn haven't build them yet.
-          # Skip python3.11 for 32bit.
+          # 32bit Windows, i686 Linux and musllinux are also skipped.
           CIBW_SKIP: "pp* *-win32 *-manylinux_i686 *musllinux*"
           CIBW_TEST_REQUIRES: "pytest pandas scikit-learn"
           CIBW_TEST_COMMAND: "pytest --pyargs sklearn_extra"
@@ -52,7 +51,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: pip install setuptools cython numpy

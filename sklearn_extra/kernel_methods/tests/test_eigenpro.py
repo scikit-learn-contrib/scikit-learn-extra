@@ -31,7 +31,7 @@ def gen_classification(params):
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"kernel": "not_a_kernel"}, "Unknown kernel 'not_a_kernel'"),
+        ({"kernel": "not_a_kernel"}, "not_a_kernel"),
         ({"n_epoch": 0}, "n_epoch should be positive, was 0"),
         ({"n_epoch": -1}, "n_epoch should be positive, was -1"),
         ({"n_components": -1}, "n_components should be non-negative, was -1"),
