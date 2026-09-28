@@ -5,6 +5,7 @@ A demo of K-Medoids clustering on the handwritten digits data
 In this example we compare different pairwise distance
 metrics for K-Medoids.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 

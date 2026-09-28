@@ -6,6 +6,7 @@ Robust regression on simulated corrupted dataset
 In this example we compare the RobustWeightedRegressor
 with various robust regression algorithms from scikit-learn.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 
