@@ -9,12 +9,12 @@ the sum of absolute distance to the closest medoid. A medoid is a point of the
 dataset.  Read more in the :ref:`User Guide <_k_medoids>`.
 
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn_extra.cluster import KMedoids
 from sklearn.datasets import make_blobs
-
 
 print(__doc__)
 
