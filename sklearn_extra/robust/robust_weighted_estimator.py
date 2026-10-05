@@ -35,7 +35,6 @@ from .._compat import estimator_type, validate_data
 from .mean_estimators import median_of_means_blocked, block_mom, huber
 from ._robust_weighted_estimator_helper import _kmeans_loss
 
-
 # cython implementation of loss functions, copied from scikit-learn with light
 # modifications.
 from ._robust_weighted_estimator_helper import (
@@ -47,7 +46,6 @@ from ._robust_weighted_estimator_helper import (
     ModifiedHuber,
     SquaredHinge,
 )
-
 
 LOSS_FUNCTIONS = {
     "hinge": (Hinge,),
