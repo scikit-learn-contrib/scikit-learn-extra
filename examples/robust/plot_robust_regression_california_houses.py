@@ -16,6 +16,7 @@ Depending on what criterion one want to optimize, the parameter measuring
 robustness in RobustWeightedRegressor can change and this is not so
 straightforward when using RANSAC and TheilSenRegressor.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn_extra.robust import RobustWeightedRegressor

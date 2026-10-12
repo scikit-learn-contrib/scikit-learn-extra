@@ -14,6 +14,7 @@ The mean-shift algorithm, once correctly
 parameterized, detects the outliers as a class of
 their own.
 """
+
 print(__doc__)
 
 import time

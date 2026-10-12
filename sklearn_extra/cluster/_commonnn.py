@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Density-Based Common-Nearest-Neighbors Clustering
-"""
+"""Density-Based Common-Nearest-Neighbors Clustering"""
 
 # Author: Jan-Oliver Joswig <jan.joswig@fu-berlin.de>
 #

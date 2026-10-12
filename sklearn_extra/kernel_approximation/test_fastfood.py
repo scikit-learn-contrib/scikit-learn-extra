@@ -6,7 +6,6 @@ from sklearn.metrics.pairwise import rbf_kernel
 
 from sklearn_extra.kernel_approximation import Fastfood
 
-
 # generate data
 rng = np.random.RandomState(0)
 X = rng.random_sample(size=(300, 50))

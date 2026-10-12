@@ -1,4 +1,5 @@
 """Testing for K-Medoids"""
+
 import warnings
 import numpy as np
 from unittest import mock
@@ -14,7 +15,6 @@ from numpy.testing import assert_allclose, assert_array_equal
 from sklearn_extra.cluster import KMedoids, CLARA
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
-
 
 seed = 0
 X = np.random.RandomState(seed).rand(100, 5)
