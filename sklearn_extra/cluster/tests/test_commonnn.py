@@ -1,5 +1,4 @@
-"""Tests for common-nearest neighbour clustering
-"""
+"""Tests for common-nearest neighbour clustering"""
 
 import pickle
 
@@ -20,7 +19,6 @@ from sklearn_extra.cluster import CommonNNClustering
 from sklearn_extra.cluster import commonnn
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
-
 
 # TODO Tests where adapted from sklearn.cluster.tests.test_dbscan
 #     of scikit-learn version 0.24.dev0.

@@ -10,6 +10,7 @@ minimum number of common neighbors. Read more in the :ref:`User Guide
 <commonnn>`.
 
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -17,7 +18,6 @@ from sklearn_extra.cluster import CommonNNClustering
 from sklearn import metrics
 from sklearn.datasets import make_blobs
 from sklearn.preprocessing import StandardScaler
-
 
 print(__doc__)
 

@@ -5,6 +5,7 @@ A demo of K-Medoids vs CLARA clustering on the handwritten digits data
 In this example we compare different computation time of K-Medoids and CLARA on
 the handwritten digits data.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 import time

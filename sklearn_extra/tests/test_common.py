@@ -10,7 +10,6 @@ from sklearn_extra.robust import (
     RobustWeightedKMeans,
 )
 
-
 ALL_ESTIMATORS = [
     Fastfood,
     KMedoids,
