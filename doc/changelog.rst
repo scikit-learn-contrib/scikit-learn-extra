@@ -4,6 +4,10 @@ Changelog
 Version 0.3.0
 ----------
 
+- Add :class:`~sklearn_extra.cluster.EMeans`, mini-batch k-means with
+  exponential moving averages (Bessa et al., 2026), ported from the
+  reference implementation in Faiss.
+
 - Fix bug with random initialization of KMedoids [`#129 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/129>`_].
 - `KMedoids` supports array-like init method [`#137 <https://github.com/scikit-learn-contrib/scikit-learn-extra/pull/137>`_].
 - Add a stopping criterion and parameter tuning heuristic for Huber robust mean

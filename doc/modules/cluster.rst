@@ -1,8 +1,8 @@
 .. _cluster:
 
-============================================================
-Clustering with KMedoids, CLARA and Common-nearest-neighbors
-============================================================
+=====================================================================
+Clustering with KMedoids, CLARA, Common-nearest-neighbors and e-means
+=====================================================================
 .. _k_medoids:
 
 K-Medoids
@@ -231,3 +231,43 @@ manually.
 
   * O. Lemke, B.G. Keller "Common nearest neighbor clustering - a
     benchmark" Algorithms, 2018, 11, 19.
+
+.. _e_means:
+
+e-means
+=======
+
+:class:`EMeans <sklearn_extra.cluster.EMeans>` minimizes the same objective
+as :class:`sklearn.cluster.KMeans`, the sum of squared distances of samples
+to their closest center, with mini-batch updates. Each cluster :math:`j`
+keeps an exponential moving average of the number :math:`N_j` and the sum
+:math:`S_j` of the points assigned to it, and its center is
+:math:`c_j = S_j / N_j`. For a mini-batch in which :math:`n_j` points with
+sum :math:`s_j` are assigned to cluster :math:`j`,
+
+.. math::
+
+    N_j \leftarrow \gamma N_j + (1 - \gamma) n_j, \qquad
+    S_j \leftarrow \gamma S_j + (1 - \gamma) s_j.
+
+The step :math:`1 - \gamma` decreases along a cosine schedule. The batch
+size and the initial step are set by scaling laws fitted by the authors on
+large embedding datasets, as functions of the number of samples, of
+clusters and of epochs, so the defaults need no tuning. Every 5 batches,
+clusters whose mass has fallen below a tenth of the mean are revived by
+splitting a cluster sampled in proportion to its mass. The returned centers
+are the means of the points assigned to each cluster during the last epoch.
+
+On high-dimensional data with many clusters, e-means typically reaches the
+training error of 25 Lloyd iterations in 2 to 3 epochs, so ``n_epochs``
+defaults to 5. Each epoch costs about as much as one Lloyd iteration.
+
+The default ``init="random"`` is cheap for many clusters. For a few
+clusters, ``init="k-means++"`` avoids poor local minima, as with
+:class:`sklearn.cluster.KMeans`.
+
+.. topic:: References:
+
+  * S. Bessa, P.-E. Mazaré, G. Szilvasy, H. Touvron, D. Picard, M. Douze and
+    H. Jégou. "e-means: outperforming k-means (in one-tenth the epochs)".
+    arXiv:2611.09501, 2026.
